@@ -360,16 +360,16 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 </div>
 
 <!-- ══════════ CREATE USER MODAL ══════════ -->
-<div class="mo" id="create-user-mo">
+<div class="mo" id="create-user-mo" style="z-index:600;">
   <div class="md">
     <div class="mh"></div>
     <div class="mti">CREATE PROFILE</div>
     <div class="fl">Name</div>
     <input class="fi" id="cu-name" placeholder="e.g. Shane" maxlength="12"/>
     <div class="fl">4-Digit PIN</div>
-    <input class="fi" id="cu-pin" type="number" inputmode="numeric" placeholder="e.g. 1234" maxlength="4"/>
+    <input class="fi" id="cu-pin" type="number" inputmode="numeric" placeholder="e.g. 1234"/>
     <div class="fl">Profile Color</div>
-    <div id="color-picker" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;"></div>
+    <div id="color-picker" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;padding:4px 0;"></div>
     <button class="mb" onclick="createUser()" style="margin-top:16px;">CREATE PROFILE</button>
     <button class="mca" onclick="closeModal('create-user-mo')">CANCEL</button>
   </div>
@@ -612,14 +612,14 @@ function openCreateUser(){
   var cp=el('color-picker');cp.innerHTML='';
   for(var i=0;i<AVATAR_COLORS.length;i++){
     var btn=document.createElement('div');
-    btn.style.cssText='width:32px;height:32px;border-radius:50%;background:'+AVATAR_COLORS[i]+';cursor:pointer;border:2px solid transparent;transition:border .15s;';
     btn.setAttribute('data-color',AVATAR_COLORS[i]);
+    btn.setAttribute('data-selected', i===0?'1':'0');
+    btn.style.cssText='width:34px;height:34px;border-radius:50%;background:'+AVATAR_COLORS[i]+';cursor:pointer;border:3px solid '+(i===0?'#fff':'transparent')+';transition:border .15s;flex-shrink:0;';
     btn.onclick=function(){
-      var bs=el('color-picker').querySelectorAll('div');
-      for(var j=0;j<bs.length;j++)bs[j].style.borderColor='transparent';
-      this.style.borderColor='#fff';
+      var bs=el('color-picker').children;
+      for(var j=0;j<bs.length;j++){bs[j].style.border='3px solid transparent';bs[j].setAttribute('data-selected','0');}
+      this.style.border='3px solid #fff';this.setAttribute('data-selected','1');
     };
-    if(i===0)btn.style.borderColor='#fff';
     cp.appendChild(btn);
   }
   el('create-user-mo').classList.add('visible');
@@ -627,15 +627,16 @@ function openCreateUser(){
 
 function createUser(){
   var name=el('cu-name').value.trim();
-  var pin=el('cu-pin').value.trim();
+  var pinVal=el('cu-pin').value.trim();
   if(!name){showToast('NAME REQUIRED');return;}
-  if(!pin||pin.length!==4||isNaN(pin)){showToast('4-DIGIT PIN REQUIRED');return;}
-  var selected=el('color-picker').querySelector('div[style*="rgb(255, 255, 255)"]')||el('color-picker').querySelector('div[style*="#fff"]')||el('color-picker').children[0];
-  var color=selected?selected.getAttribute('data-color'):AVATAR_COLORS[0];
+  if(!pinVal||pinVal.length!==4||isNaN(pinVal)){showToast('4-DIGIT PIN REQUIRED');return;}
   var users=loadUsers();
   if(users.length>=5){showToast('MAX 5 PROFILES');return;}
+  var color=AVATAR_COLORS[0];
+  var bs=el('color-picker').children;
+  for(var i=0;i<bs.length;i++){if(bs[i].getAttribute('data-selected')==='1'){color=bs[i].getAttribute('data-color');break;}}
   var uid='u_'+Date.now();
-  users.push({id:uid,name:name,pin:pin,color:color});
+  users.push({id:uid,name:name,pin:pinVal,color:color});
   saveUsers(users);
   closeModal('create-user-mo');
   renderSplash();
@@ -1658,7 +1659,7 @@ function renderBody(){
   cont.appendChild(bioRow('Weight (lbs)','weight','number','e.g. 185'));
   cont.appendChild(bioRow('Height (in)','height','number','e.g. 72'));
   cont.appendChild(bioRow('Age','age','number','e.g. 28'));
-  cont.appendChild(bioRow('Sex','sex',null,null,['Male','Female']));
+  cont.appendChild(bioRow('Sex','sex',null,null,['Male','Female','Other']));
   cont.appendChild(bioRow('Body Fat %','bf','number','e.g. 18'));
   cont.appendChild(bioRow('Goal Weight','goalweight','number','e.g. 175'));
   if(S.bio.weight&&S.bio.height){
@@ -1730,7 +1731,18 @@ function saveBio(){
 // UTILS
 // ════════════════════════════════
 function closeModal(id){el(id).classList.remove('visible');}
-function showToast(msg){var t=el('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2200);}
+function showToast(msg){
+  var t=el('toast');
+  if(!t||el('main-app').style.display==='none'){
+    // Splash context — use a temporary toast appended to body
+    var tmp=document.createElement('div');
+    tmp.style.cssText='position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:#0f1520;border:1px solid rgba(79,195,247,.3);color:#4fc3f7;padding:8px 16px;border-radius:2px;font-family:Orbitron,sans-serif;font-size:9px;letter-spacing:.1em;z-index:700;white-space:nowrap;';
+    tmp.textContent=msg;document.body.appendChild(tmp);
+    setTimeout(function(){if(tmp.parentNode)tmp.parentNode.removeChild(tmp);},2200);
+    return;
+  }
+  t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2200);
+}
 
 // ════════════════════════════════
 // INIT
