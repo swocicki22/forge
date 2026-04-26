@@ -275,9 +275,15 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .bw-val{font-family:'Orbitron',sans-serif;font-size:13px;color:var(--tx);}
 .bw-del{background:none;border:none;color:var(--s3);font-size:13px;cursor:pointer;padding:2px 5px;margin-left:auto;}
 
+
+.rem-ex-btn{background:none;border:none;color:var(--s3);font-size:13px;cursor:pointer;padding:2px 5px;flex-shrink:0;font-family:'Orbitron',sans-serif;line-height:1;}
+.rem-ex-btn:active{color:var(--danger);}
+.add-ex-workout{width:100%;background:transparent;border:1px dashed var(--bl);color:var(--hl);border-radius:2px;padding:9px;font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:.12em;cursor:pointer;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:5px;}
+.add-ex-workout:active{background:var(--hld);}
 /* ── REST TIMER ── */
-.ro{display:none;position:fixed;inset:0;background:rgba(4,6,8,.95);z-index:100;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.ro{display:none;position:fixed;inset:0;background:rgba(4,6,8,.95);z-index:400;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
 .ro.visible{display:flex;}
+.ro *{position:relative;z-index:1;}
 .ro::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(79,195,247,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(79,195,247,.04) 1px,transparent 1px);background-size:40px 40px;}
 .rl{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:.26em;text-transform:uppercase;color:var(--s2);margin-bottom:18px;position:relative;}
 .rc{width:170px;height:170px;position:relative;margin-bottom:18px;}
@@ -516,6 +522,51 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 <div class="mo" id="edit-day-mo"><div class="md"><div class="mh"></div><div class="mti">EDIT PROTOCOL</div><div class="fl">Day Name</div><input class="fi" id="ed-name"/><div class="fl">Tag</div><input class="fi" id="ed-tag"/><div class="fl">Cardio Finisher</div><input class="fi" id="ed-cardio"/><button class="mb" onclick="saveDayEdit()">SAVE</button><button class="mca" onclick="closeModal('edit-day-mo')">CANCEL</button><button class="mb-red" onclick="deleteDay()">DELETE DAY</button></div></div>
 <div class="mo" id="notes-mo"><div class="md"><div class="mh"></div><div class="mti" id="notes-ex-name">NOTES</div><div id="notes-content" style="font-family:'Rajdhani',sans-serif;font-size:13px;color:var(--st);line-height:1.7;margin-bottom:12px;"></div><button class="mb" onclick="closeModal('notes-mo')">CLOSE</button></div></div>
 <div class="mo" id="bw-mo"><div class="md"><div class="mh"></div><div class="mti">LOG BODY WEIGHT</div><div class="fl">Weight (lbs)</div><input class="fi" id="bw-inp" type="number" inputmode="decimal" placeholder="e.g. 185.5"/><button class="mb" onclick="logBodyWeight()">LOG</button><button class="mca" onclick="closeModal('bw-mo')">CANCEL</button></div></div>
+
+
+
+<!-- DELETE WORKOUT LOG CONFIRM -->
+<div class="mo" id="del-log-mo">
+  <div class="md">
+    <div class="mh"></div>
+    <div class="mti">DELETE SESSION?</div>
+    <div id="del-log-name" style="font-family:'Orbitron',sans-serif;font-size:11px;color:var(--hlb);margin-bottom:8px;"></div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--st);margin-bottom:16px;line-height:1.7;">This session will be permanently removed from your log. PRs set during this session will be kept.</div>
+    <button class="mb-red" onclick="confirmDeleteLog()">DELETE SESSION</button>
+    <button class="mca" onclick="S.pendingDeleteLog=null;closeModal('del-log-mo')">CANCEL</button>
+  </div>
+</div>
+
+<!-- REMOVE EX FROM WORKOUT CONFIRM -->
+<div class="mo" id="rem-ex-mo">
+  <div class="md">
+    <div class="mh"></div>
+    <div class="mti">REMOVE EXERCISE?</div>
+    <div id="rem-ex-name" style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--hlb);margin-bottom:8px;"></div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--st);margin-bottom:16px;line-height:1.7;">This exercise has completed sets.<br>What would you like to do with them?</div>
+    <button class="mb" onclick="doRemoveExFromWorkout(S.pendingRemoveEx,true);closeModal('rem-ex-mo');">REMOVE BUT SAVE SETS TO LOG</button>
+    <button class="mb-red" onclick="doRemoveExFromWorkout(S.pendingRemoveEx,false);closeModal('rem-ex-mo');">REMOVE AND DISCARD SETS</button>
+    <button class="mca" onclick="S.pendingRemoveEx=null;closeModal('rem-ex-mo');">CANCEL</button>
+  </div>
+</div>
+
+<!-- ADD EXERCISE TO ACTIVE WORKOUT -->
+<div class="mo" id="add-ex-workout-mo">
+  <div class="md">
+    <div class="mh"></div>
+    <div class="mti">ADD EXERCISE</div>
+    <div class="fl">Exercise Name</div>
+    <input class="fi" id="aew-name" placeholder="e.g. Cable Curl"/>
+    <div class="fl">Type</div>
+    <input class="fi" id="aew-type" placeholder="e.g. Isolation, Compound"/>
+    <div class="fl">Sets</div>
+    <input class="fi" id="aew-sets" type="number" inputmode="numeric" placeholder="3"/>
+    <div class="fl">Starting Weight (lbs)</div>
+    <input class="fi" id="aew-weight" type="number" inputmode="decimal" placeholder="0"/>
+    <button class="mb" onclick="confirmAddExToWorkout()">ADD TO WORKOUT</button>
+    <button class="mca" onclick="closeModal('add-ex-workout-mo')">CANCEL</button>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -1103,19 +1154,49 @@ function renderHistoryDetail(cont,idx){
   }
 }
 
+
+function deleteWorkoutLog(idx){
+  S.pendingDeleteLog=idx;
+  var w=S.log[idx];
+  el('del-log-name').textContent=w.name+' — '+new Date(w.date).toLocaleDateString();
+  el('del-log-mo').classList.add('visible');
+}
+
+function confirmDeleteLog(){
+  if(S.pendingDeleteLog===null||S.pendingDeleteLog===undefined)return;
+  S.log.splice(S.pendingDeleteLog,1);
+  S.pendingDeleteLog=null;
+  saveState();
+  closeModal('del-log-mo');
+  viewingSessionIdx=null;
+  renderProg();
+  showToast('SESSION DELETED');
+}
+
 function renderHistoryList(cont){
   if(!S.log.length){cont.innerHTML='<div class="es"><div class="ei">NO HISTORY YET</div><div class="esb">Complete sessions to build your log.</div></div>';return;}
-  var card=document.createElement('div');card.className='cc';card.innerHTML='<div class="ct">SESSION LOG — TAP TO EXPAND</div>';
+  var card=document.createElement('div');card.className='cc';card.innerHTML='<div class="ct">SESSION LOG — TAP TO EXPAND &nbsp;&nbsp; &#10005; TO DELETE</div>';
   var sessions=S.log.slice().reverse();
   for(var i=0;i<sessions.length;i++){
     var w=sessions[i];var globalIdx=S.log.length-1-i;var d=new Date(w.date);
-    var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;';
-    row.innerHTML='<div style="font-family:\'Orbitron\',sans-serif;font-size:13px;color:var(--hl);width:24px;text-align:center;flex-shrink:0;">'+w.lbl+'</div>'
+    var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border);';
+    var inner=document.createElement('div');inner.style.cssText='display:flex;align-items:center;gap:9px;flex:1;cursor:pointer;';
+    inner.innerHTML='<div style="font-family:\'Orbitron\',sans-serif;font-size:13px;color:var(--hl);width:24px;text-align:center;flex-shrink:0;">'+w.lbl+'</div>'
       +'<div style="flex:1;"><div style="font-family:\'Rajdhani\',sans-serif;font-weight:600;font-size:12px;">'+w.name+'</div>'
       +'<div style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:var(--s2);">'+d.toLocaleDateString()+' — '+w.dur+'</div></div>'
       +'<div style="font-family:\'Share Tech Mono\',monospace;font-size:8px;color:var(--hl);text-align:right;">'+w.vol.toLocaleString()+'<br><span style="font-size:6px;color:var(--s3)">LBS</span></div>'
       +'<div style="color:var(--s3);font-size:10px;">&#9658;</div>';
-    (function(idx){row.onclick=function(){viewingSessionIdx=idx;renderProg();};})(globalIdx);
+    (function(idx){inner.onclick=function(){viewingSessionIdx=idx;renderProg();};})(globalIdx);
+    var delBtn=document.createElement('button');
+    delBtn.style.cssText='background:none;border:none;color:var(--s3);font-size:14px;cursor:pointer;padding:4px 6px;flex-shrink:0;';
+    delBtn.innerHTML='&#10005;';
+    delBtn.title='Delete session';
+    (function(idx,r){delBtn.onclick=function(e){
+      e.stopPropagation();
+      deleteWorkoutLog(idx);
+    };})(globalIdx,row);
+    row.appendChild(inner);
+    row.appendChild(delBtn);
     card.appendChild(row);
   }
   cont.appendChild(card);
@@ -1280,9 +1361,9 @@ function renderActive(){
     var notesBtn=ex.notes?'<button class="info-btn" onclick="showNotes(\''+ek+'\')">i</button>':'';
     var trg='<div class="target-reps">x'+wd.reps+'</div>';
     var olBadge=suggestSet[ex.name]?'<div class="ex-overload">&#9650; INCREASE</div>':'';
-    blk.innerHTML='<div class="eh"><div style="flex:1;"><div class="en">'+ex.name+'</div><div class="et">'+ex.type+'</div></div>'+olBadge+trg+notesBtn+ssb+'</div>'
+    blk.innerHTML='<div class="eh"><div style="flex:1;"><div class="en">'+ex.name+'</div><div class="et">'+ex.type+'</div></div>'+olBadge+trg+notesBtn+ssb+'<button class="rem-ex-btn" onclick="removeExFromWorkout(\''+ex.name+'\')">&#10005;</button></div>'
       +'<div class="shr"><div class="sc">#</div><div class="sc">WEIGHT</div><div class="sc">REPS</div><div class="sc">WU</div><div class="sc">&#10003;</div></div>'
-      +sh+'<button class="addbtn" onclick="addS(\''+ex.name+'\')">+ ADD SET</button>';
+      +sh+'<div style="display:flex;border-top:1px solid var(--border);"><button class="addbtn" style="border-top:none;border-right:1px solid var(--border);" onclick="addS(\''+ex.name+'\')">+ ADD SET</button><button class="addbtn" style="border-top:none;color:var(--danger);" onclick="removeS(\''+ex.name+'\')">- REMOVE</button></div>';
     list.appendChild(blk);
   }
 
@@ -1315,7 +1396,75 @@ function renderActive(){
   }
 
   if(day.cardio){var cf=document.createElement('div');cf.className='cf';cf.innerHTML='<div style="font-family:\'Orbitron\',sans-serif;font-size:10px;color:var(--hl);flex-shrink:0;">CF</div><div><div class="cft">CARDIO FINISHER</div><div class="cfd">'+day.cardio+'</div></div>';list.appendChild(cf);}
+  var addExBtn=document.createElement('button');addExBtn.className='add-ex-workout';
+  addExBtn.innerHTML='+ ADD EXERCISE TO WORKOUT';
+  addExBtn.onclick=function(){openAddExToWorkout();};
+  list.appendChild(addExBtn);
   var fb=document.createElement('button');fb.className='fin';fb.textContent='COMMIT SESSION';fb.onclick=showFinMo;list.appendChild(fb);
+}
+
+
+function removeExFromWorkout(exName){
+  var day=S.activeDay;
+  // Check if any sets have been completed
+  var sets=S.sets[exName]||[];
+  var hasDone=false;
+  for(var i=0;i<sets.length;i++){if(sets[i].done){hasDone=true;break;}}
+  if(hasDone){
+    // Store pending removal name and show confirm modal
+    S.pendingRemoveEx=exName;
+    el('rem-ex-name').textContent=exName;
+    el('rem-ex-mo').classList.add('visible');
+  }else{
+    doRemoveExFromWorkout(exName,false);
+  }
+}
+
+function doRemoveExFromWorkout(exName,keepSets){
+  var day=S.activeDay;
+  // Remove from day.ex
+  for(var i=0;i<day.ex.length;i++){
+    if(day.ex[i].name===exName){day.ex.splice(i,1);break;}
+  }
+  // Handle sets
+  if(!keepSets){
+    delete S.sets[exName];
+  }else{
+    // Keep sets data but mark exercise as removed-but-logged
+    if(!S.removedSets)S.removedSets={};
+    S.removedSets[exName]=S.sets[exName];
+    delete S.sets[exName];
+  }
+  S.pendingRemoveEx=null;
+  renderActive();
+  showToast('EXERCISE REMOVED');
+}
+
+function openAddExToWorkout(){
+  el('aew-name').value='';
+  el('aew-type').value='';
+  el('aew-sets').value='3';
+  el('aew-weight').value='';
+  el('add-ex-workout-mo').classList.add('visible');
+}
+
+function confirmAddExToWorkout(){
+  var name=el('aew-name').value.trim();
+  if(!name){showToast('NAME REQUIRED');return;}
+  var type=el('aew-type').value.trim()||'Custom';
+  var sets=parseInt(el('aew-sets').value)||3;
+  var weight=parseFloat(el('aew-weight').value)||0;
+  var wd=getWeekData();
+  var newEx={name:name,type:type,ds:sets,dr:wd.reps,dw:weight,ss:'',notes:''};
+  // Add to active day
+  S.activeDay.ex.push(newEx);
+  // Initialize sets
+  var arr=[];
+  for(var i=0;i<sets;i++)arr.push({weight:weight,reps:wd.reps,done:false,warmup:false,rpe:0});
+  S.sets[name]=arr;
+  closeModal('add-ex-workout-mo');
+  renderActive();
+  showToast('EXERCISE ADDED');
 }
 
 function showNotes(ek){
@@ -1370,6 +1519,13 @@ function togS(exName,idx){
 function addS(exName){
   if(!S.sets[exName])return;var sets=S.sets[exName];var last=sets[sets.length-1];
   sets.push({weight:last?last.weight:'',reps:last?last.reps:'',done:false,warmup:false,rpe:0});
+  renderActive();
+}
+
+function removeS(exName){
+  if(!S.sets[exName])return;var sets=S.sets[exName];
+  if(sets.length<=1){showToast("MINIMUM 1 SET");return;}
+  sets.pop();
   renderActive();
 }
 
