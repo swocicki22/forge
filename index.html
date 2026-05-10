@@ -1606,24 +1606,9 @@ function confirmReset(type){
   pendingResetType=type;
   var titles={history:'RESET WORKOUT HISTORY',all:'RESET EVERYTHING',delete:'DELETE PROFILE'};
   var bodies={
-    history:'This will permanently delete:
-— All logged sessions
-— All PRs
-— Body weight entries
-— Water & supplement logs
-
-Your workout days and exercises will be kept.',
-    all:'This will permanently delete:
-— All logged sessions
-— All PRs
-— Body weight entries
-— Water & supplement logs
-— All custom workout days
-
-Workouts will reset to default presets. Your profile stays.',
-    delete:'This will permanently delete this entire profile including all sessions, PRs, and data.
-
-This cannot be undone.'
+    history:'This will permanently delete:\n— All logged sessions\n— All PRs\n— Body weight entries\n— Water & supplement logs\n\nYour workout days and exercises will be kept.',
+    all:'This will permanently delete:\n— All logged sessions\n— All PRs\n— Body weight entries\n— Water & supplement logs\n— All custom workout days\n\nWorkouts will reset to default presets. Your profile stays.',
+    delete:'This will permanently delete this entire profile including all sessions, PRs, and data.\n\nThis cannot be undone.'
   };
   el('confirm-reset-title').textContent=titles[type];
   el('confirm-reset-body').textContent=bodies[type];
