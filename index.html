@@ -1635,9 +1635,11 @@ function executeReset(){
   closeModal('confirm-reset-mo');
   if(pendingResetType==='history'){
     S.log=[];S.prs={};S.bwLog=[];S.suppLog={};S.waterLog={};S.bio={};
-    saveState();renderHome();showToast('HISTORY CLEARED');
+    localStorage.removeItem('forge_week_start');
+    saveState();renderHome();renderSel();showToast('HISTORY CLEARED');
   } else if(pendingResetType==='all'){
     S.log=[];S.prs={};S.bwLog=[];S.suppLog={};S.waterLog={};S.bio={};S.days=buildPresets();
+    localStorage.removeItem('forge_week_start');
     saveState();renderHome();renderSel();showToast('FULL RESET COMPLETE');
   } else if(pendingResetType==='delete'){
     try{localStorage.removeItem('forge_user_'+currentUserId);}catch(e){}
