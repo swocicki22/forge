@@ -480,69 +480,6 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
   </div>
 </div>
 
-<!-- ══════════ USER SETTINGS MODAL ══════════ -->
-
-<div class="mo" id="user-settings-mo" style="z-index:250;">
-  <div class="md">
-    <div class="mh"></div>
-    <div class="mti">PROFILE SETTINGS</div>
-    <div id="us-profile-info"></div>
-
-```
-<div class="us-section-title">Reset Options</div>
-
-<button class="us-btn us-warn" onclick="confirmReset('history')">
-  <div class="us-btn-icon">&#9851;</div>
-  <div class="us-btn-inner">
-    <span>RESET WORKOUT HISTORY</span>
-    <em class="us-btn-desc">Clears sessions, PRs, body weight, water &amp; supplement logs. Keeps your workout days &amp; exercises.</em>
-  </div>
-</button>
-
-<button class="us-btn us-danger" onclick="confirmReset('all')">
-  <div class="us-btn-icon">&#9888;</div>
-  <div class="us-btn-inner">
-    <span>RESET EVERYTHING</span>
-    <em class="us-btn-desc">Full wipe — clears all history AND resets workouts to default presets. Profile stays.</em>
-  </div>
-</button>
-
-<div class="us-section-title">Profile</div>
-
-<button class="us-btn" onclick="backToSplash();closeModal('user-settings-mo');">
-  <div class="us-btn-icon">&#9654;</div>
-  <div class="us-btn-inner">
-    <span>SWITCH PROFILE</span>
-    <em class="us-btn-desc">Return to the profile selector screen.</em>
-  </div>
-</button>
-
-<button class="us-btn us-danger" onclick="confirmReset('delete')">
-  <div class="us-btn-icon">&#10005;</div>
-  <div class="us-btn-inner">
-    <span>DELETE PROFILE</span>
-    <em class="us-btn-desc">Permanently removes this profile and all its data.</em>
-  </div>
-</button>
-
-<button class="mca" onclick="closeModal('user-settings-mo')" style="margin-top:14px;">CLOSE</button>
-```
-
-  </div>
-</div>
-
-<!-- ══════════ CONFIRM RESET MODAL ══════════ -->
-
-<div class="mo" id="confirm-reset-mo" style="z-index:300;">
-  <div class="md">
-    <div class="mh"></div>
-    <div class="mti" id="confirm-reset-title">CONFIRM</div>
-    <div id="confirm-reset-body" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--st);line-height:1.9;letter-spacing:.04em;margin-bottom:14px;white-space:pre-line;"></div>
-    <button class="mb-red" onclick="executeReset()">CONFIRM</button>
-    <button class="mca" onclick="closeModal('confirm-reset-mo')">CANCEL</button>
-  </div>
-</div>
-
 <!-- ══════════ MAIN APP ══════════ -->
 
 <div class="app" id="main-app" style="display:none">
@@ -767,7 +704,6 @@ var pinBuffer='';
 var pinMode='verify';
 var pendingUserId=null;
 var newUserData=null;
-var pendingResetType=null; // 'history' | 'all' | 'delete'
 
 function loadUsers(){
   try{var u=localStorage.getItem(USERS_KEY);if(u)return JSON.parse(u);}catch(e){}
@@ -787,68 +723,11 @@ function saveUserData(userId,data){
 // ════════════════════════════════
 // USER SETTINGS & RESET
 // ════════════════════════════════
-function openUserSettings(){
-  if(!currentUserId)return;
-  var users=loadUsers();var user=null;
-  for(var i=0;i<users.length;i++){if(users[i].id===currentUserId){user=users[i];break;}}
-  if(!user)return;
-  var data=getUserData(currentUserId);
-  var sessions=data.log?data.log.length:0;
-  var prs=data.prs?Object.keys(data.prs).length:0;
-  var info=el('us-profile-info');
-  info.innerHTML='<div class="us-profile-header">'
-    +'<div class="us-avatar" style="background:'+user.color+'22;border:2px solid '+user.color+'44;color:'+user.color+'">'+user.name.charAt(0).toUpperCase()+'</div>'
-    +'<div><div class="us-profile-name">'+user.name.toUpperCase()+'</div>'
-    +'<div class="us-profile-stats">'+sessions+' sessions &nbsp;·&nbsp; '+prs+' PRs</div></div>'
-    +'</div>';
-  el('user-settings-mo').classList.add('visible');
-}
 
-function confirmReset(type){
-  pendingResetType=type;
-  var titles={history:'RESET WORKOUT HISTORY',all:'RESET EVERYTHING',delete:'DELETE PROFILE'};
-  var bodies={
-    history:'This will permanently delete:\n— All logged sessions\n— All PRs\n— Body weight entries\n— Water & supplement logs\n\nYour workout days and exercises will be kept.',
-    all:'This will permanently delete:\n— All logged sessions\n— All PRs\n— Body weight entries\n— Water & supplement logs\n— All custom workout days\n\nWorkouts will reset to default presets. Your profile stays.',
-    delete:'This will permanently delete this entire profile including all sessions, PRs, and data.\n\nThis cannot be undone.'
-  };
-  el('confirm-reset-title').textContent=titles[type];
-  el('confirm-reset-body').textContent=bodies[type];
-  el('confirm-reset-mo').classList.add('visible');
-}
 
-function executeReset(){
-  closeModal('confirm-reset-mo');
-  closeModal('user-settings-mo');
-  if(pendingResetType==='history'){
-    S.log=[];S.prs={};S.bwLog=[];S.suppLog={};S.waterLog={};S.bio={};
-    saveState();
-    renderHome();
-    showToast('HISTORY CLEARED');
-  } else if(pendingResetType==='all'){
-    S.log=[];S.prs={};S.bwLog=[];S.suppLog={};S.waterLog={};S.bio={};S.days=buildPresets();
-    saveState();
-    renderHome();renderSel();
-    showToast('FULL RESET COMPLETE');
-  } else if(pendingResetType==='delete'){
-    // Remove user data
-    try{localStorage.removeItem('forge_user_'+currentUserId);}catch(e){}
-    // Remove from users list
-    var users=loadUsers();
-    users=users.filter(function(u){return u.id!==currentUserId;});
-    saveUsers(users);
-    // Go back to splash
-    currentUserId=null;
-    if(S.tint)clearInterval(S.tint);
-    if(S.rint)clearInterval(S.rint);
-    skipRest();
-    el('main-app').style.display='none';
-    el('splash').classList.remove('hidden');
-    renderSplash();
-    showToast('PROFILE DELETED');
-  }
-  pendingResetType=null;
-}
+
+
+
 
 // ════════════════════════════════
 // SPLASH SCREEN
