@@ -339,6 +339,23 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .esb{font-family:‘Rajdhani’,sans-serif;font-size:12px;color:var(–s3);line-height:1.6;}
 .toast{position:fixed;bottom:calc(62px + var(–sb));left:50%;transform:translateX(-50%) translateY(12px);background:var(–card2);border:1px solid var(–hlbr);color:var(–hl);padding:6px 13px;border-radius:2px;font-family:‘Orbitron’,sans-serif;font-size:8px;letter-spacing:.1em;opacity:0;transition:all .2s;pointer-events:none;white-space:nowrap;z-index:300;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── USER SETTINGS MODAL ── */
+.us-section-title{font-family:‘Share Tech Mono’,monospace;font-size:7px;letter-spacing:.2em;text-transform:uppercase;color:var(–s2);margin:14px 0 6px;display:flex;align-items:center;gap:8px;}
+.us-section-title::after{content:’’;flex:1;height:1px;background:var(–border);}
+.us-profile-header{display:flex;align-items:center;gap:12px;background:var(–card);border:1px solid var(–bl);border-radius:2px;padding:12px;margin-bottom:4px;}
+.us-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:‘Orbitron’,sans-serif;font-size:16px;font-weight:700;flex-shrink:0;}
+.us-profile-name{font-family:‘Orbitron’,sans-serif;font-size:13px;letter-spacing:.1em;color:var(–hlb);}
+.us-profile-stats{font-family:‘Share Tech Mono’,monospace;font-size:8px;color:var(–s2);margin-top:2px;}
+.us-btn{width:100%;background:transparent;border:1px solid var(–bl);color:var(–tx);border-radius:2px;padding:11px 12px;font-family:‘Orbitron’,sans-serif;font-size:8px;letter-spacing:.12em;cursor:pointer;margin-top:4px;text-align:left;display:flex;align-items:center;gap:10px;}
+.us-btn:active{background:var(–card2);}
+.us-btn-icon{font-size:12px;width:18px;text-align:center;flex-shrink:0;}
+.us-btn-desc{font-family:‘Share Tech Mono’,monospace;font-size:7px;color:var(–s2);margin-top:2px;font-style:normal;letter-spacing:.04em;}
+.us-btn-inner{display:flex;flex-direction:column;gap:1px;}
+.us-danger{border-color:rgba(239,83,80,.25);color:var(–danger);}
+.us-danger:active{background:rgba(239,83,80,.08);}
+.us-warn{border-color:rgba(255,179,0,.25);color:var(–am);}
+.us-warn:active{background:rgba(255,179,0,.06);}
 </style>
 
 </head>
@@ -459,6 +476,69 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
     <div class="mti" id="confirm-reset-title">CONFIRM</div>
     <div id="confirm-reset-body" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--st);line-height:1.9;letter-spacing:.04em;margin-bottom:14px;"></div>
     <button class="mb-red" id="confirm-reset-btn" onclick="executeReset()">CONFIRM</button>
+    <button class="mca" onclick="closeModal('confirm-reset-mo')">CANCEL</button>
+  </div>
+</div>
+
+<!-- ══════════ USER SETTINGS MODAL ══════════ -->
+
+<div class="mo" id="user-settings-mo" style="z-index:250;">
+  <div class="md">
+    <div class="mh"></div>
+    <div class="mti">PROFILE SETTINGS</div>
+    <div id="us-profile-info"></div>
+
+```
+<div class="us-section-title">Reset Options</div>
+
+<button class="us-btn us-warn" onclick="confirmReset('history')">
+  <div class="us-btn-icon">&#9851;</div>
+  <div class="us-btn-inner">
+    <span>RESET WORKOUT HISTORY</span>
+    <em class="us-btn-desc">Clears sessions, PRs, body weight, water &amp; supplement logs. Keeps your workout days &amp; exercises.</em>
+  </div>
+</button>
+
+<button class="us-btn us-danger" onclick="confirmReset('all')">
+  <div class="us-btn-icon">&#9888;</div>
+  <div class="us-btn-inner">
+    <span>RESET EVERYTHING</span>
+    <em class="us-btn-desc">Full wipe — clears all history AND resets workouts to default presets. Profile stays.</em>
+  </div>
+</button>
+
+<div class="us-section-title">Profile</div>
+
+<button class="us-btn" onclick="backToSplash();closeModal('user-settings-mo');">
+  <div class="us-btn-icon">&#9654;</div>
+  <div class="us-btn-inner">
+    <span>SWITCH PROFILE</span>
+    <em class="us-btn-desc">Return to the profile selector screen.</em>
+  </div>
+</button>
+
+<button class="us-btn us-danger" onclick="confirmReset('delete')">
+  <div class="us-btn-icon">&#10005;</div>
+  <div class="us-btn-inner">
+    <span>DELETE PROFILE</span>
+    <em class="us-btn-desc">Permanently removes this profile and all its data.</em>
+  </div>
+</button>
+
+<button class="mca" onclick="closeModal('user-settings-mo')" style="margin-top:14px;">CLOSE</button>
+```
+
+  </div>
+</div>
+
+<!-- ══════════ CONFIRM RESET MODAL ══════════ -->
+
+<div class="mo" id="confirm-reset-mo" style="z-index:300;">
+  <div class="md">
+    <div class="mh"></div>
+    <div class="mti" id="confirm-reset-title">CONFIRM</div>
+    <div id="confirm-reset-body" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--st);line-height:1.9;letter-spacing:.04em;margin-bottom:14px;white-space:pre-line;"></div>
+    <button class="mb-red" onclick="executeReset()">CONFIRM</button>
     <button class="mca" onclick="closeModal('confirm-reset-mo')">CANCEL</button>
   </div>
 </div>
@@ -1497,6 +1577,83 @@ function showToast(msg){
   var t=el('toast');
   if(!t||el('main-app').style.display==='none'){var tmp=document.createElement('div');tmp.style.cssText='position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:#0f1520;border:1px solid rgba(79,195,247,.3);color:#4fc3f7;padding:8px 16px;border-radius:2px;font-family:Orbitron,sans-serif;font-size:9px;letter-spacing:.1em;z-index:700;white-space:nowrap;';tmp.textContent=msg;document.body.appendChild(tmp);setTimeout(function(){if(tmp.parentNode)tmp.parentNode.removeChild(tmp);},2200);return;}
   t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2200);
+}
+
+
+// ════════════════════════════════
+// USER SETTINGS & RESET
+// ════════════════════════════════
+var pendingResetType=null;
+
+function openUserSettings(){
+  if(!currentUserId)return;
+  var users=loadUsers();var user=null;
+  for(var i=0;i<users.length;i++){if(users[i].id===currentUserId){user=users[i];break;}}
+  if(!user)return;
+  var data=getUserData(currentUserId);
+  var sessions=data.log?data.log.length:0;
+  var prs=data.prs?Object.keys(data.prs).length:0;
+  var info=el('us-profile-info');
+  info.innerHTML='<div class="us-profile-header">'
+    +'<div class="us-avatar" style="background:'+user.color+'22;border:2px solid '+user.color+'44;color:'+user.color+'">'+user.name.charAt(0).toUpperCase()+'</div>'
+    +'<div><div class="us-profile-name">'+user.name.toUpperCase()+'</div>'
+    +'<div class="us-profile-stats">'+sessions+' sessions &nbsp;&middot;&nbsp; '+prs+' PRs</div></div>'
+    +'</div>';
+  el('user-settings-mo').classList.add('visible');
+}
+
+function confirmReset(type){
+  pendingResetType=type;
+  var titles={history:'RESET WORKOUT HISTORY',all:'RESET EVERYTHING',delete:'DELETE PROFILE'};
+  var bodies={
+    history:'This will permanently delete:
+— All logged sessions
+— All PRs
+— Body weight entries
+— Water & supplement logs
+
+Your workout days and exercises will be kept.',
+    all:'This will permanently delete:
+— All logged sessions
+— All PRs
+— Body weight entries
+— Water & supplement logs
+— All custom workout days
+
+Workouts will reset to default presets. Your profile stays.',
+    delete:'This will permanently delete this entire profile including all sessions, PRs, and data.
+
+This cannot be undone.'
+  };
+  el('confirm-reset-title').textContent=titles[type];
+  el('confirm-reset-body').textContent=bodies[type];
+  closeModal('user-settings-mo');
+  el('confirm-reset-mo').classList.add('visible');
+}
+
+function executeReset(){
+  closeModal('confirm-reset-mo');
+  if(pendingResetType==='history'){
+    S.log=[];S.prs={};S.bwLog=[];S.suppLog={};S.waterLog={};S.bio={};
+    saveState();renderHome();showToast('HISTORY CLEARED');
+  } else if(pendingResetType==='all'){
+    S.log=[];S.prs={};S.bwLog=[];S.suppLog={};S.waterLog={};S.bio={};S.days=buildPresets();
+    saveState();renderHome();renderSel();showToast('FULL RESET COMPLETE');
+  } else if(pendingResetType==='delete'){
+    try{localStorage.removeItem('forge_user_'+currentUserId);}catch(e){}
+    var users=loadUsers();
+    users=users.filter(function(u){return u.id!==currentUserId;});
+    saveUsers(users);
+    currentUserId=null;
+    if(S.tint)clearInterval(S.tint);
+    if(S.rint)clearInterval(S.rint);
+    skipRest();
+    el('main-app').style.display='none';
+    el('splash').classList.remove('hidden');
+    renderSplash();
+    showToast('PROFILE DELETED');
+  }
+  pendingResetType=null;
 }
 
 // ════════════════════════════════
