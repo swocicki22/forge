@@ -355,6 +355,34 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .us-danger:active{background:rgba(239,83,80,.08);}
 .us-warn{border-color:rgba(255,179,0,.25);color:var(--am);}
 .us-warn:active{background:rgba(255,179,0,.06);}
+
+/* ── AB DIFFICULTY SELECTOR ── */
+.ab-diff-row{display:flex;gap:6px;margin-bottom:8px;margin-top:4px;}
+.ab-diff-btn{flex:1;background:transparent;border:1px solid var(--border);border-radius:2px;padding:7px 4px;font-family:'Orbitron',sans-serif;font-size:6px;letter-spacing:.1em;color:var(--s2);cursor:pointer;text-align:center;}
+.ab-diff-btn.active{background:var(--hld);border-color:var(--hlbr);color:var(--hl);}
+.ab-diff-btn.active.warn{background:rgba(255,179,0,.08);border-color:rgba(255,179,0,.3);color:var(--am);}
+.ab-diff-btn.active.danger{background:rgba(239,83,80,.08);border-color:rgba(239,83,80,.3);color:var(--danger);}
+
+/* ── EXERCISE SUBSTITUTE MODAL ── */
+.sub-ex-item{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:9px 11px;margin-bottom:4px;cursor:pointer;display:flex;align-items:center;gap:9px;}
+.sub-ex-item:active{background:var(--card2);}
+.sub-ex-name{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--tx);flex:1;}
+.sub-ex-type{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--s2);}
+.sub-current{border-color:var(--hlbr);background:var(--hld);}
+
+/* ── PROGRESS ESTIMATOR BADGE ── */
+.prog-est{background:rgba(79,195,247,.06);border:1px solid var(--hlbr);border-radius:2px;padding:8px 11px;margin-bottom:8px;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--hl);line-height:1.7;}
+.prog-est-title{font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:.1em;color:var(--hlb);margin-bottom:4px;}
+
+/* ── EDIT PAST SESSION ── */
+.hist-edit-btn{background:none;border:1px solid var(--hlbr);border-radius:2px;color:var(--hl);padding:4px 10px;font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:.08em;cursor:pointer;margin-bottom:10px;}
+.hist-edit-btn:active{background:var(--hld);}
+.hist-edit-inp{background:var(--card2);border:1px solid var(--bl);border-radius:2px;padding:4px 6px;color:var(--tx);font-family:'Share Tech Mono',monospace;font-size:11px;width:60px;outline:none;text-align:center;-webkit-appearance:none;}
+.hist-edit-inp:focus{border-color:var(--hl);}
+
+/* ── PAST SUPPS EDITOR ── */
+.past-supp-day{background:var(--card);border:1px solid var(--bl);border-radius:2px;padding:10px 12px;margin-bottom:5px;}
+.past-supp-date{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.1em;color:var(--hlb);margin-bottom:8px;}
 </style>
 </head>
 <body>
@@ -576,7 +604,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 <div class="screen" id="s-body">
   <div class="topbar">
     <div class="logo"><svg class="glyph" viewBox="0 0 26 26" fill="none"><polygon points="13,1 25,7 25,19 13,25 1,19 1,7" stroke="#4fc3f7" stroke-width="1" fill="none" opacity=".45"/><circle cx="13" cy="13" r="2.5" fill="#4fc3f7" opacity=".85"/></svg><div class="lt">VITALS</div></div>
-    <button class="tbb" onclick="saveBio()">SAVE</button>
+    <button class="tbb2" onclick="openPastSupps()" style="margin-right:8px;">HISTORY</button><button class="tbb" onclick="saveBio()">SAVE</button>
   </div>
   <div class="scroll" id="body-content"></div>
 </div>
@@ -648,6 +676,46 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
     <input class="fi" id="aew-weight" type="number" inputmode="decimal" placeholder="0"/>
     <button class="mb" onclick="confirmAddExToWorkout()">ADD TO WORKOUT</button>
     <button class="mca" onclick="closeModal('add-ex-workout-mo')">CANCEL</button>
+  </div>
+</div>
+
+
+<!-- ══════════ EXERCISE SUBSTITUTE MODAL ══════════ -->
+<div class="mo" id="sub-ex-mo" style="z-index:250;">
+  <div class="md">
+    <div class="mh"></div>
+    <div class="mti" id="sub-ex-title">SUBSTITUTE EXERCISE</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--s2);margin-bottom:10px;" id="sub-ex-muscle"></div>
+    <div id="sub-ex-list"></div>
+    <button class="mca" onclick="closeModal('sub-ex-mo')" style="margin-top:8px;">CANCEL</button>
+  </div>
+</div>
+
+<!-- ══════════ AB DIFFICULTY MODAL ══════════ -->
+<div class="mo" id="ab-diff-mo" style="z-index:250;">
+  <div class="md">
+    <div class="mh"></div>
+    <div class="mti">ADD AB WORKOUT</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--s2);margin-bottom:10px;">SELECT DIFFICULTY</div>
+    <div class="ab-diff-row">
+      <button class="ab-diff-btn active" id="ab-diff-light" onclick="selectAbDiff('light')">LIGHT<br><span style="font-size:5px;letter-spacing:.05em;margin-top:2px;display:block;">15 REPS</span></button>
+      <button class="ab-diff-btn" id="ab-diff-standard" onclick="selectAbDiff('standard')">STANDARD<br><span style="font-size:5px;letter-spacing:.05em;margin-top:2px;display:block;">25 REPS</span></button>
+      <button class="ab-diff-btn" id="ab-diff-heavy" onclick="selectAbDiff('heavy')">HEAVY<br><span style="font-size:5px;letter-spacing:.05em;margin-top:2px;display:block;">40 REPS</span></button>
+    </div>
+    <div id="ab-diff-preview" style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--s2);margin:8px 0;line-height:1.7;"></div>
+    <button class="mb" onclick="confirmAddAb()">ADD AB WORKOUT</button>
+    <button class="mca" onclick="closeModal('ab-diff-mo')">CANCEL</button>
+  </div>
+</div>
+
+<!-- ══════════ PAST SUPPLEMENTS EDITOR ══════════ -->
+<div class="mo" id="past-supp-mo" style="z-index:250;">
+  <div class="md">
+    <div class="mh"></div>
+    <div class="mti">EDIT PAST SUPPLEMENTS</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--s2);margin-bottom:10px;">Tap any supplement to toggle it for that day.</div>
+    <div id="past-supp-content"></div>
+    <button class="mb" onclick="closeModal('past-supp-mo');renderBody();">DONE</button>
   </div>
 </div>
 
@@ -1169,7 +1237,7 @@ function renderEditor(){
     for(var i=0;i<main.length;i++)cont.appendChild(buildEditorRow(main[i].ex,main[i].idx));
     var ab=document.createElement('button');ab.className='add-ex-btn';ab.innerHTML='+ ADD EXERCISE';ab.onclick=function(){openAddExercise(false);};cont.appendChild(ab);
     if(core.length){var sd2=document.createElement('div');sd2.className='section-div';sd2.textContent='AB RIPPER X';cont.appendChild(sd2);for(var i=0;i<core.length;i++)cont.appendChild(buildEditorRow(core[i].ex,core[i].idx));}
-    var ac=document.createElement('button');ac.className='add-ex-btn';ac.innerHTML='+ ADD CORE EXERCISE';ac.onclick=function(){openAddExercise(true);};cont.appendChild(ac);
+    var ac=document.createElement('button');ac.className='add-ex-btn';ac.style.borderColor='var(--en)';ac.style.color='var(--en)';ac.innerHTML='+ ADD AB WORKOUT';ac.onclick=function(){openAbDiff();};cont.appendChild(ac);
   }
   var resetBtn=document.createElement('button');resetBtn.style.cssText='width:100%;background:transparent;border:1px solid var(--border);color:var(--s2);border-radius:2px;padding:9px;font-family:\'Orbitron\',sans-serif;font-size:7px;letter-spacing:.1em;cursor:pointer;margin-top:16px;';resetBtn.textContent='RESET TO DEFAULT PRESET';resetBtn.onclick=function(){resetDayToPreset();};cont.appendChild(resetBtn);
 }
@@ -1204,6 +1272,11 @@ function startWkt(dayId){
     var ex=day.ex[i];var dw=ex.dw,dr=wd.reps;if(ex.type==='Core')dr=ex.dr;
     if(ls&&ls.rawSets&&ls.rawSets[ex.name]){var lsd=ls.rawSets[ex.name];for(var k=lsd.length-1;k>=0;k--){if(lsd[k].done&&!lsd[k].warmup&&lsd[k].weight){dw=lsd[k].weight;break;}}}
     if(suggestMap[ex.name])dw=suggestMap[ex.name];
+    // Progression estimator: if week changed, back-calculate goal weight
+    else {
+      var progSuggs=getProgressionSuggestions();
+      if(progSuggs[ex.name])dw=progSuggs[ex.name].goalWeight;
+    }
     var arr=[];for(var j=0;j<ex.ds;j++)arr.push({weight:dw,reps:dr,done:false,warmup:false,rpe:0});
     S.sets[ex.name]=arr;
   }
@@ -1232,7 +1305,7 @@ function renderActive(){
     }
     var ssb=ex.ss?'<div class="ssb">'+ex.ss+'</div>':'';var notesBtn=ex.notes?'<button class="info-btn" onclick="showNotes(\''+ek+'\')">i</button>':'';
     var trg='<div class="target-reps">x'+wd.reps+'</div>';var olBadge=suggestSet[ex.name]?'<div class="ex-overload">&#9650; INCREASE</div>':'';
-    blk.innerHTML='<div class="eh"><div style="flex:1;"><div class="en">'+ex.name+'</div><div class="et">'+ex.type+'</div></div>'+olBadge+trg+notesBtn+ssb+'<button class="rem-ex-btn" onclick="removeExFromWorkout(\''+ex.name+'\')">&#10005;</button></div><div class="shr"><div class="sc">#</div><div class="sc">WEIGHT</div><div class="sc">REPS</div><div class="sc">WU</div><div class="sc">&#10003;</div></div>'+sh+'<div style="display:flex;border-top:1px solid var(--border);"><button class="addbtn" style="border-top:none;border-right:1px solid var(--border);" onclick="addS(\''+ex.name+'\')">+ ADD SET</button><button class="addbtn" style="border-top:none;color:var(--danger);" onclick="removeS(\''+ex.name+'\')">- REMOVE</button></div>';
+    var subBtn='<button class="info-btn" onclick="openSubstitute(\''+ex.name+'\')" title="Substitute" style="border-color:var(--hlbr);color:var(--hl);">&#8652;</button>';blk.innerHTML='<div class="eh"><div style="flex:1;"><div class="en">'+ex.name+'</div><div class="et">'+ex.type+'</div></div>'+olBadge+trg+subBtn+notesBtn+ssb+'<button class="rem-ex-btn" onclick="removeExFromWorkout(\''+ex.name+'\')">&#10005;</button></div><div class="shr"><div class="sc">#</div><div class="sc">WEIGHT</div><div class="sc">REPS</div><div class="sc">WU</div><div class="sc">&#10003;</div></div>'+sh+'<div style="display:flex;border-top:1px solid var(--border);"><button class="addbtn" style="border-top:none;border-right:1px solid var(--border);" onclick="addS(\''+ex.name+'\')">+ ADD SET</button><button class="addbtn" style="border-top:none;color:var(--danger);" onclick="removeS(\''+ex.name+'\')">- REMOVE</button></div>';
     list.appendChild(blk);
   }
   if(core.length){
@@ -1310,10 +1383,10 @@ function confirmFin(){
 // ════════════════════════════════
 // REST TIMER
 // ════════════════════════════════
-function startRest(){if(S.rint)clearInterval(S.rint);rRem=S.rdur;updRest();el('resto').classList.add('visible');S.rint=setInterval(function(){rRem--;updRest();if(rRem<=0)skipRest();},1000);}
+// startRest replaced by background-aware version below,1000);}
 function updRest(){el('rcnt').textContent=rRem;el('rfill').style.strokeDashoffset=490*(1-rRem/S.rdur);}
-function skipRest(){if(S.rint)clearInterval(S.rint);el('resto').classList.remove('visible');}
-function setRD(s,btn){S.rdur=s;rRem=s;updRest();var bs=document.querySelectorAll('.rd');for(var i=0;i<bs.length;i++)bs[i].classList.remove('active');if(btn)btn.classList.add('active');}
+// skipRest replaced below
+// setRD replaced below
 
 // ════════════════════════════════
 // PROGRESS
@@ -1501,6 +1574,432 @@ function executeReset(){
     showToast('PROFILE DELETED');
   }
   pendingResetType=null;
+}
+
+
+// ════════════════════════════════
+// AB DIFFICULTY
+// ════════════════════════════════
+var abDiffSelected = 'standard';
+
+var AB_PRESETS = {
+  light: [
+    {name:'In & Outs',type:'Core',ds:1,dr:15,dw:0,ss:'',notes:'Bring knees to chest then extend. Lower back pressed to floor.'},
+    {name:'Bicycle Crunch',type:'Core',ds:1,dr:15,dw:0,ss:'',notes:'Slow and controlled. Opposite elbow to knee. Full rotation.'},
+    {name:'Reverse Bicycle',type:'Core',ds:1,dr:15,dw:0,ss:'',notes:'Reverse the bicycle motion. Core tight throughout.'},
+    {name:'Wide Leg Sit-Up',type:'Core',ds:1,dr:15,dw:0,ss:'',notes:'Legs wide, touch opposite foot at top. Full ROM.'},
+    {name:'Pulse Ups',type:'Core',ds:1,dr:15,dw:0,ss:'',notes:'Legs vertical. Pulse hips up toward ceiling.'},
+    {name:'Mason Twist',type:'Core',ds:1,dr:20,dw:0,ss:'',notes:'20 total. Lean back 45 degrees. Rotate side to side.'}
+  ],
+  standard: [
+    {name:'In & Outs',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Bring knees to chest then extend. Lower back pressed to floor.'},
+    {name:'Bicycle Crunch',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Slow and controlled. Opposite elbow to knee. Full rotation.'},
+    {name:'Reverse Bicycle',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Reverse the bicycle motion. Core tight throughout.'},
+    {name:'Crunchy Frog',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Balance on tailbone. Wrap arms around knees then extend.'},
+    {name:'Wide Leg Sit-Up',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Legs wide, touch opposite foot at top. Full ROM.'},
+    {name:'Fifer Scissors',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Alternate legs up and down. Both legs stay straight.'},
+    {name:'Hip Rock & Raise',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Rock hips then raise legs vertical. Lower back stays down.'},
+    {name:'Pulse Ups',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Legs vertical. Pulse hips up toward ceiling.'},
+    {name:'V-Up Roll Up',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Alternate V-up and full roll-up. Control the descent.'},
+    {name:'Oblique V-Up',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Side lying. Bring legs and torso together.'},
+    {name:'Leg Climbers',type:'Core',ds:1,dr:12,dw:0,ss:'',notes:'12 each leg. Climb up the leg to the ankle.'},
+    {name:'Mason Twist',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'40 total. Lean back 45 degrees. Rotate side to side.'}
+  ],
+  heavy: [
+    {name:'In & Outs',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Bring knees to chest then extend. Lower back pressed to floor.'},
+    {name:'Bicycle Crunch',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Slow and controlled. Opposite elbow to knee. Full rotation.'},
+    {name:'Reverse Bicycle',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Reverse the bicycle motion. Core tight throughout.'},
+    {name:'Crunchy Frog',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Balance on tailbone. Wrap arms around knees then extend.'},
+    {name:'Wide Leg Sit-Up',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Legs wide, touch opposite foot at top. Full ROM.'},
+    {name:'Fifer Scissors',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Alternate legs up and down. Both legs stay straight.'},
+    {name:'Hip Rock & Raise',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Rock hips then raise legs vertical. Lower back stays down.'},
+    {name:'Pulse Ups',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Legs vertical. Pulse hips up toward ceiling.'},
+    {name:'V-Up Roll Up',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Alternate V-up and full roll-up. Control the descent.'},
+    {name:'Oblique V-Up',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Side lying. Bring legs and torso together.'},
+    {name:'Leg Climbers',type:'Core',ds:1,dr:20,dw:0,ss:'',notes:'20 each leg. Climb up the leg to the ankle.'},
+    {name:'Mason Twist',type:'Core',ds:1,dr:60,dw:0,ss:'',notes:'60 total. Lean back 45 degrees. Rotate side to side.'}
+  ]
+};
+
+function openAbDiff(){
+  abDiffSelected='standard';
+  updateAbDiffUI();
+  el('ab-diff-mo').classList.add('visible');
+}
+
+function selectAbDiff(diff){
+  abDiffSelected=diff;
+  updateAbDiffUI();
+}
+
+function updateAbDiffUI(){
+  var btns=['light','standard','heavy'];
+  var colors={light:'',standard:'warn',heavy:'danger'};
+  for(var i=0;i<btns.length;i++){
+    var btn=el('ab-diff-'+btns[i]);
+    btn.className='ab-diff-btn'+(abDiffSelected===btns[i]?' active'+(colors[btns[i]]?' '+colors[btns[i]]:''):'');
+  }
+  var preset=AB_PRESETS[abDiffSelected];
+  var preview='';
+  for(var i=0;i<Math.min(preset.length,4);i++){
+    preview+=preset[i].name+' — '+preset[i].dr+' reps\n';
+  }
+  if(preset.length>4)preview+='+ '+(preset.length-4)+' more exercises';
+  el('ab-diff-preview').textContent=preview;
+}
+
+function confirmAddAb(){
+  var day=getDay(editingDayId);
+  var preset=AB_PRESETS[abDiffSelected];
+  // Remove existing core exercises first
+  day.ex=day.ex.filter(function(ex){return ex.type!=='Core';});
+  // Add new ones
+  for(var i=0;i<preset.length;i++){day.ex.push(JSON.parse(JSON.stringify(preset[i])));}
+  saveState();
+  closeModal('ab-diff-mo');
+  renderEditor();
+  showToast('AB WORKOUT ADDED — '+abDiffSelected.toUpperCase());
+}
+
+// ════════════════════════════════
+// EXERCISE SUBSTITUTIONS
+// ════════════════════════════════
+// Substitution map — keyed by exercise name, value is array of alternatives
+var SUB_MAP = {
+  'Barbell Bench Press':['Dumbbell Bench Press','Incline Dumbbell Press','Cable Fly','Push-Up','Pec Deck Machine'],
+  'Incline Dumbbell Press':['Barbell Bench Press','Cable Fly','Incline Barbell Press','Push-Up'],
+  'Cable Fly':['Pec Deck Machine','Dumbbell Fly','Incline Dumbbell Press','Dumbbell Pullover'],
+  'Bent-Over Dumbbell Row':['Cable Seated Row','T-Bar Row','Single Arm Dumbbell Row','Barbell Bent-Over Row','Wide-Grip Lat Pulldown'],
+  'Wide-Grip Lat Pulldown':['Pull-Up','Close-Grip Lat Pulldown','Cable Seated Row','Straight Arm Pulldown'],
+  'Cable Seated Row':['Bent-Over Dumbbell Row','Single Arm Dumbbell Row','T-Bar Row','Wide-Grip Lat Pulldown'],
+  'Single Arm Dumbbell Row':['Cable Seated Row','Bent-Over Dumbbell Row','T-Bar Row'],
+  'Dumbbell Push Press':['Barbell Overhead Press','Arnold Press','Seated Dumbbell Press'],
+  'Barbell Overhead Press':['Dumbbell Push Press','Arnold Press','Cable Lateral Raise'],
+  'Dumbbell Lateral Raise':['Cable Lateral Raise','Upright Row','Front Raise'],
+  'Barbell Back Squat':['Front Squat','Hack Squat Smith Machine','Leg Press','Bulgarian Split Squat'],
+  'Romanian Deadlift':['Lying Leg Curl','Seated Leg Curl','Cable Pull-Through','Sumo Deadlift'],
+  'Leg Press':['Barbell Back Squat','Hack Squat Smith Machine','Bulgarian Split Squat'],
+  'Bulgarian Split Squat':['Walking Lunges','Leg Press','Barbell Back Squat','Reverse Lunge Knee Drive'],
+  'Leg Extension':['Hack Squat Smith Machine','Barbell Back Squat'],
+  'Lying Leg Curl':['Seated Leg Curl','Romanian Deadlift','Cable Pull-Through'],
+  'Seated Leg Curl':['Lying Leg Curl','Romanian Deadlift'],
+  'Hip Thrust Smith Machine':['Glute Kickback Cable','Cable Pull-Through','Romanian Deadlift'],
+  'EZ Bar Curl':['Barbell Curl','Dumbbell Curl','Preacher Curl','Cable Curl'],
+  'Barbell Curl':['EZ Bar Curl','Dumbbell Curl','Hammer Curl','Cable Curl'],
+  'Dumbbell Curl':['Barbell Curl','EZ Bar Curl','Incline Dumbbell Curl','Cable Curl'],
+  'Incline Dumbbell Curl':['Dumbbell Curl','Preacher Curl','Cable Curl'],
+  'Hammer Curl':['Dumbbell Curl','Cable Curl','Barbell Curl'],
+  'Weighted Tricep Dips':['Close-Grip Bench Press','Tricep Rope Pushdown','Overhead Tricep Extension','Skull Crusher'],
+  'Tricep Rope Pushdown':['Skull Crusher','Close-Grip Bench Press','Overhead Tricep Extension','Weighted Tricep Dips'],
+  'Overhead Tricep Extension':['Skull Crusher','Tricep Rope Pushdown','Close-Grip Bench Press'],
+  'Rear Delt Cable Fly':['Face Pulls','Rear Delt Fly','Upright Row'],
+  'Face Pulls':['Rear Delt Cable Fly','Rear Delt Fly'],
+  'Walking Lunges':['Bulgarian Split Squat','Leg Press','Reverse Lunge Knee Drive'],
+  'Hack Squat Smith Machine':['Barbell Back Squat','Leg Press','Front Squat'],
+  'Standing Calf Raise':['Seated Calf Raise'],
+  'Seated Calf Raise':['Standing Calf Raise'],
+  'Glute Kickback Cable':['Hip Thrust Smith Machine','Cable Pull-Through'],
+  'Cable Pull-Through':['Romanian Deadlift','Glute Kickback Cable','Hip Thrust Smith Machine'],
+  'Dumbbell Squat to Press':['Barbell Back Squat','Dumbbell Push Press'],
+  'Pallof Press':['Cable Woodchop','Dead Bug'],
+  'Cable Woodchop High-Low':['Pallof Press','Russian Twist'],
+  'Box Step-Up':['Bulgarian Split Squat','Walking Lunges'],
+  'Dumbbell Squat to Press':['Barbell Back Squat','Dumbbell Push Press'],
+  'Single Arm Dumbbell Row':['Cable Seated Row','Bent-Over Dumbbell Row','T-Bar Row']
+};
+
+var pendingSubExName = null;
+
+function openSubstitute(exName){
+  pendingSubExName = exName;
+  el('sub-ex-title').textContent='SUBSTITUTE: '+exName.toUpperCase();
+  var subs = SUB_MAP[exName] || [];
+  var list = el('sub-ex-list');
+  list.innerHTML='';
+  if(!subs.length){
+    list.innerHTML='<div class="es"><div class="ei">NO SUBSTITUTES</div><div class="esb">No mapped substitutes for this exercise.</div></div>';
+    el('sub-ex-mo').classList.add('visible');
+    return;
+  }
+  // Find muscle group from LIB
+  var muscle='';
+  for(var i=0;i<LIB.length;i++){if(LIB[i].name===exName){muscle=LIB[i].muscle;break;}}
+  el('sub-ex-muscle').textContent=muscle?'MUSCLE GROUP: '+muscle.toUpperCase():'';
+  for(var i=0;i<subs.length;i++){
+    var subName=subs[i];
+    var tip='';
+    for(var j=0;j<LIB.length;j++){if(LIB[j].name===subName){tip=LIB[j].tip;break;}}
+    var item=document.createElement('div');
+    item.className='sub-ex-item';
+    item.innerHTML='<div style="flex:1;"><div class="sub-ex-name">'+subName+'</div><div class="sub-ex-type">'+tip+'</div></div><div style="color:var(--hl);font-family:Orbitron,sans-serif;font-size:8px;">SWAP</div>';
+    (function(name){item.onclick=function(){doSubstitute(name);};})(subName);
+    list.appendChild(item);
+  }
+  el('sub-ex-mo').classList.add('visible');
+}
+
+function doSubstitute(newName){
+  if(!pendingSubExName)return;
+  var day=S.activeDay;
+  for(var i=0;i<day.ex.length;i++){
+    if(day.ex[i].name===pendingSubExName){
+      // Find default weight/type from LIB
+      var libEx=null;
+      for(var j=0;j<LIB.length;j++){if(LIB[j].name===newName){libEx=LIB[j];break;}}
+      var oldEx=day.ex[i];
+      day.ex[i]=JSON.parse(JSON.stringify(oldEx));
+      day.ex[i].name=newName;
+      if(libEx)day.ex[i].type=libEx.type;
+      // Transfer sets
+      var oldSets=S.sets[pendingSubExName]||[];
+      S.sets[newName]=JSON.parse(JSON.stringify(oldSets));
+      delete S.sets[pendingSubExName];
+      break;
+    }
+  }
+  pendingSubExName=null;
+  closeModal('sub-ex-mo');
+  renderActive();
+  showToast('EXERCISE SWAPPED');
+}
+
+// ════════════════════════════════
+// WEIGHT PROGRESSION ESTIMATOR
+// ════════════════════════════════
+function calcGoalWeight(lastWeight, lastReps, targetReps){
+  // Calculate e1RM from last session
+  if(!lastWeight||!lastReps||lastReps<1)return null;
+  var orm = lastWeight * (1 + lastReps/30);
+  // Back-calculate goal weight for target reps
+  var goalWeight = orm / (1 + targetReps/30);
+  // Round to nearest 2.5
+  goalWeight = Math.round(goalWeight/2.5)*2.5;
+  return goalWeight;
+}
+
+function getProgressionSuggestions(){
+  var wd=getWeekData();
+  var suggestions={};
+  // For each exercise, find the most recent session with data
+  var exNames={};
+  for(var i=0;i<S.days.length;i++){
+    for(var j=0;j<S.days[i].ex.length;j++){
+      var ex=S.days[i].ex[j];
+      if(ex.type!=='Core')exNames[ex.name]=true;
+    }
+  }
+  for(var exName in exNames){
+    // Find last logged working set
+    for(var i=S.log.length-1;i>=0;i--){
+      var w=S.log[i];
+      if(!w.rawSets||!w.rawSets[exName])continue;
+      var sets=w.rawSets[exName].filter(function(s){return s.done&&!s.warmup&&s.weight&&s.reps;});
+      if(!sets.length)continue;
+      // Use the heaviest set
+      var best=sets[0];
+      for(var j=1;j<sets.length;j++){if((sets[j].weight||0)>(best.weight||0))best=sets[j];}
+      var lastW=parseFloat(best.weight)||0;
+      var lastR=parseFloat(best.reps)||0;
+      // Only suggest if last reps differ from current target
+      if(lastR!==wd.reps&&lastW>0){
+        var goal=calcGoalWeight(lastW,lastR,wd.reps);
+        if(goal&&goal>0)suggestions[exName]={lastWeight:lastW,lastReps:lastR,goalWeight:goal,targetReps:wd.reps};
+      }
+      break;
+    }
+  }
+  return suggestions;
+}
+
+// ════════════════════════════════
+// BACKGROUND-AWARE REST TIMER
+// ════════════════════════════════
+var restStartTime = null;
+var restDuration = 90;
+
+function startRest(){
+  if(S.rint)clearInterval(S.rint);
+  restStartTime = Date.now();
+  restDuration = S.rdur;
+  rRem = S.rdur;
+  updRest();
+  el('resto').classList.add('visible');
+  S.rint = setInterval(function(){
+    var elapsed = Math.floor((Date.now() - restStartTime) / 1000);
+    rRem = Math.max(0, restDuration - elapsed);
+    updRest();
+    if(rRem <= 0) skipRest();
+  }, 500);
+  // Handle page visibility changes
+  document.removeEventListener('visibilitychange', onVisibilityChange);
+  document.addEventListener('visibilitychange', onVisibilityChange);
+}
+
+function onVisibilityChange(){
+  if(!document.hidden && restStartTime && el('resto').classList.contains('visible')){
+    var elapsed = Math.floor((Date.now() - restStartTime) / 1000);
+    rRem = Math.max(0, restDuration - elapsed);
+    updRest();
+    if(rRem <= 0) skipRest();
+  }
+}
+
+function skipRest(){
+  if(S.rint)clearInterval(S.rint);
+  restStartTime=null;
+  el('resto').classList.remove('visible');
+}
+
+function setRD(s,btn){
+  S.rdur=s;restDuration=s;rRem=s;
+  if(restStartTime)restStartTime=Date.now(); // reset start if timer running
+  updRest();
+  var bs=document.querySelectorAll('.rd');
+  for(var i=0;i<bs.length;i++)bs[i].classList.remove('active');
+  if(btn)btn.classList.add('active');
+}
+
+// ════════════════════════════════
+// EDIT PAST SESSION
+// ════════════════════════════════
+var editingSessionIdx = null;
+var editingSessionMode = false;
+
+function renderHistoryDetail(cont, idx){
+  var w=S.log[idx];if(!w){renderHistoryList(cont);return;}
+  var d=new Date(w.date);
+  var back=document.createElement('button');back.className='hist-back';back.innerHTML='&#9666; ALL SESSIONS';
+  back.onclick=function(){viewingSessionIdx=null;editingSessionMode=false;renderProg();};
+  cont.appendChild(back);
+
+  var header=document.createElement('div');header.className='hist-session-header';
+  header.innerHTML='<div class="hist-day-num">'+w.lbl+'</div><div class="hist-day-name">'+w.name+'</div>'
+    +'<div class="hist-meta">'+d.toLocaleDateString()+' &mdash; '+d.toLocaleTimeString()
+    +'<br>Duration: '+w.dur+'<br>Volume: '+w.vol.toLocaleString()+' lbs'
+    +'<br>Week '+(w.week||1)+' &mdash; '+(w.phase||'')+'</div>';
+  cont.appendChild(header);
+
+  // Edit toggle
+  var editBtn=document.createElement('button');editBtn.className='hist-edit-btn';
+  editBtn.textContent=editingSessionMode?'SAVE CHANGES':'EDIT SESSION';
+  editBtn.onclick=function(){
+    if(editingSessionMode){
+      // Recalculate volume
+      var vol=0,ts=0;
+      if(w.rawSets){
+        for(var exName in w.rawSets){
+          var sets=w.rawSets[exName];
+          for(var i=0;i<sets.length;i++){
+            if(sets[i].done&&!sets[i].warmup){
+              ts++;
+              vol+=(parseFloat(sets[i].weight)||0)*(parseFloat(sets[i].reps)||0);
+            }
+          }
+        }
+      }
+      w.vol=Math.round(vol);w.sets=ts;
+      saveState();showToast('SESSION SAVED');
+    }
+    editingSessionMode=!editingSessionMode;
+    viewingSessionIdx=idx;renderProg();
+  };
+  cont.appendChild(editBtn);
+
+  if(!w.rawSets){
+    var empty=document.createElement('div');empty.className='es';empty.innerHTML='<div class="ei">NO SET DATA</div>';cont.appendChild(empty);return;
+  }
+
+  for(var exName in w.rawSets){
+    var sets=w.rawSets[exName];if(!sets||!sets.length)continue;
+    var doneSets=sets.filter(function(s){return s.done;});if(!doneSets.length&&!editingSessionMode)continue;
+    var best1rm=0;
+    for(var i=0;i<doneSets.length;i++){
+      var orm2=calcEpley(parseFloat(doneSets[i].weight)||0,parseFloat(doneSets[i].reps)||0);
+      if(orm2>best1rm)best1rm=orm2;
+    }
+    var block=document.createElement('div');block.className='hist-ex-block';
+    var hdr='<div class="hist-ex-name">'+exName;
+    if(best1rm>0)hdr+='<span class="orm-badge"> &mdash; e1RM: '+best1rm+'lb</span>';
+    hdr+='</div>';
+    if(editingSessionMode){
+      hdr+='<div class="hist-set-hdr"><div>#</div><div>WEIGHT</div><div>REPS</div><div>DONE</div><div>WU</div></div>';
+    }else{
+      hdr+='<div class="hist-set-hdr"><div>#</div><div>WEIGHT</div><div>REPS</div><div>VOL</div><div>TYPE</div></div>';
+    }
+    block.innerHTML=hdr;
+
+    for(var i=0;i<sets.length;i++){
+      var s=sets[i];
+      var row=document.createElement('div');
+      if(editingSessionMode){
+        row.className='hist-set-row';
+        var wKey='hist-w-'+exName.replace(/[^a-z0-9]/gi,'_')+'-'+i;
+        var rKey='hist-r-'+exName.replace(/[^a-z0-9]/gi,'_')+'-'+i;
+        var doneChk=document.createElement('input');doneChk.type='checkbox';doneChk.checked=!!s.done;doneChk.style.cssText='width:16px;height:16px;accent-color:var(--hl);';
+        (function(li,en,si){doneChk.onchange=function(){S.log[li].rawSets[en][si].done=this.checked;};})(idx,exName,i);
+        var wuChk=document.createElement('input');wuChk.type='checkbox';wuChk.checked=!!s.warmup;wuChk.style.cssText='width:16px;height:16px;accent-color:var(--am);';
+        (function(li,en,si){wuChk.onchange=function(){S.log[li].rawSets[en][si].warmup=this.checked;};})(idx,exName,i);
+        row.innerHTML='<div>'+(i+1)+'</div>'
+          +'<div><input class="hist-edit-inp" id="'+wKey+'" type="number" value="'+(s.weight||0)+'"/></div>'
+          +'<div><input class="hist-edit-inp" id="'+rKey+'" type="number" value="'+(s.reps||0)+'"/></div>'
+          +'<div></div><div></div>';
+        row.children[3].appendChild(doneChk);
+        row.children[4].appendChild(wuChk);
+        // Wire up weight/rep inputs
+        (function(logIdx,en,si,wk,rk){
+          row.querySelector('#'+wk).oninput=function(){S.log[logIdx].rawSets[en][si].weight=parseFloat(this.value)||0;};
+          row.querySelector('#'+rk).oninput=function(){S.log[logIdx].rawSets[en][si].reps=parseFloat(this.value)||0;};
+        })(idx,exName,i,wKey,rKey);
+      } else {
+        if(!s.done)continue;
+        row.className='hist-set-row'+(s.warmup?' warmup-row':'');
+        var vol2=(parseFloat(s.weight)||0)*(parseFloat(s.reps)||0);
+        row.innerHTML='<div>'+(i+1)+'</div><div>'+(s.weight||0)+'lb</div><div>'+(s.reps||0)+'</div><div>'+vol2+'</div><div>'+(s.warmup?'WU':'WK')+'</div>';
+      }
+      block.appendChild(row);
+    }
+    cont.appendChild(block);
+  }
+}
+
+// ════════════════════════════════
+// PAST SUPPLEMENTS EDITOR
+// ════════════════════════════════
+function openPastSupps(){
+  renderPastSupps();
+  el('past-supp-mo').classList.add('visible');
+}
+
+function renderPastSupps(){
+  var cont=el('past-supp-content');cont.innerHTML='';
+  // Show last 7 days
+  var days=[];
+  for(var i=0;i<7;i++){
+    var d=new Date();d.setDate(d.getDate()-i);
+    var key=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+    days.push({key:key,date:d});
+  }
+  for(var i=0;i<days.length;i++){
+    var dayData=days[i];var key=dayData.key;var d=dayData.date;
+    var block=document.createElement('div');block.className='past-supp-day';
+    var dateLabel=i===0?'Today':i===1?'Yesterday':d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+    block.innerHTML='<div class="past-supp-date">'+dateLabel+'</div>';
+    var todaySupp=S.suppLog[key]||{};
+    for(var j=0;j<SUPPS.length;j++){
+      var supp=SUPPS[j];var on=todaySupp[supp.id]||false;
+      var item=document.createElement('div');item.className='supp-item';item.style.marginBottom='3px';
+      item.innerHTML='<div class="supp-check'+(on?' on':'')+'">'+( on?'&#10003;':'')+'</div>'
+        +'<div style="flex:1;"><div class="supp-name" style="font-size:12px;">'+supp.name+'</div></div>';
+      (function(k,sid){item.onclick=function(){
+        if(!S.suppLog[k])S.suppLog[k]={};
+        S.suppLog[k][sid]=!S.suppLog[k][sid];
+        saveState();
+        renderPastSupps();
+      };})(key,supp.id);
+      block.appendChild(item);
+    }
+    cont.appendChild(block);
+  }
 }
 
 // ════════════════════════════════
