@@ -388,15 +388,9 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .rpe-wrap{margin-top:16px;margin-bottom:4px;}
 .rpe-label{font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:.14em;color:var(--s2);text-transform:uppercase;margin-bottom:8px;text-align:center;}
 .rpe-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:8px;}
-.rpe-btn{background:transparent;border:1px solid var(--border);border-radius:2px;padding:8px 4px;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:var(--s2);cursor:pointer;text-align:center;}
-.rpe-btn.selected{color:var(--bg);}
-.rpe-btn.easy{border-color:var(--gr);color:var(--gr);}
-.rpe-btn.easy.selected{background:var(--gr);border-color:var(--gr);color:var(--bg);}
-.rpe-btn.mod{border-color:var(--am);color:var(--am);}
-.rpe-btn.mod.selected{background:var(--am);border-color:var(--am);color:var(--bg);}
-.rpe-btn.hard{border-color:var(--danger);color:var(--danger);}
-.rpe-btn.hard.selected{background:var(--danger);border-color:var(--danger);color:var(--bg);}
-.rpe-feedback{font-family:'Share Tech Mono',monospace;font-size:8px;text-align:center;min-height:14px;letter-spacing:.08em;}
+.rpe-btn{background:transparent;border:1px solid var(--border);border-radius:2px;padding:8px 4px;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:var(--s2);cursor:pointer;text-align:center;transition:background .12s,border-color .12s;}
+.rpe-btn.selected{color:#000 !important;background:var(--rpe-color) !important;border-color:var(--rpe-color) !important;}
+.rpe-feedback{font-family:'Share Tech Mono',monospace;font-size:8px;text-align:center;min-height:14px;letter-spacing:.08em;transition:color .2s;}
 </style>
 </head>
 <body>
@@ -2035,17 +2029,50 @@ var currentRPE = null;
 var lastCheckedExName = null;
 var lastCheckedSetIdx = null;
 
+// RPE gradient colors: 1=green, 4-5=yellow, 7=orange, 10=red
+var RPE_COLORS=[
+  '#4caf50', // 1 - green
+  '#8bc34a', // 2 - yellow-green
+  '#cddc39', // 3 - lime
+  '#ffeb3b', // 4 - yellow
+  '#ffc107', // 5 - amber
+  '#ff9800', // 6 - orange
+  '#ff6f00', // 7 - dark orange
+  '#f44336', // 8 - red-orange
+  '#e53935', // 9 - red
+  '#b71c1c'  // 10 - deep red
+];
+
+var RPE_MESSAGES=[
+  '',
+  'TOO EASY — INCREASE WEIGHT NEXT SESSION',   // 1
+  'VERY LIGHT — NEXT SET +5 LBS',              // 2
+  'LIGHT — NEXT SET +5 LBS',                   // 3
+  'COMFORTABLE — NEXT SET +2.5 LBS',           // 4
+  'ON TARGET — MAINTAIN WEIGHT',               // 5
+  'WORKING HARD — MAINTAIN WEIGHT',            // 6
+  'CHALLENGING — MAINTAIN WEIGHT',             // 7
+  'VERY HARD — CONSIDER DROPPING WEIGHT',      // 8
+  'NEAR LIMIT — DROP WEIGHT NEXT SET',         // 9
+  'MAX EFFORT — DROP WEIGHT OR DELOAD'         // 10
+];
+
+var RPE_DELTAS=[0, 5, 5, 5, 2.5, 0, 0, 0, -2.5, -5, -5]; // index 0 unused
+
 function initRPEGrid(){
   var grid = el('rpe-grid');
   if(!grid)return;
   grid.innerHTML='';
   for(var i=1;i<=10;i++){
-    var cls = i<=4?'easy':i<=7?'mod':'hard';
+    var color=RPE_COLORS[i-1];
     var btn=document.createElement('button');
-    btn.className='rpe-btn '+cls;
+    btn.className='rpe-btn';
     btn.textContent=i;
     btn.setAttribute('data-rpe',i);
-    (function(rpe){btn.onclick=function(){selectRPE(rpe);};})(i);
+    btn.style.borderColor=color;
+    btn.style.color=color;
+    btn.style.setProperty('--rpe-color',color);
+    (function(rpe,col){btn.onclick=function(){selectRPE(rpe,col);};})(i,color);
     grid.appendChild(btn);
   }
   currentRPE=null;
@@ -2053,30 +2080,29 @@ function initRPEGrid(){
   el('rpe-feedback').style.color='';
 }
 
-function selectRPE(rpe){
+function selectRPE(rpe,color){
   currentRPE=rpe;
+  if(!color)color=RPE_COLORS[rpe-1];
   var btns=el('rpe-grid').querySelectorAll('.rpe-btn');
   for(var i=0;i<btns.length;i++){
     var b=btns[i];
     var bRpe=parseInt(b.getAttribute('data-rpe'));
+    var bCol=RPE_COLORS[bRpe-1];
     b.classList.remove('selected');
-    if(bRpe===rpe)b.classList.add('selected');
+    b.style.background='transparent';
+    b.style.color=bCol;
+    b.style.borderColor=bCol;
+    if(bRpe===rpe){
+      b.classList.add('selected');
+      b.style.background=color;
+      b.style.color='#000';
+      b.style.borderColor=color;
+    }
   }
   var fb=el('rpe-feedback');
-  if(rpe<=4){
-    fb.textContent='EASY — NEXT SET +5 LBS';
-    fb.style.color='var(--gr)';
-    // Auto-adjust next set weight
-    applyRPEAdjustment(5);
-  } else if(rpe<=7){
-    fb.textContent='ON TARGET — KEEP WEIGHT';
-    fb.style.color='var(--am)';
-    applyRPEAdjustment(0);
-  } else {
-    fb.textContent='TOUGH — CONSIDER DROPPING WEIGHT';
-    fb.style.color='var(--danger)';
-    applyRPEAdjustment(-5);
-  }
+  fb.textContent=RPE_MESSAGES[rpe]||'';
+  fb.style.color=color;
+  applyRPEAdjustment(RPE_DELTAS[rpe]||0);
 }
 
 function applyRPEAdjustment(delta){
