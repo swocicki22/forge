@@ -383,6 +383,20 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 /* ── PAST SUPPS EDITOR ── */
 .past-supp-day{background:var(--card);border:1px solid var(--bl);border-radius:2px;padding:10px 12px;margin-bottom:5px;}
 .past-supp-date{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.1em;color:var(--hlb);margin-bottom:8px;}
+
+/* ── RPE SELECTOR ── */
+.rpe-wrap{margin-top:16px;margin-bottom:4px;}
+.rpe-label{font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:.14em;color:var(--s2);text-transform:uppercase;margin-bottom:8px;text-align:center;}
+.rpe-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:8px;}
+.rpe-btn{background:transparent;border:1px solid var(--border);border-radius:2px;padding:8px 4px;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:var(--s2);cursor:pointer;text-align:center;}
+.rpe-btn.selected{color:var(--bg);}
+.rpe-btn.easy{border-color:var(--gr);color:var(--gr);}
+.rpe-btn.easy.selected{background:var(--gr);border-color:var(--gr);color:var(--bg);}
+.rpe-btn.mod{border-color:var(--am);color:var(--am);}
+.rpe-btn.mod.selected{background:var(--am);border-color:var(--am);color:var(--bg);}
+.rpe-btn.hard{border-color:var(--danger);color:var(--danger);}
+.rpe-btn.hard.selected{background:var(--danger);border-color:var(--danger);color:var(--bg);}
+.rpe-feedback{font-family:'Share Tech Mono',monospace;font-size:8px;text-align:center;min-height:14px;letter-spacing:.08em;}
 </style>
 </head>
 <body>
@@ -631,6 +645,11 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
     <button class="rd active" onclick="setRD(90,this)">1:30</button>
     <button class="rd" onclick="setRD(120,this)">2:00</button>
     <button class="rd" onclick="setRD(180,this)">3:00</button>
+  </div>
+  <div class="rpe-wrap">
+    <div class="rpe-label">HOW HARD WAS THAT SET? (OPTIONAL)</div>
+    <div class="rpe-grid" id="rpe-grid"></div>
+    <div class="rpe-feedback" id="rpe-feedback"></div>
   </div>
 </div>
 
@@ -1266,7 +1285,7 @@ function resetDayToPreset(){var idx=getDayIdx(editingDayId);var presets=buildPre
 function getLastLog(id){for(var i=S.log.length-1;i>=0;i--){if(S.log[i].dayId===id)return S.log[i];}return null;}
 function startWkt(dayId){
   var day=getDay(dayId);var wd=getWeekData();
-  S.activeDay=day;S.sets={};S.start=Date.now();
+  S.activeDay=JSON.parse(JSON.stringify(day));S.activeDay.id=day.id;S.sets={};S.start=Date.now();
   var ls=getLastLog(dayId);var suggestions=getOverloadSuggestions();var suggestMap={};for(var i=0;i<suggestions.length;i++)suggestMap[suggestions[i].name]=suggestions[i].suggest;
   for(var i=0;i<day.ex.length;i++){
     var ex=day.ex[i];var dw=ex.dw,dr=wd.reps;if(ex.type==='Core')dr=ex.dr;
@@ -1361,7 +1380,13 @@ function togS(exName,idx){
   if(set.done&&set.weight&&!set.warmup){var orm=calcEpley(parseFloat(set.weight)||0,parseFloat(set.reps)||0);if(!S.prs[exName]||set.weight>S.prs[exName].weight)S.prs[exName]={weight:set.weight,date:new Date().toISOString(),orm:orm};}
   var row=el('sr-'+ek+'-'+idx);
   if(row){if(set.done)row.classList.add('done');else row.classList.remove('done');var btn=row.querySelector('.schk');if(set.done)btn.classList.add('done');else btn.classList.remove('done');btn.innerHTML=set.done?'&#10003;':'';var num=row.querySelector('.sn');if(num)num.style.color=set.done?'var(--hl)':'';}
-  updProg();if(set.done&&!set.warmup)startRest();
+  updProg();
+  if(set.done&&!set.warmup){
+    lastCheckedExName=exName;
+    lastCheckedSetIdx=idx;
+    initRPEGrid();
+    startRest();
+  }
 }
 function addS(exName){if(!S.sets[exName])return;var sets=S.sets[exName];var last=sets[sets.length-1];sets.push({weight:last?last.weight:'',reps:last?last.reps:'',done:false,warmup:false,rpe:0});renderActive();}
 function removeS(exName){if(!S.sets[exName])return;var sets=S.sets[exName];if(sets.length<=1){showToast("MINIMUM 1 SET");return;}sets.pop();renderActive();}
@@ -2002,6 +2027,82 @@ function renderPastSupps(){
   }
 }
 
+
+// ════════════════════════════════
+// RPE SYSTEM
+// ════════════════════════════════
+var currentRPE = null;
+var lastCheckedExName = null;
+var lastCheckedSetIdx = null;
+
+function initRPEGrid(){
+  var grid = el('rpe-grid');
+  if(!grid)return;
+  grid.innerHTML='';
+  for(var i=1;i<=10;i++){
+    var cls = i<=4?'easy':i<=7?'mod':'hard';
+    var btn=document.createElement('button');
+    btn.className='rpe-btn '+cls;
+    btn.textContent=i;
+    btn.setAttribute('data-rpe',i);
+    (function(rpe){btn.onclick=function(){selectRPE(rpe);};})(i);
+    grid.appendChild(btn);
+  }
+  currentRPE=null;
+  el('rpe-feedback').textContent='';
+  el('rpe-feedback').style.color='';
+}
+
+function selectRPE(rpe){
+  currentRPE=rpe;
+  var btns=el('rpe-grid').querySelectorAll('.rpe-btn');
+  for(var i=0;i<btns.length;i++){
+    var b=btns[i];
+    var bRpe=parseInt(b.getAttribute('data-rpe'));
+    b.classList.remove('selected');
+    if(bRpe===rpe)b.classList.add('selected');
+  }
+  var fb=el('rpe-feedback');
+  if(rpe<=4){
+    fb.textContent='EASY — NEXT SET +5 LBS';
+    fb.style.color='var(--gr)';
+    // Auto-adjust next set weight
+    applyRPEAdjustment(5);
+  } else if(rpe<=7){
+    fb.textContent='ON TARGET — KEEP WEIGHT';
+    fb.style.color='var(--am)';
+    applyRPEAdjustment(0);
+  } else {
+    fb.textContent='TOUGH — CONSIDER DROPPING WEIGHT';
+    fb.style.color='var(--danger)';
+    applyRPEAdjustment(-5);
+  }
+}
+
+function applyRPEAdjustment(delta){
+  if(!lastCheckedExName||lastCheckedSetIdx===null)return;
+  var sets=S.sets[lastCheckedExName];
+  if(!sets)return;
+  // Find next incomplete working set
+  for(var i=lastCheckedSetIdx+1;i<sets.length;i++){
+    if(!sets[i].done&&!sets[i].warmup){
+      var cur=parseFloat(sets[i].weight)||0;
+      var nw=Math.max(0,Math.round((cur+delta)/2.5)*2.5);
+      sets[i].weight=nw;
+      // Update the input on screen
+      var ek=lastCheckedExName.replace(/[^a-zA-Z0-9]/g,'_');
+      var inp=el('w-'+ek+'-'+i);
+      if(inp)inp.value=nw||'';
+      break;
+    }
+  }
+}
+
+// ════════════════════════════════
+// SESSION-ONLY DAY COPY
+// ════════════════════════════════
+// Ensure startWkt deep-copies the day so edits don't affect saved structure
+var originalStartWkt = startWkt;
 // ════════════════════════════════
 // INIT
 // ════════════════════════════════
