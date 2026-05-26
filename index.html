@@ -2163,18 +2163,34 @@ var originalStartWkt = startWkt;
 function syncMissingDays(){
   var presets=buildPresets();
   var changed=false;
+
+  // Step 1: Remove duplicate days (same name appearing more than once)
+  var seenNames={};
+  var deduped=[];
+  for(var i=0;i<S.days.length;i++){
+    var dname=S.days[i].name;
+    if(!seenNames[dname]){
+      seenNames[dname]=true;
+      deduped.push(S.days[i]);
+    } else {
+      changed=true; // removed a duplicate
+    }
+  }
+  S.days=deduped;
+
+  // Step 2: For each preset, check if a day with same NAME exists
   for(var i=0;i<presets.length;i++){
     var preset=presets[i];
-    // Check if a day with this id or label already exists
     var exists=false;
     for(var j=0;j<S.days.length;j++){
-      if(S.days[j].id===preset.id||S.days[j].lbl===preset.lbl){
+      if(S.days[j].name===preset.name){
         exists=true;
-        // Also update cardio finisher if it's missing RLT
-        if(S.days[j].cardio!==preset.cardio&&preset.cardio&&
-           (!S.days[j].cardio||S.days[j].cardio.indexOf('Red Light')===-1)){
-          S.days[j].cardio=preset.cardio;
-          changed=true;
+        // Update lbl and id to match new ordering
+        if(S.days[j].lbl!==preset.lbl){S.days[j].lbl=preset.lbl;changed=true;}
+        if(S.days[j].id!==preset.id){S.days[j].id=preset.id;changed=true;}
+        // Update cardio if missing RLT
+        if(preset.cardio&&(!S.days[j].cardio||S.days[j].cardio.indexOf('Red Light')===-1)){
+          S.days[j].cardio=preset.cardio;changed=true;
         }
         break;
       }
@@ -2184,8 +2200,10 @@ function syncMissingDays(){
       changed=true;
     }
   }
-  // Re-sort days by lbl
+
+  // Step 3: Re-sort by lbl
   S.days.sort(function(a,b){return parseInt(a.lbl)-parseInt(b.lbl);});
+
   if(changed){saveState();return true;}
   return false;
 }
