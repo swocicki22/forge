@@ -922,6 +922,7 @@ function loadUserIntoApp(user){
   S.suppLog=data.suppLog||{};S.waterLog=data.waterLog||{};S.bwLog=data.bwLog||[];
   S.activeDay=null;S.sets={};S.start=null;
   if(!S.days)S.days=buildPresets();
+  else{var synced=syncMissingDays();if(synced)showToast('NEW DAYS ADDED');}
   el('chip-name').textContent=user.name.toUpperCase();
   el('chip-dot').style.background=user.color;
   aTab='volume';
@@ -2156,6 +2157,40 @@ function applyRPEAdjustment(delta){
 // ════════════════════════════════
 // Ensure startWkt deep-copies the day so edits don't affect saved structure
 var originalStartWkt = startWkt;
+
+// ════════════════════════════════
+// SYNC MISSING PRESET DAYS
+// ════════════════════════════════
+function syncMissingDays(){
+  var presets=buildPresets();
+  var changed=false;
+  for(var i=0;i<presets.length;i++){
+    var preset=presets[i];
+    // Check if a day with this id or label already exists
+    var exists=false;
+    for(var j=0;j<S.days.length;j++){
+      if(S.days[j].id===preset.id||S.days[j].lbl===preset.lbl){
+        exists=true;
+        // Also update cardio finisher if it's missing RLT
+        if(S.days[j].cardio!==preset.cardio&&preset.cardio&&
+           (!S.days[j].cardio||S.days[j].cardio.indexOf('Red Light')===-1)){
+          S.days[j].cardio=preset.cardio;
+          changed=true;
+        }
+        break;
+      }
+    }
+    if(!exists){
+      S.days.push(JSON.parse(JSON.stringify(preset)));
+      changed=true;
+    }
+  }
+  // Re-sort days by lbl
+  S.days.sort(function(a,b){return parseInt(a.lbl)-parseInt(b.lbl);});
+  if(changed){saveState();return true;}
+  return false;
+}
+
 // ════════════════════════════════
 // INIT
 // ════════════════════════════════
