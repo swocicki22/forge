@@ -956,7 +956,7 @@ var AB_PRESET=[
 
 function buildPresets(){
   return [
-    {id:'d1',lbl:'01',name:'Upper Power',tag:'UPPER POWER',rest:false,cardio:'15 min Stairmaster — 2 min moderate (lvl 7) / 1 min hard (lvl 12) x5',ex:[
+    {id:'d1',lbl:'01',name:'Upper Power',tag:'UPPER POWER',rest:false,cardio:'15 min Stairmaster — 2 min moderate (lvl 7) / 1 min hard (lvl 12) x5 — Red Light Therapy: 10-15 min full body post-workout',ex:[
       {name:'Barbell Bench Press',type:'Power',ds:5,dr:5,dw:155,ss:'A1',notes:'Explosive concentric. Slow 3 sec descent. Grip slightly wider than shoulder width.'},
       {name:'Bent-Over Dumbbell Row',type:'Power',ds:5,dr:5,dw:70,ss:'A2',notes:'Pull explosively. 3-1-1 tempo. Hinge at hips, chest up.'},
       {name:'Dumbbell Push Press',type:'Power',ds:4,dr:5,dw:55,ss:'B1',notes:'Drive from legs into overhead press. Full lockout at top.'},
@@ -966,7 +966,7 @@ function buildPresets(){
       {name:'Barbell Overhead Press',type:'Strength',ds:3,dr:6,dw:95,ss:'',notes:'Press from rack. Full lockout. Brace core throughout.'},
       {name:'Face Pulls',type:'Isolation',ds:3,dr:20,dw:40,ss:'',notes:'Pull to forehead level. External rotation. Critical for rotator cuff health.'}
     ]},
-    {id:'d2',lbl:'02',name:'Lower Power',tag:'LOWER POWER',rest:false,cardio:null,ex:[
+    {id:'d2',lbl:'02',name:'Lower Power',tag:'LOWER POWER',rest:false,cardio:'Red Light Therapy: 10-15 min full body post-workout',ex:[
       {name:'Barbell Back Squat',type:'Power',ds:5,dr:5,dw:185,ss:'A1',notes:'Explosive drive out of the hole. 3-0-X tempo. Break parallel.'},
       {name:'Romanian Deadlift',type:'Power',ds:5,dr:5,dw:155,ss:'A2',notes:'Hamstring loading. Feel the stretch. Hip hinge pattern.'},
       {name:'Hip Thrust Smith Machine',type:'Power',ds:4,dr:8,dw:135,ss:'B1',notes:'Drive hips explosively. Full extension at top.'},
@@ -976,7 +976,7 @@ function buildPresets(){
       {name:'Standing Calf Raise',type:'Hypertrophy',ds:4,dr:15,dw:135,ss:'',notes:'4 sec hold at top. Full stretch at bottom.'},
       {name:'Leg Extension',type:'Isolation',ds:3,dr:15,dw:100,ss:'',notes:'Quad isolation. Pause 1 sec at top.'}
     ].concat(AB_PRESET)},
-    {id:'d3',lbl:'03',name:'Upper Hypertrophy',tag:'UPPER HYPER',rest:false,cardio:'20 min Incline Treadmill — 12% incline, 3.2 mph',ex:[
+    {id:'d3',lbl:'03',name:'Upper Hypertrophy',tag:'UPPER HYPER',rest:false,cardio:'20 min Incline Treadmill — 12% incline, 3.2 mph — Red Light Therapy: 10-15 min full body post-workout',ex:[
       {name:'Incline Dumbbell Press',type:'Hypertrophy',ds:4,dr:12,dw:65,ss:'A1',notes:'3-1-1 tempo. Drop set on final set — drop 20% and hit failure.'},
       {name:'Cable Seated Row',type:'Hypertrophy',ds:4,dr:12,dw:120,ss:'A2',notes:'Full stretch. 2 sec hold at contraction. Squeeze scapula.'},
       {name:'Dumbbell Lateral Raise',type:'Hypertrophy',ds:4,dr:15,dw:20,ss:'B1',notes:'Rest-pause on final set. Lead with elbows. Slight forward lean.'},
@@ -987,7 +987,7 @@ function buildPresets(){
       {name:'Hammer Curl',type:'Isolation',ds:3,dr:12,dw:30,ss:'',notes:'Neutral grip. Builds brachialis and arm thickness.'},
       {name:'Tricep Rope Pushdown',type:'Isolation',ds:3,dr:15,dw:50,ss:'',notes:'Flare hands at bottom for full contraction.'}
     ]},
-    {id:'d4',lbl:'04',name:'Lower Hypertrophy',tag:'LOWER HYPER',rest:false,cardio:null,ex:[
+    {id:'d4',lbl:'04',name:'Lower Hypertrophy',tag:'LOWER HYPER',rest:false,cardio:'Red Light Therapy: 10-15 min full body post-workout',ex:[
       {name:'Hack Squat Smith Machine',type:'Hypertrophy',ds:4,dr:12,dw:135,ss:'A1',notes:'Narrow stance. Feet forward. Deep quad loading.'},
       {name:'Lying Leg Curl',type:'Hypertrophy',ds:4,dr:12,dw:80,ss:'A2',notes:'Full ROM. 2 sec hold. Drop set on final set.'},
       {name:'Cable Pull-Through',type:'Hypertrophy',ds:3,dr:15,dw:60,ss:'B1',notes:'Hip hinge pattern. Glute and hamstring together.'},
@@ -997,7 +997,7 @@ function buildPresets(){
       {name:'Seated Calf Raise',type:'Isolation',ds:4,dr:20,dw:90,ss:'',notes:'Soleus focus. 4 sec hold at top.'},
       {name:'Glute Kickback Cable',type:'Isolation',ds:3,dr:15,dw:30,ss:'',notes:'Full hip extension. Squeeze glute at top.'}
     ].concat(AB_PRESET)},
-    {id:'d5',lbl:'05',name:'Full Athletic',tag:'ATHLETIC',rest:false,cardio:'20 min HIIT Bike — 20 sec all-out / 40 sec recovery x15',ex:[
+    {id:'d5',lbl:'05',name:'Full Athletic',tag:'ATHLETIC',rest:false,cardio:'20 min HIIT Bike — 20 sec all-out / 40 sec recovery x15 — Red Light Therapy: 10-15 min full body post-workout',ex:[
       {name:'Dumbbell Squat to Press',type:'Power',ds:3,dr:12,dw:35,ss:'A1',notes:'Squat down, explode up, press overhead at top. Full body power chain.'},
       {name:'Cable Woodchop High-Low',type:'Athletic',ds:3,dr:12,dw:40,ss:'A2',notes:'Rotational core power. Mimics basketball drive motion.'},
       {name:'Lateral Band Walk',type:'Athletic',ds:3,dr:15,dw:0,ss:'A3',notes:'Hip abductor strength for lateral defense. Stay low.'},
@@ -1009,6 +1009,33 @@ function buildPresets(){
       {name:'Box Step-Up',type:'Power',ds:3,dr:10,dw:30,ss:'',notes:'Drive through heel. Single leg power. Knee level box.'},
       {name:'Battle Rope Slams',type:'Cardio',ds:3,dr:20,dw:0,ss:'',notes:'Full body power. Drive from hips. 20 slams per set.'}
     ]}
+  
+    ,{id:'d6',lbl:'06',name:'Upper Body Mobility',tag:'ACTIVE REST',rest:false,
+      cardio:'1) 15 min Incline Treadmill Walk — easy pace, zone 1-2 heart rate\n2) Upper Body Stretch Circuit — hold each 30 sec:\n   • Chest opener (doorway stretch)\n   • Cross-body shoulder stretch\n   • Overhead lat stretch\n   • Thoracic spine rotation\n   • Neck side stretch\n   • Wrist & forearm flexor stretch\n3) Foam Rolling — 60 sec each:\n   • Upper back / thoracic spine\n   • Pecs & anterior shoulders\n   • Lats\n4) Massage Bed — 10-15 min\n5) Red Light Therapy — 10-15 min full body',
+      ex:[
+        {name:'Cat-Cow Stretch',type:'Mobility',ds:1,dr:10,dw:0,ss:'',notes:'On hands and knees. Arch and round spine slowly. Breathe through each rep.'},
+        {name:'Thoracic Rotation',type:'Mobility',ds:1,dr:10,dw:0,ss:'',notes:'10 each side. Seated or kneeling. Rotate upper back, keep hips still.'},
+        {name:'Doorway Chest Stretch',type:'Mobility',ds:1,dr:30,dw:0,ss:'',notes:'Hold 30 sec each arm. Find tension without pain. Breathe deeply.'},
+        {name:'Overhead Lat Stretch',type:'Mobility',ds:1,dr:30,dw:0,ss:'',notes:'Hold 30 sec each side. Reach overhead, lean away. Feel the lat stretch.'},
+        {name:'Cross-Body Shoulder Stretch',type:'Mobility',ds:1,dr:30,dw:0,ss:'',notes:'Hold 30 sec each arm. Pull arm across chest. Feel posterior shoulder.'},
+        {name:'Band Pull-Apart',type:'Mobility',ds:3,dr:15,dw:0,ss:'',notes:'Light band. Arms straight. Squeeze shoulder blades at end range.'},
+        {name:'Wrist Circles & Flexor Stretch',type:'Mobility',ds:1,dr:30,dw:0,ss:'',notes:'30 sec circles each direction, then hold flexor stretch 30 sec each wrist.'},
+        {name:'Child\'s Pose',type:'Mobility',ds:1,dr:60,dw:0,ss:'',notes:'Hold 60 sec. Arms extended overhead. Focus on breathing and relaxing.'}
+      ]
+    }
+    ,{id:'d7',lbl:'07',name:'Lower Body Mobility',tag:'ACTIVE REST',rest:false,
+      cardio:'1) 15 min Incline Treadmill Walk — easy pace, zone 1-2 heart rate\n2) Lower Body Stretch Circuit — hold each 30 sec:\n   • Hip flexor lunge stretch\n   • Pigeon pose (each side)\n   • Seated hamstring stretch\n   • Standing quad stretch\n   • Calf stretch (straight & bent knee)\n   • Glute figure-4 stretch\n3) Foam Rolling — 60 sec each:\n   • Quads\n   • IT band\n   • Hamstrings\n   • Calves\n   • Glutes\n4) Massage Bed — 10-15 min\n5) Red Light Therapy — 10-15 min full body',
+      ex:[
+        {name:'Hip Flexor Lunge Stretch',type:'Mobility',ds:1,dr:30,dw:0,ss:'',notes:'Hold 30 sec each side. Drive hips forward gently. Keep torso upright.'},
+        {name:'Pigeon Pose',type:'Mobility',ds:1,dr:60,dw:0,ss:'',notes:'Hold 60 sec each side. Deep glute and hip opener. Breathe and relax into it.'},
+        {name:'Seated Hamstring Stretch',type:'Mobility',ds:1,dr:30,dw:0,ss:'',notes:'Hold 30 sec each leg. Hinge at hips, keep back flat. Feel the hamstring.'},
+        {name:'Standing Quad Stretch',type:'Mobility',ds:1,dr:30,dw:0,ss:'',notes:'Hold 30 sec each leg. Pull heel to glute. Squeeze standing glute for balance.'},
+        {name:'Calf Stretch',type:'Mobility',ds:1,dr:30,dw:0,ss:'',notes:'30 sec each — straight knee (gastrocnemius) then bent knee (soleus).'},
+        {name:'Glute Bridge',type:'Mobility',ds:2,dr:15,dw:0,ss:'',notes:'Slow and controlled. Activate glutes at top. Good for hip mobility and activation.'},
+        {name:'Lateral Band Walk',type:'Mobility',ds:2,dr:15,dw:0,ss:'',notes:'Light band. Stay low. Hip abductor activation and glute warmup.'},
+        {name:'Figure-4 Glute Stretch',type:'Mobility',ds:1,dr:60,dw:0,ss:'',notes:'Hold 60 sec each side. Lying on back. Cross ankle over opposite knee and pull.'}
+      ]
+    }
   ];
 }
 
