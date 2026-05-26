@@ -473,6 +473,25 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
       </div>
     </button>
 
+    <div class="us-section-title">Data Backup</div>
+
+    <button class="us-btn" onclick="exportBackup()">
+      <div class="us-btn-icon">&#8659;</div>
+      <div class="us-btn-inner">
+        <span>EXPORT BACKUP</span>
+        <em class="us-btn-desc">Download all your data as a JSON file to your device.</em>
+      </div>
+    </button>
+
+    <button class="us-btn" onclick="document.getElementById('import-file-input').click()">
+      <div class="us-btn-icon">&#8657;</div>
+      <div class="us-btn-inner">
+        <span>IMPORT BACKUP</span>
+        <em class="us-btn-desc">Restore data from a previously exported backup file.</em>
+      </div>
+    </button>
+    <input type="file" id="import-file-input" accept=".json" style="display:none;" onchange="importBackup(event)"/>
+
     <div class="us-section-title">Profile</div>
 
     <button class="us-btn" onclick="backToSplash();closeModal('user-settings-mo');">
@@ -480,6 +499,14 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
       <div class="us-btn-inner">
         <span>SWITCH PROFILE</span>
         <em class="us-btn-desc">Return to the profile selector screen.</em>
+      </div>
+    </button>
+
+    <button class="us-btn" onclick="fixDuplicateDays();closeModal('user-settings-mo');">
+      <div class="us-btn-icon">&#9881;</div>
+      <div class="us-btn-inner">
+        <span>FIX DUPLICATE DAYS</span>
+        <em class="us-btn-desc">Removes duplicate workout days and reorders them correctly.</em>
       </div>
     </button>
 
@@ -2206,6 +2233,104 @@ function syncMissingDays(){
 
   if(changed){saveState();return true;}
   return false;
+}
+
+
+// ════════════════════════════════
+// BACKUP & RESTORE
+// ════════════════════════════════
+function exportBackup(){
+  if(!currentUserId)return;
+  var users=loadUsers();
+  var user=null;
+  for(var i=0;i<users.length;i++){if(users[i].id===currentUserId){user=users[i];break;}}
+  var backup={
+    version:1,
+    exportDate:new Date().toISOString(),
+    profile:{id:user.id,name:user.name,color:user.color},
+    data:{
+      log:S.log,
+      prs:S.prs,
+      days:S.days,
+      bio:S.bio,
+      suppLog:S.suppLog,
+      waterLog:S.waterLog,
+      bwLog:S.bwLog
+    }
+  };
+  var json=JSON.stringify(backup,null,2);
+  var blob=new Blob([json],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  var d=new Date();
+  a.download='forge_backup_'+user.name.toLowerCase()+'_'
+    +d.getFullYear()+(d.getMonth()+1)+d.getDate()+'.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('BACKUP EXPORTED');
+}
+
+function importBackup(event){
+  var file=event.target.files[0];
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var backup=JSON.parse(e.target.result);
+      if(!backup.version||!backup.data){
+        showToast('INVALID BACKUP FILE');
+        return;
+      }
+      var d=backup.data;
+      if(d.log!==undefined)S.log=d.log;
+      if(d.prs!==undefined)S.prs=d.prs;
+      if(d.days!==undefined)S.days=d.days;
+      if(d.bio!==undefined)S.bio=d.bio;
+      if(d.suppLog!==undefined)S.suppLog=d.suppLog;
+      if(d.waterLog!==undefined)S.waterLog=d.waterLog;
+      if(d.bwLog!==undefined)S.bwLog=d.bwLog;
+      saveState();
+      closeModal('user-settings-mo');
+      renderHome();renderSel();
+      showToast('BACKUP RESTORED');
+    }catch(err){
+      showToast('RESTORE FAILED — INVALID FILE');
+    }
+  };
+  reader.readAsText(file);
+  // Reset input so same file can be selected again
+  event.target.value='';
+}
+
+// ════════════════════════════════
+// FIX DUPLICATE DAYS
+// ════════════════════════════════
+function fixDuplicateDays(){
+  var seen={};
+  var clean=[];
+  var changed=false;
+  for(var i=0;i<S.days.length;i++){
+    var name=S.days[i].name;
+    if(!seen[name]){
+      seen[name]=true;
+      clean.push(S.days[i]);
+    } else {
+      changed=true;
+    }
+  }
+  if(changed){
+    S.days=clean;
+    // Now run full sync to add missing and reorder
+    syncMissingDays();
+    saveState();
+    renderHome();renderSel();
+    showToast('DAYS FIXED');
+  } else {
+    showToast('NO DUPLICATES FOUND');
+  }
 }
 
 // ════════════════════════════════
