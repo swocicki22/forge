@@ -391,6 +391,21 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .rpe-btn{background:transparent;border:1px solid var(--border);border-radius:2px;padding:8px 4px;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:var(--s2);cursor:pointer;text-align:center;transition:background .12s,border-color .12s;}
 .rpe-btn.selected{color:#000 !important;background:var(--rpe-color) !important;border-color:var(--rpe-color) !important;}
 .rpe-feedback{font-family:'Share Tech Mono',monospace;font-size:8px;text-align:center;min-height:14px;letter-spacing:.08em;transition:color .2s;}
+
+/* ── MUSCLE HEATMAP ── */
+.heatmap-wrap{display:flex;gap:12px;justify-content:center;margin-bottom:14px;flex-wrap:wrap;}
+.heatmap-body{position:relative;flex-shrink:0;}
+.heatmap-body svg{display:block;}
+.heatmap-label{font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:.12em;color:var(--s2);text-align:center;margin-bottom:6px;text-transform:uppercase;}
+.heatmap-legend{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:12px;flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:4px;font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--s2);}
+.legend-swatch{width:12px;height:12px;border-radius:2px;flex-shrink:0;}
+.muscle-stats{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.muscle-stat-row{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:7px 9px;display:flex;align-items:center;gap:8px;}
+.muscle-stat-bar{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.muscle-stat-fill{height:100%;border-radius:2px;transition:width .3s;}
+.muscle-stat-name{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--s2);width:64px;flex-shrink:0;}
+.muscle-stat-val{font-family:'Orbitron',sans-serif;font-size:8px;width:20px;text-align:right;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -619,6 +634,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
     <div class="ptb" onclick="swTab('1rm',this)">1RM</div>
     <div class="ptb" onclick="swTab('freq',this)">FREQUENCY</div>
     <div class="ptb" onclick="swTab('bodywt',this)">BODY WT</div>
+    <div class="ptb" onclick="swTab('heatmap',this)">HEATMAP</div>
   </div>
   <div class="scroll" id="pcontent" style="padding-top:8px;"></div>
 </div>
@@ -1471,7 +1487,7 @@ function renderProg(){
   if(aTab==='history'){if(viewingSessionIdx!==null)renderHistoryDetail(c,viewingSessionIdx);else renderHistoryList(c);return;}
   if(aTab==='bodywt'){renderBodyWt(c);return;}
   if(!S.log.length){c.innerHTML='<div class="es"><div class="ei">NO DATA YET</div><div class="esb">Complete sessions to build telemetry.</div></div>';return;}
-  if(aTab==='volume')renderVol(c);else if(aTab==='prs')renderPRs(c);else if(aTab==='1rm')render1RM(c);else renderFreq(c);
+  if(aTab==='volume')renderVol(c);else if(aTab==='prs')renderPRs(c);else if(aTab==='1rm')render1RM(c);else if(aTab==='heatmap')renderHeatmap(c);else renderFreq(c);
 }
 function renderVol(cont){
   var recent=S.log.slice(-10);
@@ -2331,6 +2347,326 @@ function fixDuplicateDays(){
   } else {
     showToast('NO DUPLICATES FOUND');
   }
+}
+
+
+// ════════════════════════════════
+// MUSCLE HEATMAP
+// ════════════════════════════════
+
+// Primary = full credit, Secondary = 0.5 credit
+var MUSCLE_MAP = {
+  // CHEST
+  'Barbell Bench Press':      {primary:['Chest'],secondary:['Shoulders','Triceps']},
+  'Incline Dumbbell Press':   {primary:['Chest'],secondary:['Shoulders','Triceps']},
+  'Decline Barbell Press':    {primary:['Chest'],secondary:['Triceps']},
+  'Cable Fly':                {primary:['Chest'],secondary:[]},
+  'Pec Deck Machine':         {primary:['Chest'],secondary:[]},
+  'Dumbbell Pullover':        {primary:['Chest'],secondary:['Back']},
+  'Push-Up':                  {primary:['Chest'],secondary:['Shoulders','Triceps']},
+  'Dumbbell Bench Press':     {primary:['Chest'],secondary:['Shoulders','Triceps']},
+  // BACK
+  'Deadlift':                 {primary:['Back'],secondary:['Glutes','Hamstrings']},
+  'Barbell Bent-Over Row':    {primary:['Back'],secondary:['Biceps']},
+  'Bent-Over Dumbbell Row':   {primary:['Back'],secondary:['Biceps']},
+  'Pull-Up':                  {primary:['Back'],secondary:['Biceps']},
+  'Wide-Grip Lat Pulldown':   {primary:['Back'],secondary:['Biceps']},
+  'Close-Grip Lat Pulldown':  {primary:['Back'],secondary:['Biceps']},
+  'Cable Seated Row':         {primary:['Back'],secondary:['Biceps']},
+  'Seated Cable Row':         {primary:['Back'],secondary:['Biceps']},
+  'Single Arm Dumbbell Row':  {primary:['Back'],secondary:['Biceps']},
+  'Straight Arm Pulldown':    {primary:['Back'],secondary:[]},
+  'Face Pull':                {primary:['Back'],secondary:['Shoulders']},
+  'Face Pulls':               {primary:['Back'],secondary:['Shoulders']},
+  'T-Bar Row':                {primary:['Back'],secondary:['Biceps']},
+  'Rack Pull':                {primary:['Back'],secondary:[]},
+  'Rear Delt Cable Fly':      {primary:['Back'],secondary:['Shoulders']},
+  'Rear Delt Fly':            {primary:['Back'],secondary:['Shoulders']},
+  // SHOULDERS
+  'Barbell Overhead Press':   {primary:['Shoulders'],secondary:['Triceps']},
+  'Dumbbell Push Press':      {primary:['Shoulders'],secondary:['Triceps']},
+  'Arnold Press':             {primary:['Shoulders'],secondary:['Triceps']},
+  'Dumbbell Lateral Raise':   {primary:['Shoulders'],secondary:[]},
+  'Cable Lateral Raise':      {primary:['Shoulders'],secondary:[]},
+  'Front Raise':              {primary:['Shoulders'],secondary:[]},
+  'Upright Row':              {primary:['Shoulders'],secondary:['Biceps']},
+  'Barbell Shrug':            {primary:['Shoulders'],secondary:[]},
+  'Overhead Press':           {primary:['Shoulders'],secondary:['Triceps']},
+  // BICEPS
+  'EZ Bar Curl':              {primary:['Biceps'],secondary:[]},
+  'Barbell Curl':             {primary:['Biceps'],secondary:[]},
+  'Dumbbell Curl':            {primary:['Biceps'],secondary:[]},
+  'Hammer Curl':              {primary:['Biceps'],secondary:['Forearms']},
+  'Incline Dumbbell Curl':    {primary:['Biceps'],secondary:[]},
+  'Preacher Curl':            {primary:['Biceps'],secondary:[]},
+  'Cable Curl':               {primary:['Biceps'],secondary:[]},
+  // TRICEPS
+  'Weighted Tricep Dips':     {primary:['Triceps'],secondary:['Chest','Shoulders']},
+  'Tricep Dips':              {primary:['Triceps'],secondary:['Chest']},
+  'Tricep Rope Pushdown':     {primary:['Triceps'],secondary:[]},
+  'Overhead Tricep Extension':{primary:['Triceps'],secondary:[]},
+  'Skull Crusher':            {primary:['Triceps'],secondary:[]},
+  'Close-Grip Bench Press':   {primary:['Triceps'],secondary:['Chest']},
+  // LEGS - QUADS
+  'Barbell Back Squat':       {primary:['Quads'],secondary:['Glutes','Hamstrings']},
+  'Front Squat':              {primary:['Quads'],secondary:['Glutes']},
+  'Hack Squat Smith Machine': {primary:['Quads'],secondary:['Glutes']},
+  'Leg Press':                {primary:['Quads'],secondary:['Glutes','Hamstrings']},
+  'Explosive Leg Press':      {primary:['Quads'],secondary:['Glutes','Hamstrings']},
+  'Single Leg Press':         {primary:['Quads'],secondary:['Glutes']},
+  'Leg Extension':            {primary:['Quads'],secondary:[]},
+  'Bulgarian Split Squat':    {primary:['Quads'],secondary:['Glutes','Hamstrings']},
+  'Walking Lunges':           {primary:['Quads'],secondary:['Glutes','Hamstrings']},
+  'Walking Lunge':            {primary:['Quads'],secondary:['Glutes','Hamstrings']},
+  'Box Step-Up':              {primary:['Quads'],secondary:['Glutes']},
+  'Reverse Lunge Knee Drive': {primary:['Quads'],secondary:['Glutes']},
+  // LEGS - HAMSTRINGS
+  'Romanian Deadlift':        {primary:['Hamstrings'],secondary:['Glutes','Back']},
+  'Lying Leg Curl':           {primary:['Hamstrings'],secondary:[]},
+  'Seated Leg Curl':          {primary:['Hamstrings'],secondary:[]},
+  'Sumo Deadlift':            {primary:['Hamstrings'],secondary:['Glutes','Back']},
+  'Cable Pull-Through':       {primary:['Hamstrings'],secondary:['Glutes']},
+  // GLUTES
+  'Hip Thrust Smith Machine': {primary:['Glutes'],secondary:['Hamstrings']},
+  'Hip Thrust':               {primary:['Glutes'],secondary:['Hamstrings']},
+  'Glute Kickback Cable':     {primary:['Glutes'],secondary:[]},
+  'Glute Bridge':             {primary:['Glutes'],secondary:['Hamstrings']},
+  'Lateral Band Walk':        {primary:['Glutes'],secondary:[]},
+  // CALVES
+  'Standing Calf Raise':      {primary:['Calves'],secondary:[]},
+  'Seated Calf Raise':        {primary:['Calves'],secondary:[]},
+  // CORE
+  'Pallof Press':             {primary:['Core'],secondary:[]},
+  'Cable Woodchop':           {primary:['Core'],secondary:[]},
+  'Cable Woodchop High-Low':  {primary:['Core'],secondary:[]},
+  'Ab Wheel Rollout':         {primary:['Core'],secondary:[]},
+  'Hanging Leg Raise':        {primary:['Core'],secondary:[]},
+  'Cable Crunch':             {primary:['Core'],secondary:[]},
+  'Plank':                    {primary:['Core'],secondary:[]},
+  'Side Plank':               {primary:['Core'],secondary:[]},
+  'Dead Bug':                 {primary:['Core'],secondary:[]},
+  'Russian Twist':            {primary:['Core'],secondary:[]},
+  'Reverse Crunch':           {primary:['Core'],secondary:[]},
+  'In & Outs':                {primary:['Core'],secondary:[]},
+  'Bicycle Crunch':           {primary:['Core'],secondary:[]},
+  'Reverse Bicycle':          {primary:['Core'],secondary:[]},
+  'Crunchy Frog':             {primary:['Core'],secondary:[]},
+  'Wide Leg Sit-Up':          {primary:['Core'],secondary:[]},
+  'Fifer Scissors':           {primary:['Core'],secondary:[]},
+  'Hip Rock & Raise':         {primary:['Core'],secondary:[]},
+  'Pulse Ups':                {primary:['Core'],secondary:[]},
+  'V-Up Roll Up':             {primary:['Core'],secondary:[]},
+  'Oblique V-Up':             {primary:['Core'],secondary:[]},
+  'Leg Climbers':             {primary:['Core'],secondary:[]},
+  'Mason Twist':              {primary:['Core'],secondary:[]},
+  // ATHLETIC / COMPOUND
+  'Dumbbell Squat to Press':  {primary:['Quads','Shoulders'],secondary:['Glutes','Triceps']},
+  'Battle Rope Slams':        {primary:['Shoulders'],secondary:['Core','Back']},
+  "Farmer's Carry":           {primary:['Forearms'],secondary:['Core','Shoulders']},
+  'Single Arm Dumbbell Row':  {primary:['Back'],secondary:['Biceps','Core']}
+};
+
+var ALL_MUSCLES=['Chest','Back','Shoulders','Biceps','Triceps','Forearms','Quads','Hamstrings','Glutes','Calves','Core'];
+
+function getMuscleVolume(days){
+  // days = number of days to look back (7 = last week)
+  var scores={};
+  for(var i=0;i<ALL_MUSCLES.length;i++)scores[ALL_MUSCLES[i]]=0;
+  var cutoff=Date.now()-(days*24*60*60*1000);
+  for(var i=S.log.length-1;i>=0;i--){
+    var session=S.log[i];
+    if(new Date(session.date).getTime()<cutoff)break;
+    if(!session.rawSets)continue;
+    for(var exName in session.rawSets){
+      var sets=session.rawSets[exName];
+      var doneSets=sets.filter(function(s){return s.done&&!s.warmup;});
+      if(!doneSets.length)continue;
+      var map=MUSCLE_MAP[exName];
+      if(!map)continue;
+      for(var j=0;j<map.primary.length;j++){
+        if(scores[map.primary[j]]!==undefined)
+          scores[map.primary[j]]+=doneSets.length;
+      }
+      for(var j=0;j<map.secondary.length;j++){
+        if(scores[map.secondary[j]]!==undefined)
+          scores[map.secondary[j]]+=doneSets.length*0.5;
+      }
+    }
+  }
+  return scores;
+}
+
+function muscleColor(score, max){
+  if(score===0)return '#132030'; // untrained
+  var pct=score/max;
+  if(pct<0.25)return '#1a4060';  // very light
+  if(pct<0.5) return '#1a6080';  // light
+  if(pct<0.75)return '#2490b0';  // moderate
+  if(pct<1.0) return '#4fc3f7';  // strong - hl color
+  return '#ffb300';              // peak/overtrained - amber
+}
+
+function renderHeatmap(cont){
+  var scores7=getMuscleVolume(7);
+  var max7=Math.max(1,Math.max.apply(null,Object.values(scores7)));
+
+  // Header
+  var hdr=document.createElement('div');
+  hdr.className='cc';
+  hdr.innerHTML='<div class="ct">MUSCLE ACTIVATION — LAST 7 DAYS</div>';
+
+  // Legend
+  var legend=document.createElement('div');
+  legend.className='heatmap-legend';
+  var legendItems=[
+    {color:'#132030',label:'Not trained'},
+    {color:'#1a6080',label:'Light'},
+    {color:'#4fc3f7',label:'Strong'},
+    {color:'#ffb300',label:'Peak'}
+  ];
+  for(var i=0;i<legendItems.length;i++){
+    legend.innerHTML+='<div class="legend-item"><div class="legend-swatch" style="background:'+legendItems[i].color+'"></div>'+legendItems[i].label+'</div>';
+  }
+  hdr.appendChild(legend);
+
+  // Front + Back SVG body maps
+  var bodyWrap=document.createElement('div');
+  bodyWrap.className='heatmap-wrap';
+
+  // Front body
+  var frontDiv=document.createElement('div');
+  frontDiv.className='heatmap-body';
+  frontDiv.innerHTML='<div class="heatmap-label">FRONT</div>'+buildFrontSVG(scores7,max7);
+
+  // Back body
+  var backDiv=document.createElement('div');
+  backDiv.className='heatmap-body';
+  backDiv.innerHTML='<div class="heatmap-label">BACK</div>'+buildBackSVG(scores7,max7);
+
+  bodyWrap.appendChild(frontDiv);
+  bodyWrap.appendChild(backDiv);
+  hdr.appendChild(bodyWrap);
+  cont.appendChild(hdr);
+
+  // Muscle stats bars
+  var statsCard=document.createElement('div');
+  statsCard.className='cc';
+  statsCard.innerHTML='<div class="ct">SETS PER MUSCLE GROUP</div>';
+  var grid=document.createElement('div');
+  grid.className='muscle-stats';
+
+  // Sort by score desc
+  var sorted=ALL_MUSCLES.slice().sort(function(a,b){return scores7[b]-scores7[a];});
+  for(var i=0;i<sorted.length;i++){
+    var muscle=sorted[i];
+    var score=Math.round(scores7[muscle]*10)/10;
+    var pct=Math.round(score/max7*100);
+    var color=muscleColor(scores7[muscle],max7);
+    var row=document.createElement('div');
+    row.className='muscle-stat-row';
+    row.innerHTML='<div class="muscle-stat-name">'+muscle.toUpperCase()+'</div>'
+      +'<div class="muscle-stat-bar"><div class="muscle-stat-fill" style="width:'+pct+'%;background:'+color+';"></div></div>'
+      +'<div class="muscle-stat-val" style="color:'+color+';">'+score+'</div>';
+    grid.appendChild(row);
+  }
+  statsCard.appendChild(grid);
+  cont.appendChild(statsCard);
+}
+
+function buildFrontSVG(scores, max){
+  var c=muscleColor;
+  return '<svg width="130" height="280" viewBox="0 0 130 280" xmlns="http://www.w3.org/2000/svg">'
+  // Head
+  +'<ellipse cx="65" cy="22" rx="18" ry="20" fill="#1a2a3a" stroke="#2e3f4a" stroke-width="1"/>'
+  // Neck
+  +'<rect x="58" y="40" width="14" height="12" rx="3" fill="#1a2a3a" stroke="#2e3f4a" stroke-width="1"/>'
+  // Chest
+  +'<path d="M35,52 Q65,48 95,52 L98,90 Q65,95 32,90 Z" fill="'+c(scores['Chest'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Left shoulder
+  +'<ellipse cx="25" cy="65" rx="13" ry="16" fill="'+c(scores['Shoulders'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Right shoulder
+  +'<ellipse cx="105" cy="65" rx="13" ry="16" fill="'+c(scores['Shoulders'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Left bicep
+  +'<path d="M13,80 Q8,95 10,115 L22,115 Q24,95 22,80 Z" fill="'+c(scores['Biceps'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Right bicep
+  +'<path d="M117,80 Q122,95 120,115 L108,115 Q106,95 108,80 Z" fill="'+c(scores['Biceps'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Left forearm
+  +'<path d="M10,116 Q6,135 8,155 L20,155 Q22,135 22,116 Z" fill="'+c(scores['Forearms'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Right forearm
+  +'<path d="M120,116 Q124,135 122,155 L110,155 Q108,135 108,116 Z" fill="'+c(scores['Forearms'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Core/Abs
+  +'<path d="M38,90 Q65,95 92,90 L90,140 Q65,144 40,140 Z" fill="'+c(scores['Core'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Left quad
+  +'<path d="M40,144 Q38,145 35,175 Q34,195 38,210 L58,210 Q60,195 60,175 Q60,150 55,144 Z" fill="'+c(scores['Quads'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Right quad
+  +'<path d="M90,144 Q92,145 95,175 Q96,195 92,210 L72,210 Q70,195 70,175 Q70,150 75,144 Z" fill="'+c(scores['Quads'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Left knee
+  +'<ellipse cx="48" cy="215" rx="10" ry="8" fill="#1a2a3a" stroke="#2e3f4a" stroke-width="1"/>'
+  // Right knee
+  +'<ellipse cx="82" cy="215" rx="10" ry="8" fill="#1a2a3a" stroke="#2e3f4a" stroke-width="1"/>'
+  // Left calf
+  +'<path d="M38,223 Q35,245 37,265 L58,265 Q60,245 58,223 Z" fill="'+c(scores['Calves'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Right calf
+  +'<path d="M92,223 Q95,245 93,265 L72,265 Q70,245 72,223 Z" fill="'+c(scores['Calves'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Labels
+  +'<text x="65" y="76" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">CHEST</text>'
+  +'<text x="65" y="118" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">CORE</text>'
+  +'<text x="48" y="182" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">QUAD</text>'
+  +'<text x="82" y="182" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">QUAD</text>'
+  +'<text x="48" y="246" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">CALF</text>'
+  +'<text x="82" y="246" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">CALF</text>'
+  +'</svg>';
+}
+
+function buildBackSVG(scores, max){
+  var c=muscleColor;
+  return '<svg width="130" height="280" viewBox="0 0 130 280" xmlns="http://www.w3.org/2000/svg">'
+  // Head
+  +'<ellipse cx="65" cy="22" rx="18" ry="20" fill="#1a2a3a" stroke="#2e3f4a" stroke-width="1"/>'
+  // Neck
+  +'<rect x="58" y="40" width="14" height="12" rx="3" fill="#1a2a3a" stroke="#2e3f4a" stroke-width="1"/>'
+  // Upper back / traps
+  +'<path d="M35,52 Q65,48 95,52 L98,90 Q65,88 32,90 Z" fill="'+c(scores['Back'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Left shoulder (rear)
+  +'<ellipse cx="25" cy="65" rx="13" ry="16" fill="'+c(scores['Shoulders'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Right shoulder (rear)
+  +'<ellipse cx="105" cy="65" rx="13" ry="16" fill="'+c(scores['Shoulders'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Left tricep
+  +'<path d="M13,80 Q8,95 10,115 L22,115 Q24,95 22,80 Z" fill="'+c(scores['Triceps'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Right tricep
+  +'<path d="M117,80 Q122,95 120,115 L108,115 Q106,95 108,80 Z" fill="'+c(scores['Triceps'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Left forearm
+  +'<path d="M10,116 Q6,135 8,155 L20,155 Q22,135 22,116 Z" fill="'+c(scores['Forearms'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Right forearm
+  +'<path d="M120,116 Q124,135 122,155 L110,155 Q108,135 108,116 Z" fill="'+c(scores['Forearms'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Lower back / lats
+  +'<path d="M38,90 Q65,88 92,90 L90,140 Q65,144 40,140 Z" fill="'+c(scores['Back'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Left glute
+  +'<path d="M40,140 Q38,142 36,165 Q35,180 40,185 L60,185 Q64,175 62,155 Q60,142 55,140 Z" fill="'+c(scores['Glutes'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Right glute
+  +'<path d="M90,140 Q92,142 94,165 Q95,180 90,185 L70,185 Q66,175 68,155 Q70,142 75,140 Z" fill="'+c(scores['Glutes'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Left hamstring
+  +'<path d="M38,185 Q35,200 36,210 L58,210 Q60,200 60,185 Z" fill="'+c(scores['Hamstrings'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Right hamstring
+  +'<path d="M92,185 Q95,200 94,210 L72,210 Q70,200 70,185 Z" fill="'+c(scores['Hamstrings'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Left knee
+  +'<ellipse cx="48" cy="215" rx="10" ry="8" fill="#1a2a3a" stroke="#2e3f4a" stroke-width="1"/>'
+  // Right knee
+  +'<ellipse cx="82" cy="215" rx="10" ry="8" fill="#1a2a3a" stroke="#2e3f4a" stroke-width="1"/>'
+  // Left calf
+  +'<path d="M38,223 Q35,245 37,265 L58,265 Q60,245 58,223 Z" fill="'+c(scores['Calves'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Right calf
+  +'<path d="M92,223 Q95,245 93,265 L72,265 Q70,245 72,223 Z" fill="'+c(scores['Calves'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Labels
+  +'<text x="65" y="72" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">BACK</text>'
+  +'<text x="65" y="118" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">BACK</text>'
+  +'<text x="48" y="165" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">GLUTE</text>'
+  +'<text x="82" y="165" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">GLUTE</text>'
+  +'<text x="48" y="200" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">HAM</text>'
+  +'<text x="82" y="200" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">HAM</text>'
+  +'<text x="48" y="246" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">CALF</text>'
+  +'<text x="82" y="246" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">CALF</text>'
+  +'</svg>';
 }
 
 // ════════════════════════════════
