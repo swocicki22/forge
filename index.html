@@ -430,6 +430,44 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .timeline-weight{font-family:Orbitron,sans-serif;font-size:13px;color:var(--tx);}
 .timeline-orm{font-family:Share Tech Mono,monospace;font-size:8px;color:var(--am);margin-left:auto;}
 .timeline-pr-badge{font-family:Orbitron,sans-serif;font-size:6px;color:var(--bg);background:var(--am);padding:2px 5px;border-radius:1px;margin-left:6px;}
+
+/* ── INTERMITTENT FASTING ── */
+.if-timer-card{background:var(--card);border:1px solid var(--bl);border-radius:2px;padding:16px;margin-bottom:8px;text-align:center;position:relative;overflow:hidden;}
+.if-timer-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--hl),transparent);}
+.if-status-label{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:4px;}
+.if-timer-display{font-family:'Orbitron',sans-serif;font-size:36px;font-weight:900;color:var(--hlb);line-height:1;margin:8px 0;}
+.if-progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin:8px 0;}
+.if-progress-fill{height:100%;border-radius:3px;transition:width .5s;}
+.if-sub{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--s2);margin-bottom:12px;}
+.if-btn-row{display:flex;gap:6px;justify-content:center;}
+.if-btn{flex:1;background:transparent;border:1px solid var(--hlbr);color:var(--hl);border-radius:2px;padding:10px;font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:.1em;cursor:pointer;}
+.if-btn:active{background:var(--hld);}
+.if-btn.danger{border-color:rgba(239,83,80,.3);color:var(--danger);}
+.if-btn.danger:active{background:rgba(239,83,80,.08);}
+.if-protocol-row{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap;}
+.if-protocol-btn{flex:1;min-width:60px;background:transparent;border:1px solid var(--border);border-radius:2px;padding:6px 4px;font-family:'Orbitron',sans-serif;font-size:6px;letter-spacing:.08em;color:var(--s2);cursor:pointer;text-align:center;}
+.if-protocol-btn.active{background:var(--hld);border-color:var(--hlbr);color:var(--hl);}
+.monster-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(76,175,80,.08);border:1px solid rgba(76,175,80,.25);border-radius:2px;padding:5px 10px;font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--gr);margin-top:6px;}
+
+/* ── DIET PLAN ── */
+.macro-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;}
+.macro-card{background:var(--card);border:1px solid var(--bl);border-radius:2px;padding:10px 6px;text-align:center;}
+.macro-val{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--hlb);line-height:1;}
+.macro-unit{font-family:'Share Tech Mono',monospace;font-size:6px;color:var(--s2);margin-top:2px;}
+.macro-label{font-family:'Share Tech Mono',monospace;font-size:6px;letter-spacing:.1em;text-transform:uppercase;color:var(--s3);margin-top:3px;}
+.macro-bar-wrap{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:5px;}
+.macro-bar-fill{height:100%;border-radius:2px;}
+.meal-item{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:10px 12px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.meal-item:active{background:var(--card2);}
+.meal-check{width:20px;height:20px;border-radius:2px;border:1px solid var(--bl);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;transition:all .15s;}
+.meal-check.on{background:var(--gr);border-color:var(--gr);color:var(--bg);}
+.meal-name{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--tx);flex:1;}
+.meal-macros{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--s2);margin-top:1px;}
+.meal-time{font-family:'Orbitron',sans-serif;font-size:7px;color:var(--hl);flex-shrink:0;}
+.cut-goal-bar{background:var(--card);border:1px solid var(--bl);border-radius:2px;padding:12px;margin-bottom:8px;}
+.cut-goal-title{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:.12em;color:var(--hlb);margin-bottom:8px;}
+.cut-progress{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin:6px 0;}
+.cut-progress-fill{height:100%;border-radius:4px;background:var(--hl);transition:width .3s;}
 </style>
 </head>
 <body>
@@ -1345,7 +1383,7 @@ function renderEditor(){
     var sd1=document.createElement('div');sd1.className='section-div';sd1.textContent='EXERCISES';cont.appendChild(sd1);
     for(var i=0;i<main.length;i++)cont.appendChild(buildEditorRow(main[i].ex,main[i].idx));
     var ab=document.createElement('button');ab.className='add-ex-btn';ab.innerHTML='+ ADD EXERCISE';ab.onclick=function(){openAddExercise(false);};cont.appendChild(ab);
-    if(core.length){var sd2=document.createElement('div');sd2.className='section-div';sd2.textContent='AB RIPPER X';cont.appendChild(sd2);for(var i=0;i<core.length;i++)cont.appendChild(buildEditorRow(core[i].ex,core[i].idx));}
+    if(core.length){var sd2=document.createElement('div');sd2.className='section-div';sd2.textContent='AB PROTOCOL';cont.appendChild(sd2);for(var i=0;i<core.length;i++)cont.appendChild(buildEditorRow(core[i].ex,core[i].idx));}
     var ac=document.createElement('button');ac.className='add-ex-btn';ac.style.borderColor='var(--en)';ac.style.color='var(--en)';ac.innerHTML='+ ADD AB WORKOUT';ac.onclick=function(){openAbDiff();};cont.appendChild(ac);
   }
   var resetBtn=document.createElement('button');resetBtn.style.cssText='width:100%;background:transparent;border:1px solid var(--border);color:var(--s2);border-radius:2px;padding:9px;font-family:\'Orbitron\',sans-serif;font-size:7px;letter-spacing:.1em;cursor:pointer;margin-top:16px;';resetBtn.textContent='RESET TO DEFAULT PRESET';resetBtn.onclick=function(){resetDayToPreset();};cont.appendChild(resetBtn);
@@ -1418,7 +1456,7 @@ function renderActive(){
     list.appendChild(blk);
   }
   if(core.length){
-    var ah=document.createElement('div');ah.className='abh';ah.innerHTML='<div style="font-family:\'Orbitron\',sans-serif;font-size:11px;color:var(--en);flex-shrink:0;">AB</div><div><div class="abt">AB RIPPER X</div><div class="abs2">25 REPS EACH — ~16 MIN — NO REST</div></div>';list.appendChild(ah);
+    var ah=document.createElement('div');ah.className='abh';ah.innerHTML='<div style="font-family:\'Orbitron\',sans-serif;font-size:11px;color:var(--en);flex-shrink:0;">AB</div><div><div class="abt">AB PROTOCOL</div><div class="abs2">25 REPS EACH — ~16 MIN — NO REST</div></div>';list.appendChild(ah);
     for(var i=0;i<core.length;i++){
       var ex=core[i];var ek=ex.name.replace(/[^a-zA-Z0-9]/g,'_');var sets=S.sets[ex.name];if(!sets)continue;
       var blk=document.createElement('div');blk.className='eb';blk.style.marginBottom='3px';
@@ -1594,6 +1632,10 @@ function filtLib(){var inp=el('srchi');var q=inp?inp.value.toLowerCase():'';var 
 // ════════════════════════════════
 function renderBody(){
   var cont=el('body-content');cont.innerHTML='';
+  // IF Tracker
+  renderIFSection(cont);
+  // Diet Plan
+  renderDietSection(cont);
   var bt=document.createElement('div');bt.className='bio-title';bt.textContent='Body Composition';cont.appendChild(bt);
   if(S.bio.weight||S.bio.height){var g=document.createElement('div');g.className='bio-grid-3';g.style.marginBottom='10px;';if(S.bio.weight){var c=document.createElement('div');c.className='bio-card';c.innerHTML='<div class="bio-label">Weight</div><div class="bio-val">'+S.bio.weight+'</div><div class="bio-unit">lbs</div>';g.appendChild(c);}if(S.bio.height){var c=document.createElement('div');c.className='bio-card';c.innerHTML='<div class="bio-label">Height</div><div class="bio-val">'+S.bio.height+'</div><div class="bio-unit">in</div>';g.appendChild(c);}if(S.bio.age){var c=document.createElement('div');c.className='bio-card';c.innerHTML='<div class="bio-label">Age</div><div class="bio-val">'+S.bio.age+'</div><div class="bio-unit">yrs</div>';g.appendChild(c);}if(S.bio.bf){var c=document.createElement('div');c.className='bio-card';c.innerHTML='<div class="bio-label">Body Fat</div><div class="bio-val">'+S.bio.bf+'</div><div class="bio-unit">%</div>';g.appendChild(c);}cont.appendChild(g);}
   function bioRow(label,field,type,ph,opts){var row=document.createElement('div');row.className='bio-row';row.innerHTML='<div class="bio-row-lbl">'+label+'</div>';if(opts){var sel=document.createElement('select');sel.className='bio-sel';sel.id='bio-'+field;sel.innerHTML='<option value="">Select</option>';for(var i=0;i<opts.length;i++)sel.innerHTML+='<option value="'+opts[i]+'"'+(S.bio[field]===opts[i]?' selected':'')+'>'+opts[i]+'</option>';row.appendChild(sel);}else{var inp=document.createElement('input');inp.className='bio-inp';inp.id='bio-'+field;inp.type=type||'text';inp.placeholder=ph||'';if(type==='number')inp.inputMode='decimal';inp.value=S.bio[field]||'';row.appendChild(inp);}return row;}
@@ -3025,6 +3067,255 @@ function renderTimeline(cont){
       list.appendChild(row);
     }
   };
+}
+
+
+// ════════════════════════════════
+// INTERMITTENT FASTING TRACKER
+// ════════════════════════════════
+var IF_PROTOCOLS={
+  '16:8': {fast:16,eat:8,label:'16:8'},
+  '18:6': {fast:18,eat:6,label:'18:6'},
+  '20:4': {fast:20,eat:4,label:'20:4'},
+  'OMAD':  {fast:23,eat:1,label:'OMAD'},
+  'Custom':{fast:16,eat:8,label:'Custom'}
+};
+
+function getIFData(){
+  if(!S.bio.ifData)S.bio.ifData={
+    protocol:'16:8',
+    fastStart:null,
+    isFasting:false,
+    log:{},
+    customFast:16
+  };
+  return S.bio.ifData;
+}
+
+function renderIFSection(cont){
+  var ifd=getIFData();
+  var proto=IF_PROTOCOLS[ifd.protocol]||IF_PROTOCOLS['16:8'];
+  var fastHours=ifd.protocol==='Custom'?(ifd.customFast||16):proto.fast;
+
+  var title=document.createElement('div');
+  title.className='bio-title';title.textContent='Intermittent Fasting';
+  cont.appendChild(title);
+
+  // Protocol selector
+  var protoWrap=document.createElement('div');
+  protoWrap.className='if-protocol-row';
+  var protocols=Object.keys(IF_PROTOCOLS);
+  for(var i=0;i<protocols.length;i++){
+    var p=protocols[i];
+    var btn=document.createElement('button');
+    btn.className='if-protocol-btn'+(ifd.protocol===p?' active':'');
+    btn.textContent=p;
+    (function(proto){btn.onclick=function(){
+      var ifd=getIFData();
+      ifd.protocol=proto;
+      saveState();renderBody();
+    };})(p);
+    protoWrap.appendChild(btn);
+  }
+  cont.appendChild(protoWrap);
+
+  // Timer card
+  var card=document.createElement('div');
+  card.className='if-timer-card';
+
+  var now=Date.now();
+  var elapsed=ifd.fastStart&&ifd.isFasting?Math.floor((now-ifd.fastStart)/1000):0;
+  var totalSecs=fastHours*3600;
+  var remaining=Math.max(0,totalSecs-elapsed);
+  var pct=ifd.isFasting?Math.min(100,Math.round(elapsed/totalSecs*100)):0;
+
+  var hrs=Math.floor(remaining/3600);
+  var mins=Math.floor((remaining%3600)/60);
+  var timeStr=(hrs<10?'0':'')+hrs+':'+(mins<10?'0':'')+mins;
+
+  var fillColor=pct>=100?'var(--gr)':pct>=75?'var(--hl)':pct>=50?'var(--am)':'var(--s2)';
+  var statusText=!ifd.isFasting?'NOT FASTING':pct>=100?'FAST COMPLETE!':'FASTING';
+  var statusColor=!ifd.isFasting?'var(--s2)':pct>=100?'var(--gr)':'var(--hl)';
+
+  card.innerHTML='<div class="if-status-label" style="color:'+statusColor+';">'+statusText+'</div>'
+    +'<div class="if-timer-display">'+timeStr+'</div>'
+    +'<div class="if-progress-bar"><div class="if-progress-fill" style="width:'+pct+'%;background:'+fillColor+';"></div></div>'
+    +'<div class="if-sub">'+(ifd.isFasting?pct+'% of '+fastHours+'h fast complete':'Tap START FAST to begin your '+fastHours+'h fast')+'</div>'
+    +'<div class="monster-badge">&#9989; Zero Ultra Monster — Safe during fast</div>';
+
+  var btnRow=document.createElement('div');btnRow.className='if-btn-row';btnRow.style.marginTop='12px';
+  if(!ifd.isFasting){
+    var startBtn=document.createElement('button');startBtn.className='if-btn';startBtn.textContent='START FAST';
+    startBtn.onclick=function(){var ifd=getIFData();ifd.fastStart=Date.now();ifd.isFasting=true;saveState();renderBody();};
+    btnRow.appendChild(startBtn);
+  } else {
+    var breakBtn=document.createElement('button');breakBtn.className='if-btn';breakBtn.textContent='BREAK FAST';
+    breakBtn.onclick=function(){
+      var ifd=getIFData();
+      var today=todayKey();
+      var elapsed2=Math.floor((Date.now()-ifd.fastStart)/1000);
+      var success=elapsed2>=(fastHours*3600*0.9); // 90% completion = success
+      if(!ifd.log[today])ifd.log[today]={};
+      ifd.log[today].completed=success;
+      ifd.log[today].hours=Math.round(elapsed2/3600*10)/10;
+      ifd.isFasting=false;ifd.fastStart=null;
+      saveState();renderBody();
+    };
+    var cancelBtn=document.createElement('button');cancelBtn.className='if-btn danger';cancelBtn.textContent='CANCEL';
+    cancelBtn.onclick=function(){var ifd=getIFData();ifd.isFasting=false;ifd.fastStart=null;saveState();renderBody();};
+    btnRow.appendChild(breakBtn);
+    btnRow.appendChild(cancelBtn);
+  }
+  card.appendChild(btnRow);
+  cont.appendChild(card);
+
+  // 7-day IF compliance
+  var compCard=document.createElement('div');compCard.className='bio-card';compCard.style.marginBottom='8px';
+  compCard.innerHTML='<div class="bio-label" style="margin-bottom:8px;">7-DAY FASTING LOG</div>';
+  var streak=0;var d=new Date();var hitToday=false;
+  for(var i=0;i<7;i++){
+    var dd=new Date(d);dd.setDate(dd.getDate()-i);
+    var key=dd.getFullYear()+'-'+(dd.getMonth()+1)+'-'+dd.getDate();
+    var dayData=ifd.log&&ifd.log[key];
+    var success=dayData&&dayData.completed;
+    if(success&&i===0)hitToday=true;
+    if(success)streak++;else if(i>0)streak=0; // only count consecutive from today back
+    var dayRow=document.createElement('div');
+    dayRow.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:5px;';
+    var dateStr=i===0?'Today':i===1?'Yesterday':dd.toLocaleDateString(undefined,{weekday:'short'});
+    var hoursStr=dayData&&dayData.hours?dayData.hours+'h':'—';
+    dayRow.innerHTML='<div style="font-family:Share Tech Mono,monospace;font-size:8px;color:var(--s2);width:65px;flex-shrink:0;">'+dateStr+'</div>'
+      +'<div style="flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="height:100%;width:'+(success?'100':'0')+'%;background:'+(success?'var(--gr)':'var(--border)')+';;border-radius:2px;"></div></div>'
+      +'<div style="font-family:Orbitron,sans-serif;font-size:7px;color:'+(success?'var(--gr)':'var(--s3)')+';">'+hoursStr+'</div>';
+    compCard.appendChild(dayRow);
+  }
+  var streakDiv=document.createElement('div');
+  streakDiv.style.cssText='font-family:Orbitron,sans-serif;font-size:9px;color:var(--am);margin-top:6px;';
+  streakDiv.textContent=streak+' DAY STREAK';
+  compCard.appendChild(streakDiv);
+  cont.appendChild(compCard);
+}
+
+// ════════════════════════════════
+// DIET PLAN — AGGRESSIVE CUT
+// ════════════════════════════════
+var CUT_MEALS=[
+  {id:'m1', time:'12:00 PM', name:'Break Fast — Protein Bowl',      p:50,c:30,f:10, desc:'6 egg whites + 2 whole eggs scrambled, 1 cup greek yogurt, berries'},
+  {id:'m2', time:'2:30 PM',  name:'Pre-Workout Meal',               p:40,c:50,f:8,  desc:'Chicken breast 6oz, 1 cup white rice, handful of spinach'},
+  {id:'m3', time:'POST',     name:'Post-Workout Shake',             p:45,c:25,f:3,  desc:'2 scoops whey protein, 1 banana, water — within 30min of training'},
+  {id:'m4', time:'7:00 PM',  name:'Final Meal — Protein + Fats',    p:50,c:15,f:20, desc:'Salmon 6oz or lean beef 6oz, large salad, olive oil dressing, avocado'},
+];
+
+function getDietLog(){
+  var today=todayKey();
+  if(!S.bio.dietLog)S.bio.dietLog={};
+  if(!S.bio.dietLog[today])S.bio.dietLog[today]={};
+  return S.bio.dietLog[today];
+}
+
+function calcMacroTargets(){
+  var weight=parseFloat(S.bio.weight)||185;
+  var protein=Math.round(weight*1.0);    // 1g per lb
+  var calories=Math.round(weight*12);    // aggressive cut: ~12 cal/lb
+  var fat=Math.round(weight*0.35);       // 0.35g per lb
+  var carbs=Math.round((calories - protein*4 - fat*9)/4);
+  return {protein:protein,carbs:Math.max(50,carbs),fat:fat,calories:calories};
+}
+
+function renderDietSection(cont){
+  var targets=calcMacroTargets();
+  var log=getDietLog();
+
+  // Calculate consumed macros
+  var consumed={p:0,c:0,f:0};
+  for(var i=0;i<CUT_MEALS.length;i++){
+    if(log[CUT_MEALS[i].id]){
+      consumed.p+=CUT_MEALS[i].p;
+      consumed.c+=CUT_MEALS[i].c;
+      consumed.f+=CUT_MEALS[i].f;
+    }
+  }
+  var consumedCal=consumed.p*4+consumed.c*4+consumed.f*9;
+
+  var title=document.createElement('div');
+  title.className='bio-title';title.textContent='Cut Protocol — Diet';
+  cont.appendChild(title);
+
+  // Cutting goal progress
+  var startWeight=parseFloat(S.bio.cutStartWeight)||parseFloat(S.bio.weight)||185;
+  var currentWeight=S.bwLog.length?S.bwLog[S.bwLog.length-1].w:parseFloat(S.bio.weight)||185;
+  var goalWeight=parseFloat(S.bio.goalweight)||(startWeight-12);
+  var totalLoss=startWeight-goalWeight;
+  var achieved=Math.max(0,startWeight-currentWeight);
+  var pct=totalLoss>0?Math.min(100,Math.round(achieved/totalLoss*100)):0;
+
+  var goalCard=document.createElement('div');goalCard.className='cut-goal-bar';
+  goalCard.innerHTML='<div class="cut-goal-title">CUTTING GOAL</div>'
+    +'<div style="display:flex;justify-content:space-between;font-family:Share Tech Mono,monospace;font-size:8px;color:var(--s2);">'
+    +'<span>Start: '+startWeight+'lb</span><span>Goal: '+goalWeight+'lb</span></div>'
+    +'<div class="cut-progress"><div class="cut-progress-fill" style="width:'+pct+'%;"></div></div>'
+    +'<div style="display:flex;justify-content:space-between;font-family:Share Tech Mono,monospace;font-size:8px;">'
+    +'<span style="color:var(--hl);">Lost: '+achieved.toFixed(1)+'lb</span>'
+    +'<span style="color:var(--s2);">Remaining: '+(Math.max(0,totalLoss-achieved)).toFixed(1)+'lb</span></div>';
+  cont.appendChild(goalCard);
+
+  // Macro targets
+  var macroDiv=document.createElement('div');macroDiv.className='macro-grid';
+  var macros=[
+    {label:'Calories',val:consumedCal+'/'+targets.calories,unit:'kcal',color:'#4fc3f7',pct:Math.min(100,Math.round(consumedCal/targets.calories*100))},
+    {label:'Protein', val:consumed.p+'/'+targets.protein,  unit:'g',   color:'#4caf50',pct:Math.min(100,Math.round(consumed.p/targets.protein*100))},
+    {label:'Carbs',   val:consumed.c+'/'+targets.carbs,    unit:'g',   color:'#ffb300',pct:Math.min(100,Math.round(consumed.c/targets.carbs*100))},
+    {label:'Fat',     val:consumed.f+'/'+targets.fat,      unit:'g',   color:'#ef5350',pct:Math.min(100,Math.round(consumed.f/targets.fat*100))},
+  ];
+  for(var i=0;i<macros.length;i++){
+    var m=macros[i];
+    var mc=document.createElement('div');mc.className='macro-card';
+    mc.innerHTML='<div class="macro-val" style="color:'+m.color+';font-size:12px;">'+m.val+'</div>'
+      +'<div class="macro-unit">'+m.unit+'</div>'
+      +'<div class="macro-label">'+m.label+'</div>'
+      +'<div class="macro-bar-wrap"><div class="macro-bar-fill" style="width:'+m.pct+'%;background:'+m.color+';"></div></div>';
+    macroDiv.appendChild(mc);
+  }
+  cont.appendChild(macroDiv);
+
+  // Meal checklist
+  var mealTitle=document.createElement('div');
+  mealTitle.style.cssText='font-family:Share Tech Mono,monospace;font-size:7px;letter-spacing:.16em;text-transform:uppercase;color:var(--s2);margin-bottom:6px;';
+  mealTitle.textContent="TODAY'S MEALS";
+  cont.appendChild(mealTitle);
+
+  for(var i=0;i<CUT_MEALS.length;i++){
+    var meal=CUT_MEALS[i];
+    var on=!!log[meal.id];
+    var item=document.createElement('div');item.className='meal-item';
+    item.innerHTML='<div class="meal-check'+(on?' on':'')+'">'+( on?'&#10003;':'')+'</div>'
+      +'<div style="flex:1;">'
+      +'<div class="meal-name">'+meal.name+'</div>'
+      +'<div class="meal-macros">P:'+meal.p+'g  C:'+meal.c+'g  F:'+meal.f+'g  — '+meal.desc+'</div>'
+      +'</div>'
+      +'<div class="meal-time">'+meal.time+'</div>';
+    (function(mid){item.onclick=function(){
+      var log=getDietLog();
+      log[mid]=!log[mid];
+      if(!S.bio.dietLog)S.bio.dietLog={};
+      S.bio.dietLog[todayKey()]=log;
+      saveState();renderBody();
+    };})(meal.id);
+    cont.appendChild(item);
+  }
+
+  // Tips
+  var tipsCard=document.createElement('div');tipsCard.className='cc';tipsCard.style.marginTop='8px';
+  tipsCard.innerHTML='<div class="ct">CUTTING TIPS</div>'
+    +'<div style="font-family:Share Tech Mono,monospace;font-size:8px;color:var(--st);line-height:2;letter-spacing:.04em;">'
+    +'&#9654; Hit protein target every day — non-negotiable<br>'
+    +'&#9654; Eat carbs around training only (pre + post workout)<br>'
+    +'&#9654; Keep fats from quality sources (salmon, eggs, avocado)<br>'
+    +'&#9654; Zero Ultra Monsters are fine during fasting window<br>'
+    +'&#9654; Aim for 1-1.5 lb loss per week — faster risks muscle loss<br>'
+    +'&#9654; Weigh yourself same time each morning (after waking, before eating)'
+    +'</div>';
+  cont.appendChild(tipsCard);
 }
 
 // ════════════════════════════════
