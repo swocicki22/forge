@@ -3352,7 +3352,7 @@ function renderDietSection(cont){
 // T = Training day (higher carbs), R = Rest/Mobility day (lower carbs)
 var WEEK_MEAL_PLAN = [
   {
-    day:'MON', label:'Day 01 — Upper Power', type:'T',
+    day:'01', label:'Day 01 — Upper Power', type:'T',
     calories:2100, protein:185, carbs:175, fat:65,
     meals:[
       {time:'12:00 PM', name:'Break Fast — Power Eggs',
@@ -3370,7 +3370,7 @@ var WEEK_MEAL_PLAN = [
     ]
   },
   {
-    day:'TUE', label:'Day 02 — Lower Power', type:'T',
+    day:'02', label:'Day 02 — Lower Power', type:'T',
     calories:2200, protein:185, carbs:190, fat:65,
     meals:[
       {time:'12:00 PM', name:'Break Fast — Protein Oats',
@@ -3388,7 +3388,7 @@ var WEEK_MEAL_PLAN = [
     ]
   },
   {
-    day:'WED', label:'Day 03 — Upper Mobility', type:'R',
+    day:'03', label:'Day 03 — Upper Mobility', type:'R',
     calories:1800, protein:185, carbs:100, fat:70,
     meals:[
       {time:'12:00 PM', name:'Break Fast — Egg & Avocado',
@@ -3406,7 +3406,7 @@ var WEEK_MEAL_PLAN = [
     ]
   },
   {
-    day:'THU', label:'Day 04 — Upper Hypertrophy', type:'T',
+    day:'04', label:'Day 04 — Upper Hypertrophy', type:'T',
     calories:2100, protein:185, carbs:175, fat:65,
     meals:[
       {time:'12:00 PM', name:'Break Fast — Power Eggs',
@@ -3424,7 +3424,7 @@ var WEEK_MEAL_PLAN = [
     ]
   },
   {
-    day:'FRI', label:'Day 05 — Lower Hypertrophy', type:'T',
+    day:'05', label:'Day 05 — Lower Hypertrophy', type:'T',
     calories:2200, protein:185, carbs:190, fat:65,
     meals:[
       {time:'12:00 PM', name:'Break Fast — Protein Pancakes',
@@ -3442,7 +3442,7 @@ var WEEK_MEAL_PLAN = [
     ]
   },
   {
-    day:'SAT', label:'Day 06 — Full Athletic', type:'T',
+    day:'06', label:'Day 06 — Full Athletic', type:'T',
     calories:2100, protein:185, carbs:170, fat:65,
     meals:[
       {time:'12:00 PM', name:'Break Fast — Greek Yogurt Bowl',
@@ -3460,7 +3460,7 @@ var WEEK_MEAL_PLAN = [
     ]
   },
   {
-    day:'SUN', label:'Day 07 — Lower Mobility', type:'R',
+    day:'07', label:'Day 07 — Lower Mobility', type:'R',
     calories:1800, protein:185, carbs:95, fat:72,
     meals:[
       {time:'12:00 PM', name:'Break Fast — Cottage Cheese & Eggs',
@@ -3571,7 +3571,7 @@ function renderMealPlan(cont){
     var hdr=document.createElement('div');
     hdr.className='meal-plan-day-header';
     hdr.innerHTML='<div>'
-      +'<div class="meal-plan-day-title" style="color:'+typeColor+';">'+day.day+' — '+day.label+'</div>'
+      +'<div class="meal-plan-day-title" style="color:'+typeColor+';">'+day.label+'</div>'
       +'<div class="meal-plan-day-meta">'+day.calories+' cal &nbsp;·&nbsp; P:'+day.protein+'g C:'+day.carbs+'g F:'+day.fat+'g</div>'
       +'</div>'
       +'<div style="color:var(--hl);font-family:Orbitron,sans-serif;font-size:10px;">'+(isOpen?'&#9660;':'&#9654;')+'</div>';
@@ -3790,7 +3790,7 @@ function generateMealPlan(){
     if(!proteins.length)return; // can't build without protein
   }
 
-  var days=['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  var days=['01','02','03','04','05','06','07'];
   var labels=['Day 01 — Upper Power','Day 02 — Lower Power','Day 03 — Upper Mobility',
               'Day 04 — Upper Hypertrophy','Day 05 — Lower Hypertrophy','Day 06 — Full Athletic','Day 07 — Lower Mobility'];
   var types=['T','T','R','T','T','T','R'];
