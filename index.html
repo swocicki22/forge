@@ -468,6 +468,31 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .cut-goal-title{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:.12em;color:var(--hlb);margin-bottom:8px;}
 .cut-progress{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin:6px 0;}
 .cut-progress-fill{height:100%;border-radius:4px;background:var(--hl);transition:width .3s;}
+
+/* ── WEEK MEAL PLAN ── */
+.meal-plan-day{background:var(--card);border:1px solid var(--bl);border-radius:2px;margin-bottom:6px;overflow:hidden;}
+.meal-plan-day-header{padding:10px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;border-bottom:1px solid var(--border);}
+.meal-plan-day-title{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--hlb);}
+.meal-plan-day-meta{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--s2);}
+.meal-plan-day-body{padding:10px 12px;display:none;}
+.meal-plan-day-body.open{display:block;}
+.meal-plan-meal{padding:7px 0;border-bottom:1px solid var(--border);}
+.meal-plan-meal:last-child{border-bottom:none;}
+.meal-plan-meal-time{font-family:'Orbitron',sans-serif;font-size:7px;color:var(--hl);letter-spacing:.1em;margin-bottom:2px;}
+.meal-plan-meal-name{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--tx);margin-bottom:2px;}
+.meal-plan-meal-desc{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--s2);line-height:1.6;}
+.meal-plan-meal-macros{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--am);margin-top:3px;}
+
+/* ── SHOPPING LIST ── */
+.shop-category{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:.14em;color:var(--hlb);margin:12px 0 6px;display:flex;align-items:center;gap:8px;}
+.shop-category::after{content:'';flex:1;height:1px;background:var(--border);}
+.shop-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.shop-item:last-child{border-bottom:none;}
+.shop-check{width:18px;height:18px;border-radius:2px;border:1px solid var(--bl);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;transition:all .15s;}
+.shop-check.on{background:var(--gr);border-color:var(--gr);color:var(--bg);}
+.shop-item-name{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:12px;color:var(--tx);flex:1;}
+.shop-item-qty{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--s2);flex-shrink:0;}
+.shop-item.checked .shop-item-name{text-decoration:line-through;color:var(--s3);}
 </style>
 </head>
 <body>
@@ -1636,6 +1661,8 @@ function renderBody(){
   renderIFSection(cont);
   // Diet Plan
   renderDietSection(cont);
+  // Meal Plan
+  renderMealPlan(cont);
   var bt=document.createElement('div');bt.className='bio-title';bt.textContent='Body Composition';cont.appendChild(bt);
   if(S.bio.weight||S.bio.height){var g=document.createElement('div');g.className='bio-grid-3';g.style.marginBottom='10px;';if(S.bio.weight){var c=document.createElement('div');c.className='bio-card';c.innerHTML='<div class="bio-label">Weight</div><div class="bio-val">'+S.bio.weight+'</div><div class="bio-unit">lbs</div>';g.appendChild(c);}if(S.bio.height){var c=document.createElement('div');c.className='bio-card';c.innerHTML='<div class="bio-label">Height</div><div class="bio-val">'+S.bio.height+'</div><div class="bio-unit">in</div>';g.appendChild(c);}if(S.bio.age){var c=document.createElement('div');c.className='bio-card';c.innerHTML='<div class="bio-label">Age</div><div class="bio-val">'+S.bio.age+'</div><div class="bio-unit">yrs</div>';g.appendChild(c);}if(S.bio.bf){var c=document.createElement('div');c.className='bio-card';c.innerHTML='<div class="bio-label">Body Fat</div><div class="bio-val">'+S.bio.bf+'</div><div class="bio-unit">%</div>';g.appendChild(c);}cont.appendChild(g);}
   function bioRow(label,field,type,ph,opts){var row=document.createElement('div');row.className='bio-row';row.innerHTML='<div class="bio-row-lbl">'+label+'</div>';if(opts){var sel=document.createElement('select');sel.className='bio-sel';sel.id='bio-'+field;sel.innerHTML='<option value="">Select</option>';for(var i=0;i<opts.length;i++)sel.innerHTML+='<option value="'+opts[i]+'"'+(S.bio[field]===opts[i]?' selected':'')+'>'+opts[i]+'</option>';row.appendChild(sel);}else{var inp=document.createElement('input');inp.className='bio-inp';inp.id='bio-'+field;inp.type=type||'text';inp.placeholder=ph||'';if(type==='number')inp.inputMode='decimal';inp.value=S.bio[field]||'';row.appendChild(inp);}return row;}
@@ -3316,6 +3343,311 @@ function renderDietSection(cont){
     +'&#9654; Weigh yourself same time each morning (after waking, before eating)'
     +'</div>';
   cont.appendChild(tipsCard);
+}
+
+
+// ════════════════════════════════
+// 7-DAY MEAL PLAN
+// ════════════════════════════════
+// T = Training day (higher carbs), R = Rest/Mobility day (lower carbs)
+var WEEK_MEAL_PLAN = [
+  {
+    day:'MON', label:'Day 01 — Upper Power', type:'T',
+    calories:2100, protein:185, carbs:175, fat:65,
+    meals:[
+      {time:'12:00 PM', name:'Break Fast — Power Eggs',
+       desc:'6 egg whites + 2 whole eggs scrambled in 1 tbsp butter\n1 cup Greek yogurt (plain, 2%)\n1/2 cup mixed berries\nBlack coffee or Zero Ultra Monster',
+       p:55,c:25,f:18},
+      {time:'2:30 PM', name:'Pre-Workout — Rice & Chicken',
+       desc:'6oz chicken breast (grilled)\n1 cup white rice\nHandful baby spinach + olive oil drizzle\n16oz water',
+       p:50,c:60,f:8},
+      {time:'POST', name:'Post-Workout Shake',
+       desc:'2 scoops whey protein\n1 medium banana\n8oz water or almond milk\nTake within 30 min of finishing',
+       p:48,c:32,f:3},
+      {time:'7:00 PM', name:'Final Meal — Salmon & Greens',
+       desc:'6oz Atlantic salmon (baked)\nLarge mixed greens salad\n1/2 avocado\n2 tbsp olive oil + lemon dressing\n1/2 cup broccoli',
+       p:42,c:12,f:28}
+    ]
+  },
+  {
+    day:'TUE', label:'Day 02 — Lower Power', type:'T',
+    calories:2200, protein:185, carbs:190, fat:65,
+    meals:[
+      {time:'12:00 PM', name:'Break Fast — Protein Oats',
+       desc:'1 cup oats cooked\n1 scoop whey protein stirred in\n1 tbsp almond butter\n1/2 banana sliced\nBlack coffee or Zero Ultra Monster',
+       p:45,c:65,f:12},
+      {time:'2:30 PM', name:'Pre-Workout — Turkey Rice Bowl',
+       desc:'6oz lean ground turkey (93%)\n1.5 cups white rice\n1/2 cup black beans\nSalsa, lime juice\n16oz water',
+       p:55,c:75,f:10},
+      {time:'POST', name:'Post-Workout Shake',
+       desc:'2 scoops whey protein\n1 medium banana\n8oz water\nWithin 30 min of finishing',
+       p:48,c:32,f:3},
+      {time:'7:00 PM', name:'Final Meal — Lean Beef & Veg',
+       desc:'6oz 93% lean ground beef\n1 cup roasted broccoli + cauliflower\n1/2 avocado\nSalt, pepper, garlic powder',
+       p:45,c:15,f:28}
+    ]
+  },
+  {
+    day:'WED', label:'Day 03 — Upper Mobility', type:'R',
+    calories:1800, protein:185, carbs:100, fat:70,
+    meals:[
+      {time:'12:00 PM', name:'Break Fast — Egg & Avocado',
+       desc:'3 whole eggs scrambled in 1 tbsp butter\n1/2 avocado sliced\n2 slices turkey bacon\nBlack coffee or Zero Ultra Monster',
+       p:38,c:8,f:30},
+      {time:'3:00 PM', name:'Midday — Cottage Cheese Bowl',
+       desc:'1.5 cups cottage cheese (low fat)\n1/4 cup walnuts\n1/2 cup blueberries\nCinnamon',
+       p:45,c:22,f:18},
+      {time:'6:00 PM', name:'Dinner — Chicken & Salad',
+       desc:'7oz chicken breast (grilled)\nLarge Caesar salad (romaine, parmesan, olive oil)\n1/2 cup cherry tomatoes\nNo croutons',
+       p:55,c:12,f:18},
+      {time:'7:45 PM', name:'Evening Snack — Protein',
+       desc:'1 scoop casein protein in water\nOR 1 cup Greek yogurt\n10 almonds',
+       p:30,c:8,f:8}
+    ]
+  },
+  {
+    day:'THU', label:'Day 04 — Upper Hypertrophy', type:'T',
+    calories:2100, protein:185, carbs:175, fat:65,
+    meals:[
+      {time:'12:00 PM', name:'Break Fast — Power Eggs',
+       desc:'6 egg whites + 2 whole eggs scrambled in 1 tbsp butter\n1 cup Greek yogurt (plain)\n1/2 cup strawberries\nBlack coffee or Zero Ultra Monster',
+       p:55,c:25,f:18},
+      {time:'2:30 PM', name:'Pre-Workout — Chicken & Sweet Potato',
+       desc:'6oz chicken breast\n1 medium sweet potato (baked)\nHandful spinach\n16oz water',
+       p:48,c:55,f:5},
+      {time:'POST', name:'Post-Workout Shake',
+       desc:'2 scoops whey protein\n1 medium apple\n8oz water\nWithin 30 min of finishing',
+       p:48,c:30,f:3},
+      {time:'7:00 PM', name:'Final Meal — Tuna & Greens',
+       desc:'2 cans albacore tuna in water\nLarge mixed greens\n1/2 avocado\n1 tbsp olive oil + apple cider vinegar\nCucumber, red onion',
+       p:52,c:10,f:22}
+    ]
+  },
+  {
+    day:'FRI', label:'Day 05 — Lower Hypertrophy', type:'T',
+    calories:2200, protein:185, carbs:190, fat:65,
+    meals:[
+      {time:'12:00 PM', name:'Break Fast — Protein Pancakes',
+       desc:'3 eggs + 1 scoop protein powder + 1/2 banana blended\nCook like pancakes in 1 tbsp butter\n1/4 cup sugar-free maple syrup\nBlack coffee or Zero Ultra Monster',
+       p:52,c:40,f:15},
+      {time:'2:30 PM', name:'Pre-Workout — Beef & Rice',
+       desc:'6oz 93% lean ground beef\n1.5 cups white rice\n1/2 cup peas\nSoy sauce, garlic\n16oz water',
+       p:50,c:72,f:12},
+      {time:'POST', name:'Post-Workout Shake',
+       desc:'2 scoops whey protein\n1 banana\n8oz water\nWithin 30 min',
+       p:48,c:32,f:3},
+      {time:'7:00 PM', name:'Final Meal — Salmon Bowl',
+       desc:'6oz salmon (baked or pan seared)\n1/2 cup cauliflower rice\nRoasted asparagus\n1/2 avocado\nLemon, salt, pepper',
+       p:42,c:12,f:30}
+    ]
+  },
+  {
+    day:'SAT', label:'Day 06 — Full Athletic', type:'T',
+    calories:2100, protein:185, carbs:170, fat:65,
+    meals:[
+      {time:'12:00 PM', name:'Break Fast — Greek Yogurt Bowl',
+       desc:'1.5 cups Greek yogurt (2%)\n1 scoop whey protein stirred in\n1/4 cup granola (low sugar)\n1/2 cup mixed berries\nBlack coffee or Zero Ultra Monster',
+       p:58,c:45,f:10},
+      {time:'2:30 PM', name:'Pre-Workout — Chicken Wrap',
+       desc:'6oz grilled chicken breast\n1 large whole wheat tortilla\nRomaine, tomato, salsa\n1/4 avocado\n16oz water',
+       p:50,c:50,f:14},
+      {time:'POST', name:'Post-Workout Shake',
+       desc:'2 scoops whey protein\n1 banana\n8oz water\nWithin 30 min',
+       p:48,c:32,f:3},
+      {time:'7:00 PM', name:'Final Meal — Shrimp & Veg',
+       desc:'8oz shrimp (peeled, deveined)\nStir fry with bell peppers, broccoli, snap peas\n1 tbsp olive oil + soy sauce + garlic\n1/2 cup white rice',
+       p:42,c:30,f:16}
+    ]
+  },
+  {
+    day:'SUN', label:'Day 07 — Lower Mobility', type:'R',
+    calories:1800, protein:185, carbs:95, fat:72,
+    meals:[
+      {time:'12:00 PM', name:'Break Fast — Smoked Salmon Eggs',
+       desc:'3 whole eggs scrambled in 1 tbsp butter\n2oz smoked salmon\n1/4 avocado\nCapers, red onion\nBlack coffee or Zero Ultra Monster',
+       p:42,c:5,f:28},
+      {time:'3:00 PM', name:'Midday — Tuna Salad',
+       desc:'2 cans albacore tuna\nMixed greens, cucumber, cherry tomatoes\n1 tbsp olive oil + lemon\n10 olives',
+       p:48,c:10,f:18},
+      {time:'6:00 PM', name:'Dinner — Meal Prep Chicken',
+       desc:'7oz chicken breast\n1 cup roasted brussels sprouts\n1/2 cup quinoa\n1 tbsp olive oil\nSalt, pepper, herbs',
+       p:55,c:28,f:14},
+      {time:'7:45 PM', name:'Evening — Casein & Almonds',
+       desc:'1 scoop casein protein in water (slow digesting — good before bed)\n15 almonds\nHerbal tea',
+       p:28,c:6,f:9}
+    ]
+  }
+];
+
+// Shopping list organized by category
+var SHOPPING_LIST = {
+  'PROTEINS': [
+    {name:'Chicken breast', qty:'3-4 lbs', id:'s1'},
+    {name:'Salmon fillets', qty:'2 lbs', id:'s2'},
+    {name:'93% lean ground beef', qty:'2 lbs', id:'s3'},
+    {name:'93% lean ground turkey', qty:'1 lb', id:'s4'},
+    {name:'Albacore tuna (canned)', qty:'8 cans', id:'s5'},
+    {name:'Large eggs', qty:'2 dozen', id:'s6'},
+    {name:'Liquid egg whites', qty:'32oz carton', id:'s7'},
+    {name:'Shrimp (frozen, peeled)', qty:'2 lbs', id:'s8'},
+    {name:'Smoked salmon', qty:'4oz pack', id:'s9'},
+    {name:'Turkey bacon', qty:'1 pack', id:'s10'},
+    {name:'Whey protein powder', qty:'1 container', id:'s11'},
+    {name:'Casein protein powder', qty:'1 container', id:'s12'},
+    {name:'Greek yogurt (plain 2%)', qty:'32oz x2', id:'s13'},
+    {name:'Cottage cheese (low fat)', qty:'16oz x2', id:'s14'},
+  ],
+  'CARBS': [
+    {name:'White rice', qty:'5 lb bag', id:'s15'},
+    {name:'Sweet potatoes', qty:'3-4 medium', id:'s16'},
+    {name:'Rolled oats', qty:'1 container', id:'s17'},
+    {name:'Quinoa', qty:'1 lb', id:'s18'},
+    {name:'Bananas', qty:'2 bunches', id:'s19'},
+    {name:'Mixed berries (frozen ok)', qty:'2 bags', id:'s20'},
+    {name:'Blueberries', qty:'1 pint', id:'s21'},
+    {name:'Strawberries', qty:'1 lb', id:'s22'},
+    {name:'Apple', qty:'3-4', id:'s23'},
+    {name:'Black beans (canned)', qty:'2 cans', id:'s24'},
+    {name:'Whole wheat tortillas', qty:'1 pack', id:'s25'},
+    {name:'Low sugar granola', qty:'1 bag', id:'s26'},
+  ],
+  'FATS & OILS': [
+    {name:'Avocados', qty:'5-6', id:'s27'},
+    {name:'Olive oil (extra virgin)', qty:'1 bottle', id:'s28'},
+    {name:'Butter (unsalted)', qty:'1 stick', id:'s29'},
+    {name:'Almond butter', qty:'1 jar', id:'s30'},
+    {name:'Walnuts', qty:'1 bag', id:'s31'},
+    {name:'Almonds', qty:'1 bag', id:'s32'},
+    {name:'Olives', qty:'1 jar', id:'s33'},
+  ],
+  'VEGETABLES': [
+    {name:'Baby spinach', qty:'2 bags', id:'s34'},
+    {name:'Mixed greens / romaine', qty:'2 bags', id:'s35'},
+    {name:'Broccoli', qty:'2 heads or frozen bag', id:'s36'},
+    {name:'Cauliflower / cauliflower rice', qty:'1 head + 1 bag', id:'s37'},
+    {name:'Brussels sprouts', qty:'1 lb', id:'s38'},
+    {name:'Asparagus', qty:'1 bunch', id:'s39'},
+    {name:'Bell peppers', qty:'3-4', id:'s40'},
+    {name:'Cherry tomatoes', qty:'1 pint', id:'s41'},
+    {name:'Cucumber', qty:'2', id:'s42'},
+    {name:'Red onion', qty:'1', id:'s43'},
+    {name:'Snap peas', qty:'1 bag', id:'s44'},
+  ],
+  'PANTRY & SAUCES': [
+    {name:'Soy sauce (low sodium)', qty:'1 bottle', id:'s45'},
+    {name:'Salsa', qty:'1 jar', id:'s46'},
+    {name:'Apple cider vinegar', qty:'1 bottle', id:'s47'},
+    {name:'Sugar-free maple syrup', qty:'1 bottle', id:'s48'},
+    {name:'Capers', qty:'1 jar', id:'s49'},
+    {name:'Lemons / limes', qty:'4-5', id:'s50'},
+    {name:'Garlic (fresh or powder)', qty:'1 head + powder', id:'s51'},
+    {name:'Salt, pepper, herbs', qty:'As needed', id:'s52'},
+    {name:'Almond milk (unsweetened)', qty:'1 carton', id:'s53'},
+  ],
+  'DRINKS': [
+    {name:'Zero Ultra Monsters', qty:'7+ cans (1/day)', id:'s54'},
+    {name:'Water / sparkling water', qty:'Stock up', id:'s55'},
+    {name:'Black coffee / herbal tea', qty:'As needed', id:'s56'},
+  ]
+};
+
+var openMealDays = {};
+
+function renderMealPlan(cont){
+  var title=document.createElement('div');
+  title.className='bio-title';title.textContent='7-Day Meal Plan';
+  cont.appendChild(title);
+
+  // Day type legend
+  var legend=document.createElement('div');
+  legend.style.cssText='display:flex;gap:10px;margin-bottom:10px;';
+  legend.innerHTML='<div style="font-family:Share Tech Mono,monospace;font-size:7px;color:var(--hl);">&#9632; TRAINING DAY — higher carbs</div>'
+    +'<div style="font-family:Share Tech Mono,monospace;font-size:7px;color:var(--am);">&#9632; REST DAY — lower carbs</div>';
+  cont.appendChild(legend);
+
+  for(var i=0;i<WEEK_MEAL_PLAN.length;i++){
+    var day=WEEK_MEAL_PLAN[i];
+    var isOpen=openMealDays[day.day];
+    var typeColor=day.type==='T'?'var(--hl)':'var(--am)';
+
+    var dayDiv=document.createElement('div');
+    dayDiv.className='meal-plan-day';
+
+    var hdr=document.createElement('div');
+    hdr.className='meal-plan-day-header';
+    hdr.innerHTML='<div>'
+      +'<div class="meal-plan-day-title" style="color:'+typeColor+';">'+day.day+' — '+day.label+'</div>'
+      +'<div class="meal-plan-day-meta">'+day.calories+' cal &nbsp;·&nbsp; P:'+day.protein+'g C:'+day.carbs+'g F:'+day.fat+'g</div>'
+      +'</div>'
+      +'<div style="color:var(--hl);font-family:Orbitron,sans-serif;font-size:10px;">'+(isOpen?'&#9660;':'&#9654;')+'</div>';
+
+    var body=document.createElement('div');
+    body.className='meal-plan-day-body'+(isOpen?' open':'');
+
+    for(var j=0;j<day.meals.length;j++){
+      var meal=day.meals[j];
+      var mDiv=document.createElement('div');mDiv.className='meal-plan-meal';
+      mDiv.innerHTML='<div class="meal-plan-meal-time">'+meal.time+'</div>'
+        +'<div class="meal-plan-meal-name">'+meal.name+'</div>'
+        +'<div class="meal-plan-meal-desc">'+meal.desc.split('\\n').join('<br>')+'</div>'
+        +'<div class="meal-plan-meal-macros">P:'+meal.p+'g &nbsp; C:'+meal.c+'g &nbsp; F:'+meal.f+'g</div>';
+      body.appendChild(mDiv);
+    }
+
+    (function(dayKey, b, h){
+      h.onclick=function(){
+        openMealDays[dayKey]=!openMealDays[dayKey];
+        b.classList.toggle('open');
+        h.querySelector('div:last-child').innerHTML=openMealDays[dayKey]?'&#9660;':'&#9654;';
+      };
+    })(day.day, body, hdr);
+
+    dayDiv.appendChild(hdr);
+    dayDiv.appendChild(body);
+    cont.appendChild(dayDiv);
+  }
+
+  // Shopping list
+  var shopTitle=document.createElement('div');
+  shopTitle.className='bio-title';shopTitle.textContent='Weekly Shopping List';
+  cont.appendChild(shopTitle);
+
+  // Clear all button
+  var clearBtn=document.createElement('button');
+  clearBtn.style.cssText='background:none;border:1px solid var(--border);border-radius:2px;color:var(--s2);padding:5px 12px;font-family:Orbitron,sans-serif;font-size:7px;letter-spacing:.1em;cursor:pointer;margin-bottom:10px;';
+  clearBtn.textContent='CLEAR ALL CHECKS';
+  clearBtn.onclick=function(){
+    if(!S.bio.shopLog)S.bio.shopLog={};
+    S.bio.shopLog={};
+    saveState();renderBody();
+  };
+  cont.appendChild(clearBtn);
+
+  if(!S.bio.shopLog)S.bio.shopLog={};
+  var categories=Object.keys(SHOPPING_LIST);
+  for(var i=0;i<categories.length;i++){
+    var cat=categories[i];
+    var catTitle=document.createElement('div');
+    catTitle.className='shop-category';catTitle.textContent=cat;
+    cont.appendChild(catTitle);
+
+    var items=SHOPPING_LIST[cat];
+    for(var j=0;j<items.length;j++){
+      var item=items[j];
+      var on=!!S.bio.shopLog[item.id];
+      var row=document.createElement('div');
+      row.className='shop-item'+(on?' checked':'');
+      row.innerHTML='<div class="shop-check'+(on?' on':'')+'">'+( on?'&#10003;':'')+'</div>'
+        +'<div class="shop-item-name">'+item.name+'</div>'
+        +'<div class="shop-item-qty">'+item.qty+'</div>';
+      (function(iid,r){row.onclick=function(){
+        if(!S.bio.shopLog)S.bio.shopLog={};
+        S.bio.shopLog[iid]=!S.bio.shopLog[iid];
+        saveState();renderBody();
+      };})(item.id,row);
+      cont.appendChild(row);
+    }
+  }
 }
 
 // ════════════════════════════════
