@@ -3483,69 +3483,74 @@ var WEEK_MEAL_PLAN = [
 
 var SHOPPING_LIST = {
   'PROTEINS': [
-    {name:'Kirkland Chicken Breast', qty:'6 lb bag', id:'s1'},
-    {name:'93% Lean Ground Beef', qty:'2 x 2lb packs', id:'s3'},
-    {name:'93% Lean Ground Turkey', qty:'2 x 1lb packs', id:'s4'},
-    {name:'Kirkland Large Eggs', qty:'2 dozen pack', id:'s6'},
-    {name:'Kirkland Liquid Egg Whites', qty:'32oz carton', id:'s7'},
-    {name:'Turkey Bacon', qty:'1 pack', id:'s10'},
-    {name:'Kirkland Whey Protein', qty:'1 container', id:'s11'},
-    {name:'Casein Protein Powder', qty:'1 container', id:'s12'},
-    {name:'Kirkland Greek Yogurt (plain)', qty:'3 lb tub', id:'s13'},
-    {name:'Kirkland Cottage Cheese', qty:'2-pack tubs', id:'s14'},
+    {name:'Kirkland Chicken Breast', qty:'6 lb bag', id:'s1', role:'protein', label:'Chicken Breast'},
+    {name:'93% Lean Ground Beef', qty:'2 x 2lb packs', id:'s3', role:'protein', label:'Ground Beef'},
+    {name:'93% Lean Ground Turkey', qty:'2 x 1lb packs', id:'s4', role:'protein', label:'Ground Turkey'},
+    {name:'Kirkland Large Eggs', qty:'2 dozen pack', id:'s6', role:'protein', label:'Eggs'},
+    {name:'Kirkland Liquid Egg Whites', qty:'32oz carton', id:'s7', role:'protein', label:'Egg Whites'},
+    {name:'Turkey Bacon', qty:'1 pack', id:'s10', role:'protein', label:'Turkey Bacon'},
+    {name:'Kirkland Whey Protein', qty:'1 container', id:'s11', role:'shake', label:'Whey Protein'},
+    {name:'Casein Protein Powder', qty:'1 container', id:'s12', role:'casein', label:'Casein Protein'},
+    {name:'Kirkland Greek Yogurt (plain)', qty:'3 lb tub', id:'s13', role:'protein', label:'Greek Yogurt'},
+    {name:'Kirkland Cottage Cheese', qty:'2-pack tubs', id:'s14', role:'protein', label:'Cottage Cheese'},
   ],
   'CARBS & PRODUCE': [
-    {name:'Kirkland White Rice', qty:'25 lb bag', id:'s15'},
-    {name:'Sweet Potatoes', qty:'3-4 medium', id:'s16'},
-    {name:'Rolled Oats', qty:'1 large container', id:'s17'},
-    {name:'Quinoa', qty:'1 lb bag', id:'s18'},
-    {name:'Bananas', qty:'2 bunches', id:'s19'},
-    {name:'Kirkland Frozen Mixed Berries', qty:'3 lb bag', id:'s20'},
-    {name:'Apples', qty:'3-4', id:'s23'},
-    {name:'Black Beans (canned)', qty:'2 cans', id:'s24'},
-    {name:'Low Sugar Granola', qty:'1 bag', id:'s26'},
+    {name:'Kirkland White Rice', qty:'25 lb bag', id:'s15', role:'carb', label:'White Rice'},
+    {name:'Sweet Potatoes', qty:'3-4 medium', id:'s16', role:'carb', label:'Sweet Potato'},
+    {name:'Rolled Oats', qty:'1 large container', id:'s17', role:'carb', label:'Oats'},
+    {name:'Quinoa', qty:'1 lb bag', id:'s18', role:'carb', label:'Quinoa'},
+    {name:'Bananas', qty:'2 bunches', id:'s19', role:'fruit', label:'Banana'},
+    {name:'Kirkland Frozen Mixed Berries', qty:'3 lb bag', id:'s20', role:'fruit', label:'Mixed Berries'},
+    {name:'Apples', qty:'3-4', id:'s23', role:'fruit', label:'Apple'},
+    {name:'Black Beans (canned)', qty:'2 cans', id:'s24', role:'carb', label:'Black Beans'},
+    {name:'Low Sugar Granola', qty:'1 bag', id:'s26', role:'carb', label:'Granola'},
   ],
   'FATS & OILS': [
-    {name:'Avocados', qty:'5-6 pack', id:'s27'},
-    {name:'Kirkland Extra Virgin Olive Oil', qty:'2-pack bottles', id:'s28'},
-    {name:'Kirkland Unsalted Butter', qty:'4-pack sticks', id:'s29'},
-    {name:'Kirkland Almond Butter', qty:'1 large jar', id:'s30'},
-    {name:'Kirkland Walnuts', qty:'1 large bag', id:'s31'},
-    {name:'Kirkland Almonds', qty:'1 large bag', id:'s32'},
+    {name:'Avocados', qty:'5-6 pack', id:'s27', role:'fat', label:'Avocado'},
+    {name:'Kirkland Extra Virgin Olive Oil', qty:'2-pack bottles', id:'s28', role:'fat', label:'Olive Oil'},
+    {name:'Kirkland Unsalted Butter', qty:'4-pack sticks', id:'s29', role:'fat', label:'Butter'},
+    {name:'Kirkland Almond Butter', qty:'1 large jar', id:'s30', role:'fat', label:'Almond Butter'},
+    {name:'Kirkland Walnuts', qty:'1 large bag', id:'s31', role:'fat', label:'Walnuts'},
+    {name:'Kirkland Almonds', qty:'1 large bag', id:'s32', role:'fat', label:'Almonds'},
   ],
   'VEGETABLES': [
-    {name:'Kirkland Baby Spinach', qty:'2 lb bag', id:'s34'},
-    {name:'Kirkland Mixed Greens', qty:'1 large bag', id:'s35'},
-    {name:'Kirkland Frozen Broccoli', qty:'4 lb bag', id:'s36'},
-    {name:'Kirkland Frozen Cauliflower Rice', qty:'4 lb bag', id:'s37'},
-    {name:'Kirkland Frozen Brussels Sprouts', qty:'2 lb bag', id:'s38'},
-    {name:'Bell Peppers', qty:'3-4', id:'s40'},
-    {name:'Cherry Tomatoes', qty:'1 pint', id:'s41'},
-    {name:'Cucumber', qty:'2', id:'s42'},
-    {name:'Red Onion', qty:'1', id:'s43'},
-    {name:'Snap Peas', qty:'1 bag', id:'s44'},
+    {name:'Kirkland Baby Spinach', qty:'2 lb bag', id:'s34', role:'veg', label:'Baby Spinach'},
+    {name:'Kirkland Mixed Greens', qty:'1 large bag', id:'s35', role:'veg', label:'Mixed Greens'},
+    {name:'Kirkland Frozen Broccoli', qty:'4 lb bag', id:'s36', role:'veg', label:'Broccoli'},
+    {name:'Kirkland Frozen Cauliflower Rice', qty:'4 lb bag', id:'s37', role:'veg', label:'Cauliflower Rice'},
+    {name:'Kirkland Frozen Brussels Sprouts', qty:'2 lb bag', id:'s38', role:'veg', label:'Brussels Sprouts'},
+    {name:'Bell Peppers', qty:'3-4', id:'s40', role:'veg', label:'Bell Peppers'},
+    {name:'Cherry Tomatoes', qty:'1 pint', id:'s41', role:'veg', label:'Cherry Tomatoes'},
+    {name:'Cucumber', qty:'2', id:'s42', role:'veg', label:'Cucumber'},
+    {name:'Red Onion', qty:'1', id:'s43', role:'veg', label:'Red Onion'},
+    {name:'Snap Peas', qty:'1 bag', id:'s44', role:'veg', label:'Snap Peas'},
   ],
   'PANTRY & SAUCES': [
-    {name:'Kirkland Low Sodium Soy Sauce', qty:'1 bottle', id:'s45'},
-    {name:'Salsa', qty:'1 jar', id:'s46'},
-    {name:'Apple Cider Vinegar', qty:'1 bottle', id:'s47'},
-    {name:'Sugar-Free Maple Syrup', qty:'1 bottle', id:'s48'},
-    {name:'Lemons / Limes', qty:'4-5', id:'s50'},
-    {name:'Garlic Powder + Herbs', qty:'As needed', id:'s52'},
-    {name:'Kirkland Unsweetened Almond Milk', qty:'1 carton', id:'s53'},
+    {name:'Kirkland Low Sodium Soy Sauce', qty:'1 bottle', id:'s45', role:'sauce', label:'Soy Sauce'},
+    {name:'Salsa', qty:'1 jar', id:'s46', role:'sauce', label:'Salsa'},
+    {name:'Apple Cider Vinegar', qty:'1 bottle', id:'s47', role:'sauce', label:'ACV'},
+    {name:'Sugar-Free Maple Syrup', qty:'1 bottle', id:'s48', role:'sauce', label:'Sugar-Free Syrup'},
+    {name:'Lemons / Limes', qty:'4-5', id:'s50', role:'sauce', label:'Lemon/Lime'},
+    {name:'Garlic Powder + Herbs', qty:'As needed', id:'s52', role:'sauce', label:'Garlic + Herbs'},
+    {name:'Kirkland Unsweetened Almond Milk', qty:'1 carton', id:'s53', role:'liquid', label:'Almond Milk'},
   ],
   'DRINKS': [
-    {name:'Monster Zero Ultra (24-pack)', qty:'1 case', id:'s54'},
-    {name:'Kirkland Sparkling Water', qty:'1 case', id:'s55'},
-    {name:'Black Coffee / Herbal Tea', qty:'As needed', id:'s56'},
+    {name:'Monster Zero Ultra (24-pack)', qty:'1 case', id:'s54', role:'drink', label:'Zero Ultra Monster'},
+    {name:'Kirkland Sparkling Water', qty:'1 case', id:'s55', role:'drink', label:'Sparkling Water'},
+    {name:'Black Coffee / Herbal Tea', qty:'As needed', id:'s56', role:'drink', label:'Coffee/Tea'},
   ]
 };
 
 var openMealDays = {};
 
 function renderMealPlan(cont){
+  // Use generated plan if available, otherwise use static plan
+  var planDays = (S.bio.generatedPlan && S.bio.generatedPlan.days) ? S.bio.generatedPlan.days : WEEK_MEAL_PLAN;
+  var isGenerated = !!(S.bio.generatedPlan && S.bio.generatedPlan.days);
+
   var title=document.createElement('div');
-  title.className='bio-title';title.textContent='7-Day Meal Plan';
+  title.className='bio-title';
+  title.textContent=isGenerated?'My Custom Meal Plan':'7-Day Meal Plan';
   cont.appendChild(title);
 
   // Day type legend
@@ -3555,8 +3560,8 @@ function renderMealPlan(cont){
     +'<div style="font-family:Share Tech Mono,monospace;font-size:7px;color:var(--am);">&#9632; REST DAY — lower carbs</div>';
   cont.appendChild(legend);
 
-  for(var i=0;i<WEEK_MEAL_PLAN.length;i++){
-    var day=WEEK_MEAL_PLAN[i];
+  for(var i=0;i<planDays.length;i++){
+    var day=planDays[i];
     var isOpen=openMealDays[day.day];
     var typeColor=day.type==='T'?'var(--hl)':'var(--am)';
 
@@ -3602,6 +3607,29 @@ function renderMealPlan(cont){
   shopTitle.className='bio-title';shopTitle.textContent='Weekly Shopping List';
   cont.appendChild(shopTitle);
 
+  // Build my plan button
+  var buildWrap=document.createElement('div');
+  buildWrap.style.cssText='display:flex;gap:6px;margin-bottom:10px;';
+  var buildBtn=document.createElement('button');
+  buildBtn.style.cssText='flex:1;background:transparent;border:1px solid var(--hlbr);color:var(--hlb);border-radius:2px;padding:11px;font-family:Orbitron,sans-serif;font-size:9px;letter-spacing:.12em;cursor:pointer;';
+  buildBtn.textContent='BUILD MY PLAN';
+  buildBtn.onclick=function(){generateMealPlan();};
+  buildWrap.appendChild(buildBtn);
+  if(S.bio.generatedPlan&&S.bio.generatedPlan.days){
+    var clearPlanBtn=document.createElement('button');
+    clearPlanBtn.style.cssText='background:transparent;border:1px solid var(--border);color:var(--s2);border-radius:2px;padding:11px 14px;font-family:Orbitron,sans-serif;font-size:8px;letter-spacing:.1em;cursor:pointer;';
+    clearPlanBtn.textContent='RESET';
+    clearPlanBtn.onclick=function(){clearGeneratedPlan();};
+    buildWrap.appendChild(clearPlanBtn);
+  }
+  cont.appendChild(buildWrap);
+
+  // Instruction
+  var buildHint=document.createElement('div');
+  buildHint.style.cssText='font-family:Share Tech Mono,monospace;font-size:7px;color:var(--s2);margin-bottom:10px;line-height:1.7;';
+  buildHint.textContent='Check off items you have below, then tap BUILD MY PLAN to generate a custom 7-day plan from your available ingredients.';
+  cont.appendChild(buildHint);
+
   // Clear all button
   var clearBtn=document.createElement('button');
   clearBtn.style.cssText='background:none;border:1px solid var(--border);border-radius:2px;color:var(--s2);padding:5px 12px;font-family:Orbitron,sans-serif;font-size:7px;letter-spacing:.1em;cursor:pointer;margin-bottom:10px;';
@@ -3638,6 +3666,222 @@ function renderMealPlan(cont){
       cont.appendChild(row);
     }
   }
+}
+
+
+// ════════════════════════════════
+// BUILD MY PLAN — DYNAMIC MEAL GENERATOR
+// ════════════════════════════════
+
+// Flat lookup of all shop items by id
+function getAllShopItems(){
+  var all=[];
+  var cats=Object.keys(SHOPPING_LIST);
+  for(var i=0;i<cats.length;i++){
+    for(var j=0;j<SHOPPING_LIST[cats[i]].length;j++){
+      all.push(SHOPPING_LIST[cats[i]][j]);
+    }
+  }
+  return all;
+}
+
+function getCheckedItems(){
+  if(!S.bio.shopLog)return[];
+  var all=getAllShopItems();
+  return all.filter(function(item){return S.bio.shopLog[item.id];});
+}
+
+function getCheckedByRole(role){
+  return getCheckedItems().filter(function(i){return i.role===role;});
+}
+
+function pick(arr,idx){return arr.length?arr[idx%arr.length]:null;}
+
+function buildMealName(protein, carb, veg, fat, mealType){
+  var names={
+    breakfast:'Break Fast',
+    preWkt:'Pre-Workout',
+    postWkt:'Post-Workout Shake',
+    final:'Final Meal'
+  };
+  var prefix=names[mealType]||'Meal';
+  var parts=[];
+  if(protein)parts.push(protein.label);
+  if(carb)parts.push(carb.label);
+  return prefix+' — '+(parts.join(' & ')||'Protein Meal');
+}
+
+function buildMealDesc(protein, carb, veg, fat, sauce, mealType, isTraining){
+  var lines=[];
+  if(mealType==='postWkt'){
+    var shake=getCheckedByRole('shake');
+    var fruit=getCheckedByRole('fruit');
+    var liquid=getCheckedByRole('liquid');
+    if(shake.length)lines.push('2 scoops '+shake[0].label);
+    if(fruit.length)lines.push('1 '+fruit[Math.floor(Math.random()*fruit.length)].label);
+    lines.push((liquid.length?liquid[0].label:'Water')+' — 8oz');
+    lines.push('Within 30 min of finishing');
+    return lines.join('\n');
+  }
+  // Protein
+  if(protein){
+    if(protein.role==='protein'){
+      if(protein.label==='Eggs'||protein.label==='Egg Whites'){
+        lines.push('3 whole eggs'+(getCheckedByRole('protein').find(function(p){return p.label==='Egg Whites';})?' + egg whites':''));
+      } else if(protein.label==='Greek Yogurt'){
+        lines.push('1.5 cups '+protein.label);
+      } else if(protein.label==='Cottage Cheese'){
+        lines.push('1.5 cups '+protein.label);
+      } else {
+        lines.push('6oz '+protein.label+(mealType==='final'?' (seasoned)':mealType==='preWkt'?' (grilled)':' (cooked)'));
+      }
+    }
+  }
+  // Fat for cooking eggs/beef
+  if(fat&&(protein&&(protein.label==='Eggs'||protein.label==='Ground Beef'||protein.label==='Ground Turkey'))){
+    lines.push('1 tbsp '+fat.label);
+  }
+  // Carb
+  if(carb&&mealType!=='final'){
+    if(carb.label==='White Rice')lines.push('1 cup white rice');
+    else if(carb.label==='Sweet Potato')lines.push('1 medium sweet potato (baked)');
+    else if(carb.label==='Oats')lines.push('1 cup oats cooked');
+    else if(carb.label==='Quinoa')lines.push('1/2 cup quinoa');
+    else if(carb.label==='Black Beans')lines.push('1/2 cup black beans');
+    else if(carb.label==='Granola')lines.push('1/4 cup '+carb.label);
+    else lines.push(carb.label);
+  }
+  // Veg
+  if(veg){
+    lines.push('1 cup '+veg.label+(veg.label.indexOf('Frozen')>=0?' (steamed)':veg.label==='Mixed Greens'||veg.label==='Baby Spinach'?' (fresh)':' (cooked)'));
+  }
+  // Fat topping
+  if(fat&&protein&&protein.label!=='Eggs'){
+    if(fat.label==='Avocado')lines.push('1/2 avocado');
+    else if(fat.label==='Olive Oil')lines.push('1 tbsp olive oil');
+    else if(fat.label==='Almonds')lines.push('1/4 cup almonds');
+    else if(fat.label==='Walnuts')lines.push('1/4 cup walnuts');
+    else if(fat.label==='Almond Butter')lines.push('1 tbsp almond butter');
+  }
+  // Sauce
+  if(sauce)lines.push(sauce.label+' to taste');
+  // Drink
+  var drinks=getCheckedByRole('drink');
+  if(mealType==='breakfast'&&drinks.length){
+    lines.push('Black coffee or '+drinks[0].label);
+  }
+  return lines.join('\n')||'Prepare with available ingredients';
+}
+
+function generateMealPlan(){
+  var proteins=getCheckedByRole('protein');
+  var carbs=getCheckedByRole('carb');
+  var vegs=getCheckedByRole('veg');
+  var fats=getCheckedByRole('fat');
+  var sauces=getCheckedByRole('sauce');
+  var shakes=getCheckedByRole('shake');
+
+  // Warn if missing essentials
+  var missing=[];
+  if(!proteins.length)missing.push('a protein source');
+  if(!shakes.length)missing.push('whey protein (for post-workout shakes)');
+  if(missing.length){
+    showToast('MISSING: '+missing.join(', ').toUpperCase());
+    if(!proteins.length)return; // can't build without protein
+  }
+
+  var days=['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  var labels=['Day 01 — Upper Power','Day 02 — Lower Power','Day 03 — Upper Mobility',
+              'Day 04 — Upper Hypertrophy','Day 05 — Lower Hypertrophy','Day 06 — Full Athletic','Day 07 — Lower Mobility'];
+  var types=['T','T','R','T','T','T','R'];
+
+  var generated=[];
+  for(var d=0;d<7;d++){
+    var isTraining=types[d]==='T';
+    var meals=[];
+    var pi=d%proteins.length;
+    var ci=d%Math.max(carbs.length,1);
+    var vi=d%Math.max(vegs.length,1);
+    var fi=d%Math.max(fats.length,1);
+    var si2=d%Math.max(sauces.length,1);
+
+    var prot=proteins[pi];
+    var carb=carbs.length?carbs[ci]:null;
+    var veg=vegs.length?vegs[vi]:null;
+    var fat=fats.length?fats[fi]:null;
+    var sauce=sauces.length?sauces[si2]:null;
+
+    // Vary protein sources across meals within a day
+    var prot2=proteins[(pi+1)%proteins.length];
+    var prot3=proteins[(pi+2)%proteins.length];
+    var carb2=carbs.length?carbs[(ci+1)%carbs.length]:null;
+    var veg2=vegs.length?vegs[(vi+1)%vegs.length]:null;
+
+    // Breakfast
+    meals.push({
+      time:'12:00 PM',
+      name:buildMealName(prot,isTraining?carb:null,null,fat,'breakfast'),
+      desc:buildMealDesc(prot,isTraining?carb:null,null,fat,sauce,'breakfast',isTraining),
+      p:50,c:isTraining?30:10,f:15
+    });
+    // Pre-workout (training days) or Midday (rest days)
+    if(isTraining){
+      meals.push({
+        time:'2:30 PM',
+        name:buildMealName(prot2,carb2,veg,null,'preWkt'),
+        desc:buildMealDesc(prot2,carb2,veg,null,sauce,'preWkt',true),
+        p:48,c:55,f:6
+      });
+      // Post-workout shake
+      meals.push({
+        time:'POST',
+        name:'Post-Workout Shake',
+        desc:buildMealDesc(null,null,null,null,null,'postWkt',true),
+        p:45,c:28,f:3
+      });
+    } else {
+      meals.push({
+        time:'3:00 PM',
+        name:buildMealName(prot2,null,veg,fat,'preWkt'),
+        desc:buildMealDesc(prot2,null,veg,fat,null,'preWkt',false),
+        p:40,c:10,f:15
+      });
+    }
+    // Final meal
+    meals.push({
+      time:'7:00 PM',
+      name:buildMealName(prot3,null,veg2,fat,'final'),
+      desc:buildMealDesc(prot3,null,veg2,fat,sauce,'final',isTraining),
+      p:45,c:isTraining?15:8,f:20
+    });
+
+    generated.push({
+      day:days[d],
+      label:labels[d],
+      type:types[d],
+      calories:isTraining?2100:1800,
+      protein:185,
+      carbs:isTraining?175:95,
+      fat:65,
+      meals:meals,
+      generated:true
+    });
+  }
+
+  // Save generated plan
+  if(!S.bio.generatedPlan)S.bio.generatedPlan={};
+  S.bio.generatedPlan.days=generated;
+  S.bio.generatedPlan.date=new Date().toISOString();
+  saveState();
+  showToast('MEAL PLAN BUILT!');
+  renderBody();
+}
+
+function clearGeneratedPlan(){
+  if(S.bio.generatedPlan)delete S.bio.generatedPlan;
+  saveState();
+  showToast('PLAN CLEARED');
+  renderBody();
 }
 
 // ════════════════════════════════
