@@ -493,6 +493,13 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .shop-item-name{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:12px;color:var(--tx);flex:1;}
 .shop-item-qty{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--s2);flex-shrink:0;}
 .shop-item.checked .shop-item-name{text-decoration:line-through;color:var(--s3);}
+
+/* ── DAY SELECTOR ── */
+.day-sel-wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;}
+.day-sel-btn{background:transparent;border:1px solid var(--border);border-radius:2px;padding:7px 4px;font-family:Orbitron,sans-serif;font-size:6px;letter-spacing:.06em;color:var(--s2);cursor:pointer;text-align:center;line-height:1.5;}
+.day-sel-btn.active{background:var(--hld);border-color:var(--hlbr);color:var(--hl);}
+.day-sel-btn.rest{border-color:rgba(255,179,0,.2);color:var(--am);}
+.day-sel-btn.rest.active{background:rgba(255,179,0,.08);border-color:rgba(255,179,0,.4);color:var(--am);}
 </style>
 </head>
 <body>
@@ -3250,17 +3257,32 @@ function calcMacroTargets(){
   return {protein:protein,carbs:Math.max(50,carbs),fat:fat,calories:calories};
 }
 
+function getSelectedDayIdx(){
+  return parseInt(S.bio.selectedDayIdx||0);
+}
+
+function getDayMeals(){
+  var plan=(S.bio.generatedPlan&&S.bio.generatedPlan.days)?S.bio.generatedPlan.days:WEEK_MEAL_PLAN;
+  var idx=getSelectedDayIdx();
+  if(idx>=0&&idx<plan.length)return plan[idx].meals;
+  return WEEK_MEAL_PLAN[0].meals;
+}
+
 function renderDietSection(cont){
   var targets=calcMacroTargets();
   var log=getDietLog();
+  var plan=(S.bio.generatedPlan&&S.bio.generatedPlan.days)?S.bio.generatedPlan.days:WEEK_MEAL_PLAN;
+  var selectedIdx=getSelectedDayIdx();
+  var dayMeals=getDayMeals();
 
-  // Calculate consumed macros
+  // Calculate consumed macros from selected day meals
   var consumed={p:0,c:0,f:0};
-  for(var i=0;i<CUT_MEALS.length;i++){
-    if(log[CUT_MEALS[i].id]){
-      consumed.p+=CUT_MEALS[i].p;
-      consumed.c+=CUT_MEALS[i].c;
-      consumed.f+=CUT_MEALS[i].f;
+  for(var i=0;i<dayMeals.length;i++){
+    var mealId='dm_'+i;
+    if(log[mealId]){
+      consumed.p+=(dayMeals[i].p||0);
+      consumed.c+=(dayMeals[i].c||0);
+      consumed.f+=(dayMeals[i].f||0);
     }
   }
   var consumedCal=consumed.p*4+consumed.c*4+consumed.f*9;
@@ -3268,6 +3290,35 @@ function renderDietSection(cont){
   var title=document.createElement('div');
   title.className='bio-title';title.textContent='Cut Protocol — Diet';
   cont.appendChild(title);
+
+  // Day selector
+  var selLabel=document.createElement('div');
+  selLabel.style.cssText='font-family:Share Tech Mono,monospace;font-size:7px;letter-spacing:.14em;text-transform:uppercase;color:var(--s2);margin-bottom:6px;';
+  selLabel.textContent='SELECT YOUR TRAINING DAY';
+  cont.appendChild(selLabel);
+
+  var selWrap=document.createElement('div');
+  selWrap.className='day-sel-wrap';
+  for(var i=0;i<plan.length;i++){
+    var d=plan[i];
+    var isRest=d.type==='R';
+    var btn=document.createElement('button');
+    btn.className='day-sel-btn'+(isRest?' rest':'')+(i===selectedIdx?' active':'');
+    var line1=d.label.substring(0,2);
+    var shortName=d.label.replace(/^\d+ — /,'');
+    var words=shortName.split(' ');
+    var line2=words.slice(0,2).join(' ');
+    btn.innerHTML=line1+'<br><span style="font-size:5px;">'+line2+'</span>';
+    (function(idx){btn.onclick=function(){
+      if(!S.bio)S.bio={};
+      S.bio.selectedDayIdx=idx;
+      if(!S.bio.dietLog)S.bio.dietLog={};
+      S.bio.dietLog[todayKey()]={};
+      saveState();renderBody();
+    };})(i);
+    selWrap.appendChild(btn);
+  }
+  cont.appendChild(selWrap);
 
   // Cutting goal progress
   var startWeight=parseFloat(S.bio.cutStartWeight)||parseFloat(S.bio.weight)||185;
@@ -3309,17 +3360,20 @@ function renderDietSection(cont){
   // Meal checklist
   var mealTitle=document.createElement('div');
   mealTitle.style.cssText='font-family:Share Tech Mono,monospace;font-size:7px;letter-spacing:.16em;text-transform:uppercase;color:var(--s2);margin-bottom:6px;';
-  mealTitle.textContent="TODAY'S MEALS";
+  var dayLabel=plan[selectedIdx]?plan[selectedIdx].label:'';
+  mealTitle.textContent="TODAY'S MEALS — "+dayLabel;
   cont.appendChild(mealTitle);
 
-  for(var i=0;i<CUT_MEALS.length;i++){
-    var meal=CUT_MEALS[i];
-    var on=!!log[meal.id];
+  for(var i=0;i<dayMeals.length;i++){
+    var meal=dayMeals[i];
+    var mealId='dm_'+i;
+    var on=!!log[mealId];
+    var mealDesc=meal.desc?meal.desc.split('\\n').join(' · '):'';
     var item=document.createElement('div');item.className='meal-item';
     item.innerHTML='<div class="meal-check'+(on?' on':'')+'">'+( on?'&#10003;':'')+'</div>'
       +'<div style="flex:1;">'
       +'<div class="meal-name">'+meal.name+'</div>'
-      +'<div class="meal-macros">P:'+meal.p+'g  C:'+meal.c+'g  F:'+meal.f+'g  — '+meal.desc+'</div>'
+      +'<div class="meal-macros">P:'+(meal.p||0)+'g  C:'+(meal.c||0)+'g  F:'+(meal.f||0)+'g'+(mealDesc?' — '+mealDesc:'')+'</div>'
       +'</div>'
       +'<div class="meal-time">'+meal.time+'</div>';
     (function(mid){item.onclick=function(){
@@ -3328,7 +3382,7 @@ function renderDietSection(cont){
       if(!S.bio.dietLog)S.bio.dietLog={};
       S.bio.dietLog[todayKey()]=log;
       saveState();renderBody();
-    };})(meal.id);
+    };})(mealId);
     cont.appendChild(item);
   }
 
