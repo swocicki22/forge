@@ -1511,7 +1511,7 @@ function startWkt(dayId){
   S.activeDay=JSON.parse(JSON.stringify(day));S.activeDay.id=day.id;S.sets={};S.start=Date.now();
   var ls=getLastLog(dayId);var suggestions=getOverloadSuggestions();var suggestMap={};for(var i=0;i<suggestions.length;i++)suggestMap[suggestions[i].name]=suggestions[i].suggest;
   for(var i=0;i<day.ex.length;i++){
-    var ex=day.ex[i];var dw=ex.dw,dr=wd.reps;if(ex.type==='Core')dr=ex.dr;
+    var ex=day.ex[i];var dw=ex.dw,dr=(wd.repMin||wd.reps);if(ex.type==='Core')dr=ex.dr;
     if(ls&&ls.rawSets&&ls.rawSets[ex.name]){var lsd=ls.rawSets[ex.name];for(var k=lsd.length-1;k>=0;k--){if(lsd[k].done&&!lsd[k].warmup&&lsd[k].weight){dw=lsd[k].weight;break;}}}
     if(suggestMap[ex.name])dw=suggestMap[ex.name];
     // Progression estimator: if week changed, back-calculate goal weight
@@ -1617,8 +1617,8 @@ function filterAddExList(){
 function confirmAddExToWorkout(){
   var name=el('aew-name').value.trim();if(!name){showToast('NAME REQUIRED');return;}
   var type=el('aew-type').value.trim()||'Custom';var sets=parseInt(el('aew-sets').value)||3;var weight=parseFloat(el('aew-weight').value)||0;var wd=getWeekData();
-  var newEx={name:name,type:type,ds:sets,dr:wd.reps,dw:weight,ss:'',notes:''};
-  S.activeDay.ex.push(newEx);var arr=[];for(var i=0;i<sets;i++)arr.push({weight:weight,reps:wd.reps,done:false,warmup:false,rpe:0});
+  var newEx={name:name,type:type,ds:sets,dr:(wd.repMin||wd.reps),dw:weight,ss:'',notes:''};
+  S.activeDay.ex.push(newEx);var arr=[];for(var i=0;i<sets;i++)arr.push({weight:weight,reps:(wd.repMin||wd.reps),done:false,warmup:false,rpe:0});
   S.sets[name]=arr;closeModal('add-ex-workout-mo');renderActive();showToast('EXERCISE ADDED');
 }
 function showNotes(ek){var day=S.activeDay;var ex=null;for(var i=0;i<day.ex.length;i++){if(day.ex[i].name.replace(/[^a-zA-Z0-9]/g,'_')===ek){ex=day.ex[i];break;}}if(!ex||!ex.notes)return;el('notes-ex-name').textContent=ex.name;el('notes-content').textContent=ex.notes;el('notes-mo').classList.add('visible');}
