@@ -818,14 +818,22 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
   <div class="md">
     <div class="mh"></div>
     <div class="mti">ADD EXERCISE</div>
-    <div class="fl">Exercise Name</div>
-    <input class="fi" id="aew-name" placeholder="e.g. Cable Curl"/>
-    <div class="fl">Type</div>
-    <input class="fi" id="aew-type" placeholder="e.g. Isolation, Compound"/>
+    <div class="srch" style="margin-top:0;margin-bottom:8px;">
+      <input class="srchi" id="aew-search" placeholder="Search exercises..." oninput="filterAddExList()"/>
+    </div>
+    <div id="aew-lib-list" style="max-height:200px;overflow-y:auto;margin-bottom:10px;"></div>
+    <div id="aew-selected-wrap" style="display:none;background:var(--card);border:1px solid var(--hlbr);border-radius:2px;padding:8px 10px;margin-bottom:8px;">
+      <div style="font-family:Orbitron,sans-serif;font-size:7px;letter-spacing:.1em;color:var(--hl);margin-bottom:3px;">SELECTED</div>
+      <div id="aew-selected-name" style="font-family:Rajdhani,sans-serif;font-weight:600;font-size:13px;color:var(--tx);"></div>
+    </div>
     <div class="fl">Sets</div>
     <input class="fi" id="aew-sets" type="number" inputmode="numeric" placeholder="3"/>
     <div class="fl">Starting Weight (lbs)</div>
     <input class="fi" id="aew-weight" type="number" inputmode="decimal" placeholder="0"/>
+    <div class="fl">Custom Name (if not in list)</div>
+    <input class="fi" id="aew-name" placeholder="e.g. My Custom Exercise"/>
+    <div class="fl">Type</div>
+    <input class="fi" id="aew-type" placeholder="e.g. Isolation, Compound"/>
     <button class="mb" onclick="confirmAddExToWorkout()">ADD TO WORKOUT</button>
     <button class="mca" onclick="closeModal('add-ex-workout-mo')">CANCEL</button>
   </div>
@@ -881,11 +889,11 @@ var AVATAR_COLORS=['#4fc3f7','#f1a435','#4caf50','#e056f0','#ef5350'];
 var COLOR_NAMES=['Blue','Amber','Green','Purple','Red'];
 
 var CYCLE=[
-  {week:1,reps:15,label:'ENDURANCE',intensity:.65},
-  {week:2,reps:12,label:'HYPERTROPHY',intensity:.72},
-  {week:3,reps:10,label:'STRENGTH',intensity:.80},
-  {week:4,reps:8,label:'OVERLOAD',intensity:.87},
-  {week:5,reps:15,label:'DELOAD',intensity:.55}
+  {week:1,reps:15,repMin:12,repMax:15,label:'ENDURANCE',intensity:.65},
+  {week:2,reps:12,repMin:10,repMax:12,label:'HYPERTROPHY',intensity:.72},
+  {week:3,reps:10,repMin:6,repMax:8,label:'STRENGTH',intensity:.80},
+  {week:4,reps:8,repMin:4,repMax:6,label:'OVERLOAD',intensity:.87},
+  {week:5,reps:15,repMin:12,repMax:15,label:'DELOAD',intensity:.55}
 ];
 
 var SUPPS=[
@@ -1245,7 +1253,61 @@ var LIB=[
   {name:'Side Plank',muscle:'Core',type:'Compound',tip:'Hip up. Straight line head to feet.'},
   {name:'Dead Bug',muscle:'Core',type:'Compound',tip:'Lower back pressed to floor. Slow and controlled.'},
   {name:'Russian Twist',muscle:'Core',type:'Isolation',tip:'Lean back 45 degrees. Rotate fully.'},
-  {name:'Reverse Crunch',muscle:'Core',type:'Isolation',tip:'Posterior pelvic tilt. Bring hips off floor.'}
+  {name:'Reverse Crunch',muscle:'Core',type:'Isolation',tip:'Posterior pelvic tilt. Bring hips off floor.'},
+  // CHEST
+  {name:'Dumbbell Fly',muscle:'Chest',type:'Isolation',tip:'Wide arc. Slight bend in elbows. Stretch at bottom.'},
+  {name:'Landmine Press',muscle:'Chest',type:'Compound',tip:'Press at angle. Upper chest emphasis. Single or double arm.'},
+  {name:'Machine Chest Press',muscle:'Chest',type:'Compound',tip:'Full ROM. Pause at contraction. Adjust seat for proper angle.'},
+  {name:'Chest Dip',muscle:'Chest',type:'Compound',tip:'Lean forward for chest emphasis. Full depth.'},
+  {name:'Cable Crossover',muscle:'Chest',type:'Isolation',tip:'Cross hands at bottom. Squeeze pecs hard.'},
+  // BACK
+  {name:'Meadows Row',muscle:'Back',type:'Compound',tip:'Single arm landmine row. Great for lats and upper back thickness.'},
+  {name:'Chest Supported Row',muscle:'Chest',type:'Compound',tip:'Eliminates lower back strain. Pure upper back work.'},
+  {name:'Cable Pullover',muscle:'Back',type:'Isolation',tip:'Arms straight. Pull from overhead to hips. Lat stretch.'},
+  {name:'Inverted Row',muscle:'Back',type:'Compound',tip:'Body horizontal. Pull chest to bar. Bodyweight row.'},
+  {name:'Seal Row',muscle:'Back',type:'Compound',tip:'Lying on elevated bench. Strict form, no body momentum.'},
+  {name:'Dumbbell Shrug',muscle:'Shoulders',type:'Isolation',tip:'Hold at top 2 sec. No rolling — straight up.'},
+  // LEGS
+  {name:'Nordic Curl',muscle:'Legs',type:'Isolation',tip:'Eccentric hamstring. Lower slowly under control. Very advanced.'},
+  {name:'Reverse Hack Squat',muscle:'Legs',type:'Compound',tip:'Face the machine. More glute and hamstring emphasis.'},
+  {name:'Goblet Squat',muscle:'Legs',type:'Compound',tip:'Dumbbell at chest. Great for quad depth and posture.'},
+  {name:'Step Up with Knee Drive',muscle:'Legs',type:'Power',tip:'Drive knee up at top. Single leg power and balance.'},
+  {name:'Sissy Squat',muscle:'Legs',type:'Isolation',tip:'Extreme quad isolation. Control the descent.'},
+  {name:'Glute Ham Raise',muscle:'Legs',type:'Compound',tip:'Hamstring and glute together. Full hip extension at top.'},
+  {name:'Cable Kickback',muscle:'Legs',type:'Isolation',tip:'Full hip extension. Squeeze glute at top. Keep hips square.'},
+  // SHOULDERS
+  {name:'Cable Y-Raise',muscle:'Shoulders',type:'Isolation',tip:'Arms form Y shape. Targets lower traps and rear delts.'},
+  {name:'Landmine Lateral Raise',muscle:'Shoulders',type:'Isolation',tip:'Arc motion with landmine. Constant tension on lateral delt.'},
+  {name:'Machine Lateral Raise',muscle:'Shoulders',type:'Isolation',tip:'Constant tension. Adjust pad height to shoulder level.'},
+  {name:'Plate Front Raise',muscle:'Shoulders',type:'Isolation',tip:'Hold plate with both hands. Raise to eye level. Control descent.'},
+  {name:'Cable Face Pull',muscle:'Shoulders',type:'Isolation',tip:'Pull to forehead. External rotation. Rear delt and rotator cuff.'},
+  // ARMS
+  {name:'Spider Curl',muscle:'Arms',type:'Isolation',tip:'Lying on incline bench face down. Eliminates shoulder involvement.'},
+  {name:'Concentration Curl',muscle:'Arms',type:'Isolation',tip:'Elbow on inner thigh. Full peak contraction. Slow descent.'},
+  {name:'Cable Overhead Curl',muscle:'Arms',type:'Isolation',tip:'Arms extended overhead. Long head stretch. Unique angle.'},
+  {name:'Reverse Curl',muscle:'Arms',type:'Isolation',tip:'Overhand grip. Brachialis and forearm emphasis.'},
+  {name:'Tate Press',muscle:'Arms',type:'Isolation',tip:'Dumbbells touch chest. Flare elbows out. Tricep isolation.'},
+  {name:'JM Press',muscle:'Arms',type:'Isolation',tip:'Bar to chin level. Hybrid of skull crusher and close-grip.'},
+  {name:'Diamond Push-Up',muscle:'Arms',type:'Compound',tip:'Hands form diamond. Tricep emphasis. Keep elbows tight.'},
+  {name:'Rope Hammer Curl',muscle:'Arms',type:'Isolation',tip:'Neutral grip on rope. Split at top for brachialis peak.'},
+  // CORE
+  {name:'Dragon Flag',muscle:'Core',type:'Compound',tip:'Full body lever. Lower under control. Advanced movement.'},
+  {name:'Hollow Body Hold',muscle:'Core',type:'Compound',tip:'Lower back pressed down. Arms and legs extended. Full tension.'},
+  {name:'L-Sit',muscle:'Core',type:'Compound',tip:'Legs parallel to floor. Hold position. Extreme core strength.'},
+  {name:'Weighted Sit-Up',muscle:'Core',type:'Isolation',tip:'Hold plate on chest. Full ROM. Control descent.'},
+  {name:'Cable Oblique Crunch',muscle:'Core',type:'Isolation',tip:'Side bend toward cable. Oblique isolation.'},
+  {name:'Landmine Rotation',muscle:'Core',type:'Athletic',tip:'Rotational power. Arc plate from hip to hip. Core and shoulders.'},
+  // CARDIO & CONDITIONING
+  {name:'Sled Push',muscle:'Legs',type:'Cardio',tip:'Drive through legs. Stay low. Explosive power endurance.'},
+  {name:'Assault Bike',muscle:'Chest',type:'Cardio',tip:'Full body conditioning. Arms and legs. Max effort intervals.'},
+  {name:'Jump Rope',muscle:'Legs',type:'Cardio',tip:'Wrist rotation only. Land softly on balls of feet.'},
+  {name:'Kettlebell Swing',muscle:'Legs',type:'Power',tip:'Hip hinge drive. Explosive glute contraction. Bell to shoulder height.'},
+  {name:'Med Ball Slam',muscle:'Core',type:'Power',tip:'Full overhead extension. Slam with force. Core and shoulders.'},
+  {name:'Box Jump',muscle:'Legs',type:'Power',tip:'Full hip extension at top. Land soft. Step down — never jump down.'},
+  {name:'Burpee',muscle:'Chest',type:'Cardio',tip:'Full body. Chest to floor. Explosive jump at top.'},
+  {name:'Mountain Climber',muscle:'Core',type:'Cardio',tip:'Hips level. Drive knees to chest alternating. Fast pace.'},
+  {name:'Jump Squat',muscle:'Legs',type:'Power',tip:'Squat then explode up. Land soft with knees bent.'},
+  {name:'Rowing Machine',muscle:'Back',type:'Cardio',tip:'Drive with legs first. Pull handle to lower chest. Full extension.'}
 ];
 
 // ════════════════════════════════
@@ -1461,7 +1523,7 @@ function startWkt(dayId){
     S.sets[ex.name]=arr;
   }
   el('wtitle').textContent='DAY '+day.lbl+' — '+day.name.toUpperCase();
-  el('wk-chip').textContent='WK'+wd.week+' / '+wd.reps+'R';
+  el('wk-chip').textContent='WK'+wd.week+' / '+(wd.repMin||wd.reps)+'-'+(wd.repMax||wd.reps)+'R';
   renderActive();showScreen('s-active');startTmr();
 }
 
@@ -1484,7 +1546,7 @@ function renderActive(){
       sh+='<button class="schk'+(set.done?' done':'')+'" onclick="togS(\''+ex.name+'\','+j+')">'+(set.done?'&#10003;':'')+'</button></div>';
     }
     var ssb=ex.ss?'<div class="ssb">'+ex.ss+'</div>':'';var notesBtn=ex.notes?'<button class="info-btn" onclick="showNotes(\''+ek+'\')">i</button>':'';
-    var trg='<div class="target-reps">x'+wd.reps+'</div>';var olBadge=suggestSet[ex.name]?'<div class="ex-overload">&#9650; INCREASE</div>':'';
+    var trg='<div class="target-reps">'+(wd.repMin||wd.reps)+'-'+(wd.repMax||wd.reps)+'</div>';var olBadge=suggestSet[ex.name]?'<div class="ex-overload">&#9650; INCREASE</div>':'';
     var subBtn='<button class="info-btn" onclick="openSubstitute(\''+ex.name+'\')" title="Substitute" style="border-color:var(--hlbr);color:var(--hl);">&#8652;</button>';blk.innerHTML='<div class="eh"><div style="flex:1;"><div class="en">'+ex.name+'</div><div class="et">'+ex.type+'</div></div>'+olBadge+trg+subBtn+notesBtn+ssb+'<button class="rem-ex-btn" onclick="removeExFromWorkout(\''+ex.name+'\')">&#10005;</button></div><div class="shr"><div class="sc">#</div><div class="sc">WEIGHT</div><div class="sc">REPS</div><div class="sc">WU</div><div class="sc">&#10003;</div></div>'+sh+'<div style="display:flex;border-top:1px solid var(--border);"><button class="addbtn" style="border-top:none;border-right:1px solid var(--border);" onclick="addS(\''+ex.name+'\')">+ ADD SET</button><button class="addbtn" style="border-top:none;color:var(--danger);" onclick="removeS(\''+ex.name+'\')">- REMOVE</button></div>';
     list.appendChild(blk);
   }
@@ -1515,7 +1577,43 @@ function doRemoveExFromWorkout(exName,keepSets){
   if(!keepSets){delete S.sets[exName];}else{if(!S.removedSets)S.removedSets={};S.removedSets[exName]=S.sets[exName];delete S.sets[exName];}
   S.pendingRemoveEx=null;renderActive();showToast('EXERCISE REMOVED');
 }
-function openAddExToWorkout(){el('aew-name').value='';el('aew-type').value='';el('aew-sets').value='3';el('aew-weight').value='';el('add-ex-workout-mo').classList.add('visible');}
+function openAddExToWorkout(){
+  el('aew-name').value='';el('aew-type').value='';el('aew-sets').value='3';el('aew-weight').value='';
+  el('aew-search').value='';
+  el('aew-selected-wrap').style.display='none';
+  el('aew-selected-name').textContent='';
+  filterAddExList();
+  el('add-ex-workout-mo').classList.add('visible');
+}
+
+function filterAddExList(){
+  var q=(el('aew-search').value||'').toLowerCase();
+  var list=el('aew-lib-list');list.innerHTML='';
+  var filtered=LIB.filter(function(ex){
+    return !q||ex.name.toLowerCase().indexOf(q)>=0||ex.muscle.toLowerCase().indexOf(q)>=0;
+  });
+  filtered=filtered.slice(0,20); // show max 20 results
+  for(var i=0;i<filtered.length;i++){
+    var ex=filtered[i];
+    var item=document.createElement('div');
+    item.style.cssText='padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:8px;';
+    item.innerHTML='<div style="flex:1;"><div style="font-family:Rajdhani,sans-serif;font-weight:600;font-size:12px;color:var(--tx);">'+ex.name+'</div>'
+      +'<div style="font-family:Share Tech Mono,monospace;font-size:7px;color:var(--s2);">'+ex.muscle.toUpperCase()+' — '+ex.type+'</div></div>'
+      +'<div style="font-family:Orbitron,sans-serif;font-size:7px;color:var(--hl);">SELECT</div>';
+    (function(exercise){item.onclick=function(){
+      el('aew-name').value=exercise.name;
+      el('aew-type').value=exercise.type;
+      el('aew-selected-name').textContent=exercise.name;
+      el('aew-selected-wrap').style.display='block';
+      el('aew-search').value=exercise.name;
+      filterAddExList();
+    };})(ex);
+    list.appendChild(item);
+  }
+  if(!filtered.length){
+    list.innerHTML='<div style="font-family:Share Tech Mono,monospace;font-size:8px;color:var(--s2);padding:10px;text-align:center;">No results — use custom name below</div>';
+  }
+}
 function confirmAddExToWorkout(){
   var name=el('aew-name').value.trim();if(!name){showToast('NAME REQUIRED');return;}
   var type=el('aew-type').value.trim()||'Custom';var sets=parseInt(el('aew-sets').value)||3;var weight=parseFloat(el('aew-weight').value)||0;var wd=getWeekData();
