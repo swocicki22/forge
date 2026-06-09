@@ -1089,18 +1089,12 @@ function todayKey(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)
 // PRESETS
 // ════════════════════════════════
 var AB_PRESET=[
-  {name:'In & Outs',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Bring knees to chest then extend. Lower back pressed to floor.'},
-  {name:'Bicycle Crunch',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Slow and controlled. Opposite elbow to knee. Full rotation.'},
-  {name:'Reverse Bicycle',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Reverse the bicycle motion. Core tight throughout.'},
-  {name:'Crunchy Frog',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Balance on tailbone. Wrap arms around knees then extend.'},
-  {name:'Wide Leg Sit-Up',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Legs wide, touch opposite foot at top. Full ROM.'},
-  {name:'Fifer Scissors',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Alternate legs up and down. Both legs stay straight.'},
-  {name:'Hip Rock & Raise',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Rock hips then raise legs vertical. Lower back stays down.'},
-  {name:'Pulse Ups',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Legs vertical. Pulse hips up toward ceiling.'},
-  {name:'V-Up Roll Up',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Alternate V-up and full roll-up. Control the descent.'},
-  {name:'Oblique V-Up',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Side lying. Bring legs and torso together.'},
-  {name:'Leg Climbers',type:'Core',ds:1,dr:12,dw:0,ss:'',notes:'12 each leg. Climb up the leg to the ankle.'},
-  {name:'Mason Twist',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'40 total. Lean back 45 degrees. Rotate side to side.'}
+  {name:'Cable Crunch',type:'Core',ds:3,dr:15,dw:50,ss:'',notes:'Kneel at cable. Pull elbows to knees. Round spine fully. 3 sec negative. Add weight progressively.'},
+  {name:'Hanging Leg Raise',type:'Core',ds:3,dr:15,dw:0,ss:'',notes:'Dead hang. Raise legs to 90 degrees or higher. Posterior pelvic tilt at top. No swinging.'},
+  {name:'Decline Sit-Up',type:'Core',ds:3,dr:15,dw:25,ss:'',notes:'Hold plate on chest. Full ROM. Control descent. 3 sec negative.'},
+  {name:'Russian Twist',type:'Core',ds:3,dr:20,dw:25,ss:'',notes:'20 total reps. Hold plate or dumbbell. Lean back 45 degrees. Rotate fully side to side.'},
+  {name:'Plank',type:'Core',ds:3,dr:45,dw:0,ss:'',notes:'45 sec hold. Squeeze glutes and core. Neutral spine. Build to 60+ sec over time.'},
+  {name:'Side Plank',type:'Core',ds:2,dr:30,dw:0,ss:'',notes:'30 sec each side. Hips up. Straight line head to feet. Progress to weighted hip dips.'}
 ];
 
 function buildPresets(){
@@ -1478,7 +1472,7 @@ function renderEditor(){
     var sd1=document.createElement('div');sd1.className='section-div';sd1.textContent='EXERCISES';cont.appendChild(sd1);
     for(var i=0;i<main.length;i++)cont.appendChild(buildEditorRow(main[i].ex,main[i].idx));
     var ab=document.createElement('button');ab.className='add-ex-btn';ab.innerHTML='+ ADD EXERCISE';ab.onclick=function(){openAddExercise(false);};cont.appendChild(ab);
-    if(core.length){var sd2=document.createElement('div');sd2.className='section-div';sd2.textContent='AB PROTOCOL';cont.appendChild(sd2);for(var i=0;i<core.length;i++)cont.appendChild(buildEditorRow(core[i].ex,core[i].idx));}
+    if(core.length){var sd2=document.createElement('div');sd2.className='section-div';sd2.textContent='CORE WORK';cont.appendChild(sd2);for(var i=0;i<core.length;i++)cont.appendChild(buildEditorRow(core[i].ex,core[i].idx));}
     var ac=document.createElement('button');ac.className='add-ex-btn';ac.style.borderColor='var(--en)';ac.style.color='var(--en)';ac.innerHTML='+ ADD AB WORKOUT';ac.onclick=function(){openAbDiff();};cont.appendChild(ac);
   }
   var resetBtn=document.createElement('button');resetBtn.style.cssText='width:100%;background:transparent;border:1px solid var(--border);color:var(--s2);border-radius:2px;padding:9px;font-family:\'Orbitron\',sans-serif;font-size:7px;letter-spacing:.1em;cursor:pointer;margin-top:16px;';resetBtn.textContent='RESET TO DEFAULT PRESET';resetBtn.onclick=function(){resetDayToPreset();};cont.appendChild(resetBtn);
@@ -1511,7 +1505,14 @@ function startWkt(dayId){
   S.activeDay=JSON.parse(JSON.stringify(day));S.activeDay.id=day.id;S.sets={};S.start=Date.now();
   var ls=getLastLog(dayId);var suggestions=getOverloadSuggestions();var suggestMap={};for(var i=0;i<suggestions.length;i++)suggestMap[suggestions[i].name]=suggestions[i].suggest;
   for(var i=0;i<day.ex.length;i++){
-    var ex=day.ex[i];var dw=ex.dw,dr=(wd.repMin||wd.reps);if(ex.type==='Core')dr=ex.dr;
+    var ex=day.ex[i];var dw=ex.dw,dr=(wd.repMin||wd.reps);
+    // Rep floors for specific muscle groups and exercise types
+    var exNameLower=ex.name.toLowerCase();
+    if(ex.type==='Core')dr=ex.dr;
+    else if(exNameLower.indexOf('calf')>=0||exNameLower.indexOf('calf raise')>=0)dr=Math.max(15,dr);
+    else if(exNameLower.indexOf('lateral raise')>=0)dr=Math.max(12,dr);
+    else if(exNameLower.indexOf('face pull')>=0||exNameLower.indexOf('rear delt')>=0)dr=Math.max(15,dr);
+    else if(exNameLower.indexOf('shrug')>=0)dr=Math.max(12,dr);
     if(ls&&ls.rawSets&&ls.rawSets[ex.name]){var lsd=ls.rawSets[ex.name];for(var k=lsd.length-1;k>=0;k--){if(lsd[k].done&&!lsd[k].warmup&&lsd[k].weight){dw=lsd[k].weight;break;}}}
     if(suggestMap[ex.name])dw=suggestMap[ex.name];
     // Progression estimator: if week changed, back-calculate goal weight
@@ -1874,40 +1875,27 @@ var abDiffSelected = 'standard';
 
 var AB_PRESETS = {
   light: [
-    {name:'In & Outs',type:'Core',ds:1,dr:15,dw:0,ss:'',notes:'Bring knees to chest then extend. Lower back pressed to floor.'},
-    {name:'Bicycle Crunch',type:'Core',ds:1,dr:15,dw:0,ss:'',notes:'Slow and controlled. Opposite elbow to knee. Full rotation.'},
-    {name:'Reverse Bicycle',type:'Core',ds:1,dr:15,dw:0,ss:'',notes:'Reverse the bicycle motion. Core tight throughout.'},
-    {name:'Wide Leg Sit-Up',type:'Core',ds:1,dr:15,dw:0,ss:'',notes:'Legs wide, touch opposite foot at top. Full ROM.'},
-    {name:'Pulse Ups',type:'Core',ds:1,dr:15,dw:0,ss:'',notes:'Legs vertical. Pulse hips up toward ceiling.'},
-    {name:'Mason Twist',type:'Core',ds:1,dr:20,dw:0,ss:'',notes:'20 total. Lean back 45 degrees. Rotate side to side.'}
+    {name:'Cable Crunch',type:'Core',ds:2,dr:15,dw:40,ss:'',notes:'Kneel at cable. Pull elbows to knees. Round spine fully.'},
+    {name:'Hanging Leg Raise',type:'Core',ds:2,dr:12,dw:0,ss:'',notes:'Raise legs to 90 degrees. Posterior pelvic tilt at top.'},
+    {name:'Plank',type:'Core',ds:3,dr:30,dw:0,ss:'',notes:'30 sec hold. Squeeze core and glutes. Neutral spine.'},
+    {name:'Russian Twist',type:'Core',ds:2,dr:16,dw:10,ss:'',notes:'16 total reps. Lean back 45 degrees. Light weight.'}
   ],
   standard: [
-    {name:'In & Outs',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Bring knees to chest then extend. Lower back pressed to floor.'},
-    {name:'Bicycle Crunch',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Slow and controlled. Opposite elbow to knee. Full rotation.'},
-    {name:'Reverse Bicycle',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Reverse the bicycle motion. Core tight throughout.'},
-    {name:'Crunchy Frog',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Balance on tailbone. Wrap arms around knees then extend.'},
-    {name:'Wide Leg Sit-Up',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Legs wide, touch opposite foot at top. Full ROM.'},
-    {name:'Fifer Scissors',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Alternate legs up and down. Both legs stay straight.'},
-    {name:'Hip Rock & Raise',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Rock hips then raise legs vertical. Lower back stays down.'},
-    {name:'Pulse Ups',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Legs vertical. Pulse hips up toward ceiling.'},
-    {name:'V-Up Roll Up',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Alternate V-up and full roll-up. Control the descent.'},
-    {name:'Oblique V-Up',type:'Core',ds:1,dr:25,dw:0,ss:'',notes:'Side lying. Bring legs and torso together.'},
-    {name:'Leg Climbers',type:'Core',ds:1,dr:12,dw:0,ss:'',notes:'12 each leg. Climb up the leg to the ankle.'},
-    {name:'Mason Twist',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'40 total. Lean back 45 degrees. Rotate side to side.'}
+    {name:'Cable Crunch',type:'Core',ds:3,dr:15,dw:50,ss:'',notes:'Kneel at cable. Pull elbows to knees. Round spine fully. 3 sec negative.'},
+    {name:'Hanging Leg Raise',type:'Core',ds:3,dr:15,dw:0,ss:'',notes:'Dead hang. Raise legs to 90 degrees or higher. No swinging.'},
+    {name:'Decline Sit-Up',type:'Core',ds:3,dr:15,dw:25,ss:'',notes:'Hold plate on chest. Full ROM. 3 sec negative.'},
+    {name:'Russian Twist',type:'Core',ds:3,dr:20,dw:25,ss:'',notes:'20 total reps. Hold plate. Lean back 45 degrees. Rotate fully.'},
+    {name:'Plank',type:'Core',ds:3,dr:45,dw:0,ss:'',notes:'45 sec hold. Squeeze glutes and core. Neutral spine.'},
+    {name:'Side Plank',type:'Core',ds:2,dr:30,dw:0,ss:'',notes:'30 sec each side. Hips up. Straight line head to feet.'}
   ],
   heavy: [
-    {name:'In & Outs',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Bring knees to chest then extend. Lower back pressed to floor.'},
-    {name:'Bicycle Crunch',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Slow and controlled. Opposite elbow to knee. Full rotation.'},
-    {name:'Reverse Bicycle',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Reverse the bicycle motion. Core tight throughout.'},
-    {name:'Crunchy Frog',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Balance on tailbone. Wrap arms around knees then extend.'},
-    {name:'Wide Leg Sit-Up',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Legs wide, touch opposite foot at top. Full ROM.'},
-    {name:'Fifer Scissors',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Alternate legs up and down. Both legs stay straight.'},
-    {name:'Hip Rock & Raise',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Rock hips then raise legs vertical. Lower back stays down.'},
-    {name:'Pulse Ups',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Legs vertical. Pulse hips up toward ceiling.'},
-    {name:'V-Up Roll Up',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Alternate V-up and full roll-up. Control the descent.'},
-    {name:'Oblique V-Up',type:'Core',ds:1,dr:40,dw:0,ss:'',notes:'Side lying. Bring legs and torso together.'},
-    {name:'Leg Climbers',type:'Core',ds:1,dr:20,dw:0,ss:'',notes:'20 each leg. Climb up the leg to the ankle.'},
-    {name:'Mason Twist',type:'Core',ds:1,dr:60,dw:0,ss:'',notes:'60 total. Lean back 45 degrees. Rotate side to side.'}
+    {name:'Cable Crunch',type:'Core',ds:4,dr:15,dw:70,ss:'',notes:'Kneel at cable. Pull elbows to knees. Heavy weight, full contraction. 3 sec negative.'},
+    {name:'Hanging Leg Raise',type:'Core',ds:4,dr:15,dw:0,ss:'',notes:'Add ankle weights for progression. Full ROM. Slow and controlled.'},
+    {name:'Decline Sit-Up',type:'Core',ds:4,dr:15,dw:45,ss:'',notes:'Heavy plate on chest. Full ROM. 3 sec negative. Feel the stretch.'},
+    {name:'Russian Twist',type:'Core',ds:3,dr:24,dw:35,ss:'',notes:'24 total reps. Heavy plate or dumbbell. Explosive rotation.'},
+    {name:'Plank',type:'Core',ds:3,dr:60,dw:0,ss:'',notes:'60 sec hold. Add weight plate on back for progression.'},
+    {name:'Side Plank',type:'Core',ds:3,dr:45,dw:0,ss:'',notes:'45 sec each side. Add hip dips for extra oblique work.'},
+    {name:'Ab Wheel Rollout',type:'Core',ds:3,dr:12,dw:0,ss:'',notes:'Full extension. Pull back with abs. Keep lower back from caving.'}
   ]
 };
 
