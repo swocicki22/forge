@@ -534,6 +534,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
   </div>
   <div class="splash-sub">Select your profile to continue</div>
   <div class="user-grid" id="user-grid"></div>
+  <div id="splash-build" style="position:absolute;bottom:calc(14px + var(--sb));left:0;right:0;text-align:center;font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:.14em;color:var(--s3);"></div>
 </div>
 
 <!-- ══════════ PIN SCREEN ══════════ -->
@@ -967,6 +968,7 @@ var SUPPS=[
 // ════════════════════════════════
 // USER SYSTEM
 // ════════════════════════════════
+var APP_VERSION='3.1';
 var USERS_KEY='forge_users_v4';
 var currentUserId=null;
 var pinBuffer='';
@@ -1050,6 +1052,7 @@ function saveUserData(userId,data){
 // SPLASH SCREEN
 // ════════════════════════════════
 function renderSplash(){
+  var bld=el('splash-build');if(bld)bld.textContent='BUILD v'+APP_VERSION;
   var users=loadUsers();
   var grid=el('user-grid');grid.innerHTML='';
   for(var i=0;i<users.length;i++){
@@ -2966,7 +2969,7 @@ function renderStorageInfo(){
   }catch(e){}
   var kb=Math.round(localBytes/1024);
   var pct=Math.min(100,Math.round(localBytes/(5*1024*1024)*100));
-  var html='APP DATA: '+kb+' KB OF ~5 MB ('+pct+'%)';
+  var html='BUILD: v'+APP_VERSION+'<br>APP DATA: '+kb+' KB OF ~5 MB ('+pct+'%)';
   if(S.lastExport)html+='<br>LAST EXPORT: '+new Date(S.lastExport).toLocaleDateString();
   else html+='<br>LAST EXPORT: NEVER';
   html+='<div class="storage-bar"><div class="storage-fill" style="width:'+Math.max(pct,2)+'%;'+(pct>80?'background:var(--danger);':'')+'"></div></div>';
