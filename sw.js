@@ -2,7 +2,7 @@
 // FORGE SERVICE WORKER
 // Bump CACHE on every deploy or browsers will keep serving the old build.
 // ════════════════════════════════
-const CACHE = 'forge-v2';
+const CACHE = 'forge-v3';
 const ASSETS = [
   './',
   './index.html',
