@@ -1224,6 +1224,7 @@ function loadUserIntoApp(user){
   }
   // Migration: re-key legacy unpadded date keys (2026-6-9 → 2026-06-09)
   migrateDateKeys(S.suppLog);migrateDateKeys(S.waterLog);
+  if(S.bio&&S.bio.ifData&&S.bio.ifData.log)migrateDateKeys(S.bio.ifData.log);
   if(!S.days)S.days=buildPresets();
   else{var synced=syncMissingDays();if(synced)showToast('NEW DAYS ADDED');}
   saveState();
@@ -1313,7 +1314,8 @@ function saveState(){
 }
 
 function el(id){return document.getElementById(id);}
-function todayKey(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+function dateKey(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+function todayKey(){return dateKey(new Date());}
 
 // ════════════════════════════════
 // PRESETS
@@ -1609,7 +1611,20 @@ function renderHome(){
   el('stp').textContent=Object.keys(S.prs).length;
   var streak=0;var today=new Date();today.setHours(0,0,0,0);
   var ld=uniqDates(S.log);
-  for(var i=0;i<ld.length;i++){var e2=new Date(today);e2.setDate(e2.getDate()-i);if(ld[i]===e2.getTime())streak++;else break;}
+  if(ld.length){
+    var yesterday=new Date(today);yesterday.setDate(yesterday.getDate()-1);
+    // Streak survives until a full day passes untrained: anchor the chain
+    // at today if trained today, else at yesterday
+    var anchor=null;
+    if(ld[0]===today.getTime())anchor=today;
+    else if(ld[0]===yesterday.getTime())anchor=yesterday;
+    if(anchor){
+      for(var i=0;i<ld.length;i++){
+        var e2=new Date(anchor);e2.setDate(e2.getDate()-i);
+        if(ld[i]===e2.getTime())streak++;else break;
+      }
+    }
+  }
   el('sts').textContent=streak;
   var wd=getWeekData();
   el('week-banner-wrap').innerHTML='<div class="week-banner"><div><div style="font-family:\'Share Tech Mono\',monospace;font-size:7px;letter-spacing:.14em;color:var(--s2);text-transform:uppercase;margin-bottom:2px">Cycle</div><div class="week-num">WEEK '+wd.week+'</div></div><div style="text-align:right"><div style="font-family:\'Share Tech Mono\',monospace;font-size:7px;letter-spacing:.12em;color:var(--s2);text-transform:uppercase;margin-bottom:2px">Target Reps</div><div class="week-reps">'+(wd.repMin||wd.reps)+'-'+(wd.repMax||wd.reps)+' REPS</div><div class="week-phase">'+wd.label+'</div></div></div>';
@@ -2175,8 +2190,8 @@ function renderBody(){
 function addWater(oz){var today=todayKey();S.waterLog[today]=(S.waterLog[today]||0)+oz;if(S.waterLog[today]<0)S.waterLog[today]=0;saveState();renderBody();}
 function resetWater(){var today=todayKey();S.waterLog[today]=0;saveState();renderBody();}
 function toggleSupp(sid){var today=todayKey();if(!S.suppLog[today])S.suppLog[today]={};S.suppLog[today][sid]=!S.suppLog[today][sid];saveState();}
-function getSuppStreak(sid){var streak=0;var d=new Date();for(var i=0;i<30;i++){var dd=new Date(d);dd.setDate(dd.getDate()-i);var key=dd.getFullYear()+'-'+(dd.getMonth()+1)+'-'+dd.getDate();if(S.suppLog[key]&&S.suppLog[key][sid])streak++;else break;}return streak;}
-function get7DayComp(sid){var hits=0;var d=new Date();for(var i=0;i<7;i++){var dd=new Date(d);dd.setDate(dd.getDate()-i);var key=dd.getFullYear()+'-'+(dd.getMonth()+1)+'-'+dd.getDate();if(S.suppLog[key]&&S.suppLog[key][sid])hits++;}return Math.round(hits/7*100);}
+function getSuppStreak(sid){var streak=0;var d=new Date();for(var i=0;i<30;i++){var dd=new Date(d);dd.setDate(dd.getDate()-i);var key=dateKey(dd);if(S.suppLog[key]&&S.suppLog[key][sid])streak++;else break;}return streak;}
+function get7DayComp(sid){var hits=0;var d=new Date();for(var i=0;i<7;i++){var dd=new Date(d);dd.setDate(dd.getDate()-i);var key=dateKey(dd);if(S.suppLog[key]&&S.suppLog[key][sid])hits++;}return Math.round(hits/7*100);}
 var BIO_LIMITS={weight:[50,1000],height:[20,300],age:[5,120],bf:[1,80],goalweight:[50,1000],waterGoal:[8,400]};
 function saveBio(){
   var fields=['weight','height','age','bf','goalweight','waterGoal'];var bad=[];
@@ -2517,6 +2532,23 @@ function bestRecentE1RM(exName,maxSessions){
   return best;
 }
 function getTargetWeight(exName,wd){
+  // Same-phase continuity: if this exercise was logged in the CURRENT
+  // phase week within the last 35 days, carry that session's top working
+  // weight forward unchanged — your logged numbers come back exactly.
+  for(var i=S.log.length-1;i>=0;i--){
+    var w=S.log[i];
+    if(Date.now()-new Date(w.date).getTime()>35*864e5)break;
+    if((w.week||0)!==wd.week)continue;
+    if(!w.rawSets||!w.rawSets[exName])continue;
+    var best=0;
+    var sets=w.rawSets[exName];
+    for(var j=0;j<sets.length;j++){
+      var s=sets[j];
+      if(s.done&&!s.warmup&&s.weight&&(parseFloat(s.weight)||0)>best)best=parseFloat(s.weight)||0;
+    }
+    if(best>0)return best;
+  }
+  // Cross-phase: rescale best recent e1RM to this week's intensity
   var e1=bestRecentE1RM(exName,3);
   if(!e1)return null;
   var t=Math.round(e1*(wd.intensity||0.7)/2.5)*2.5;
@@ -2688,7 +2720,7 @@ function renderPastSupps(){
   var days=[];
   for(var i=0;i<7;i++){
     var d=new Date();d.setDate(d.getDate()-i);
-    var key=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+    var key=dateKey(d);
     days.push({key:key,date:d});
   }
   for(var i=0;i<days.length;i++){
@@ -3021,6 +3053,7 @@ function confirmImport(){
   if(d.bwLog!==undefined)S.bwLog=d.bwLog;
   if(d.weekStart)S.weekStart=d.weekStart;
   migrateDateKeys(S.suppLog);migrateDateKeys(S.waterLog);
+  if(S.bio&&S.bio.ifData&&S.bio.ifData.log)migrateDateKeys(S.bio.ifData.log);
   pendingImport=null;
   saveState();
   closeModal('import-confirm-mo');closeModal('user-settings-mo');
@@ -3984,7 +4017,7 @@ function renderIFSection(cont){
   var streak=0;var d=new Date();var hitToday=false;
   for(var i=0;i<7;i++){
     var dd=new Date(d);dd.setDate(dd.getDate()-i);
-    var key=dd.getFullYear()+'-'+(dd.getMonth()+1)+'-'+dd.getDate();
+    var key=dateKey(dd);
     var dayData=ifd.log&&ifd.log[key];
     var success=dayData&&dayData.completed;
     if(success&&i===0)hitToday=true;
