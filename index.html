@@ -502,6 +502,21 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .day-sel-btn.active{background:var(--hld);border-color:var(--hlbr);color:var(--hl);}
 .day-sel-btn.rest{border-color:rgba(255,179,0,.2);color:var(--am);}
 .day-sel-btn.rest.active{background:rgba(255,179,0,.08);border-color:rgba(255,179,0,.4);color:var(--am);}
+/* ── INTERACTIVE HEATMAP ── */
+.hm-region{cursor:pointer;transition:opacity .15s;}
+.hm-region.sel{stroke:var(--am) !important;stroke-width:2 !important;}
+.hm-region:active{opacity:.7;}
+.hm-toggle{display:flex;gap:5px;justify-content:center;margin-bottom:10px;}
+.hm-tbtn{background:none;border:1px solid var(--border);border-radius:2px;color:var(--s2);padding:4px 14px;font-family:Orbitron,sans-serif;font-size:7px;letter-spacing:.12em;cursor:pointer;}
+.hm-tbtn.active{border-color:var(--hlbr);color:var(--hl);}
+.hm-detail{background:var(--card);border:1px solid var(--hlbr);border-radius:2px;padding:10px 11px;margin-top:10px;}
+.hm-detail-title{font-family:Orbitron,sans-serif;font-size:10px;letter-spacing:.1em;color:var(--hlb);margin-bottom:6px;}
+.hm-detail-meta{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--s2);line-height:1.9;margin-bottom:8px;}
+.hm-ex-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);}
+.hm-ex-name{flex:1;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:11px;color:var(--tx);}
+.hm-ex-sets{font-family:Orbitron,sans-serif;font-size:8px;color:var(--hl);flex-shrink:0;}
+.hm-hint{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--s3);text-align:center;letter-spacing:.08em;margin-top:8px;}
+
 /* ── ACTION TOAST & STORAGE (system additions) ── */
 .toast.actionable{pointer-events:auto;}
 .toast-act{background:none;border:1px solid var(--hl);color:var(--hlb);font-family:Orbitron,sans-serif;font-size:8px;letter-spacing:.1em;padding:3px 9px;margin-left:10px;border-radius:2px;cursor:pointer;vertical-align:middle;}
@@ -1239,7 +1254,7 @@ function migrateDateKeys(obj){
 var _saT=null;
 function saveActive(){
   if(!currentUserId||!S.start||!S.activeDay)return;
-  lsSet('forge_active_'+currentUserId,JSON.stringify({day:S.activeDay,sets:S.sets,start:S.start,savedAt:Date.now()}));
+  lsSet('forge_active_'+currentUserId,JSON.stringify({day:S.activeDay,sets:S.sets,removedSets:S.removedSets||{},start:S.start,savedAt:Date.now()}));
 }
 function saveActiveDebounced(){if(_saT)clearTimeout(_saT);_saT=setTimeout(saveActive,400);}
 function clearActive(){
@@ -1260,7 +1275,7 @@ function checkActiveSession(){
 }
 function resumeActiveSession(){
   if(!pendingResume){closeModal('resume-mo');return;}
-  S.activeDay=pendingResume.day;S.sets=pendingResume.sets;S.start=pendingResume.start;
+  S.activeDay=pendingResume.day;S.sets=pendingResume.sets;S.removedSets=pendingResume.removedSets||{};S.start=pendingResume.start;
   pendingResume=null;
   var wd=getWeekData();
   el('wtitle').textContent='DAY '+S.activeDay.lbl+' — '+S.activeDay.name.toUpperCase();
@@ -1535,15 +1550,33 @@ function advanceWeek(){S.weekStart=(S.weekStart||Date.now())-(7*24*60*60*1000);s
 // ════════════════════════════════
 function calcEpley(weight,reps){if(!weight||!reps||reps===1)return weight;return Math.round(weight*(1+reps/30));}
 function getOverloadSuggestions(){
-  var suggestions=[];var wd=getWeekData();var exNames={};
+  // Progressive overload is only meaningful within the same rep range.
+  // Compare the last two sessions logged in the CURRENT phase week, and
+  // require hitting the TOP of that phase's range in both before
+  // suggesting +2.5. Cross-phase weights are never compared.
+  var suggestions=[];var wd=getWeekData();var curWeek=wd.week;
+  var topTarget=wd.repMax||wd.reps;
+  var exNames={};
   for(var i=0;i<S.days.length;i++){for(var j=0;j<S.days[i].ex.length;j++){var ex=S.days[i].ex[j];if(ex.type!=='Core')exNames[ex.name]=true;}}
   for(var exName in exNames){
     var sessions=[];
-    for(var i=S.log.length-1;i>=0&&sessions.length<2;i--){var w=S.log[i];if(w.rawSets&&w.rawSets[exName]){var sets=w.rawSets[exName].filter(function(s){return s.done&&!s.warmup;});if(sets.length>0)sessions.push(sets);}}
+    for(var i=S.log.length-1;i>=0&&sessions.length<2;i--){
+      var w=S.log[i];
+      if((w.week||0)!==curWeek)continue;
+      if(w.rawSets&&w.rawSets[exName]){
+        var sets=w.rawSets[exName].filter(function(s){return s.done&&!s.warmup;});
+        if(sets.length>0)sessions.push(sets);
+      }
+    }
     if(sessions.length<2)continue;
     var allHit=true;
-    for(var i=0;i<sessions.length;i++){for(var j=0;j<sessions[i].length;j++){if((sessions[i][j].reps||0)<wd.reps)allHit=false;}}
-    if(allHit){var lastWeight=0;for(var j=0;j<sessions[0].length;j++){if((sessions[0][j].weight||0)>lastWeight)lastWeight=sessions[0][j].weight||0;}var suggest=Math.round((lastWeight+2.5)*10)/10;suggestions.push({name:exName,current:lastWeight,suggest:suggest});}
+    for(var i=0;i<sessions.length;i++){for(var j=0;j<sessions[i].length;j++){if((sessions[i][j].reps||0)<topTarget)allHit=false;}}
+    if(allHit){
+      var lastWeight=0;
+      for(var j=0;j<sessions[0].length;j++){if((sessions[0][j].weight||0)>lastWeight)lastWeight=sessions[0][j].weight||0;}
+      var suggest=Math.round((lastWeight+2.5)*10)/10;
+      suggestions.push({name:exName,current:lastWeight,suggest:suggest});
+    }
   }
   return suggestions;
 }
@@ -1727,8 +1760,8 @@ function resetDayToPreset(){var idx=getDayIdx(editingDayId);var presets=buildPre
 function getLastLog(id){for(var i=S.log.length-1;i>=0;i--){if(S.log[i].dayId===id)return S.log[i];}return null;}
 function startWkt(dayId){
   var day=getDay(dayId);var wd=getWeekData();
-  S.activeDay=JSON.parse(JSON.stringify(day));S.activeDay.id=day.id;S.sets={};S.start=Date.now();
-  var ls=getLastLog(dayId);var suggestions=getOverloadSuggestions();var suggestMap={};for(var i=0;i<suggestions.length;i++)suggestMap[suggestions[i].name]=suggestions[i].suggest;
+  S.activeDay=JSON.parse(JSON.stringify(day));S.activeDay.id=day.id;S.sets={};S.removedSets={};S.start=Date.now();
+  var suggestions=getOverloadSuggestions();var suggestMap={};for(var i=0;i<suggestions.length;i++)suggestMap[suggestions[i].name]=suggestions[i].suggest;
   for(var i=0;i<day.ex.length;i++){
     var ex=day.ex[i];var dw=ex.dw,dr=(wd.repMin||wd.reps);
     // Rep floors for specific muscle groups and exercise types
@@ -1738,13 +1771,12 @@ function startWkt(dayId){
     else if(exNameLower.indexOf('lateral raise')>=0)dr=Math.max(12,dr);
     else if(exNameLower.indexOf('face pull')>=0||exNameLower.indexOf('rear delt')>=0)dr=Math.max(15,dr);
     else if(exNameLower.indexOf('shrug')>=0)dr=Math.max(12,dr);
-    if(ls&&ls.rawSets&&ls.rawSets[ex.name]){var lsd=ls.rawSets[ex.name];for(var k=lsd.length-1;k>=0;k--){if(lsd[k].done&&!lsd[k].warmup&&lsd[k].weight){dw=lsd[k].weight;break;}}}
+    // Phase-scaled target from your own e1RM history; falls back to the
+    // day's prescribed default when there's no history yet
+    var tw=getTargetWeight(ex.name,wd);
+    if(tw!==null)dw=tw;
+    // Phase-aware overload bump (same-phase comparison only)
     if(suggestMap[ex.name])dw=suggestMap[ex.name];
-    // Progression estimator: if week changed, back-calculate goal weight
-    else {
-      var progSuggs=getProgressionSuggestions();
-      if(progSuggs[ex.name])dw=progSuggs[ex.name].goalWeight;
-    }
     var arr=[];for(var j=0;j<ex.ds;j++)arr.push({weight:dw,reps:dr,done:false,warmup:false,rpe:0});
     S.sets[ex.name]=arr;
   }
@@ -1845,7 +1877,14 @@ function removeExFromWorkout(exName){
 }
 function doRemoveExFromWorkout(exName,keepSets){
   var day=S.activeDay;for(var i=0;i<day.ex.length;i++){if(day.ex[i].name===exName){day.ex.splice(i,1);break;}}
-  if(!keepSets){delete S.sets[exName];}else{if(!S.removedSets)S.removedSets={};S.removedSets[exName]=S.sets[exName];delete S.sets[exName];}
+  if(!keepSets){delete S.sets[exName];}
+  else{
+    if(!S.removedSets)S.removedSets={};
+    // Only completed work is worth preserving
+    var kept=(S.sets[exName]||[]).filter(function(s){return s.done;});
+    if(kept.length)S.removedSets[exName]=kept;
+    delete S.sets[exName];
+  }
   S.pendingRemoveEx=null;renderActive();saveActive();showToast('EXERCISE REMOVED');
 }
 function openAddExToWorkout(){
@@ -1974,21 +2013,30 @@ function doAbortWkt(){
   closeModal('abort-mo');
   if(S.tint)clearInterval(S.tint);
   skipRest();clearActive();releaseWakeLock();
-  S.activeDay=null;S.sets={};S.start=null;
+  S.activeDay=null;S.sets={};S.removedSets={};S.start=null;
   showScreen('s-home');
 }
 function showFinMo(){
   var elapsed=Math.floor((Date.now()-S.start)/1000);var day=S.activeDay;var wd=getWeekData();var ts=0,ds=0,vol=0,warmups=0;
   for(var i=0;i<day.ex.length;i++){var sets=S.sets[day.ex[i].name];if(!sets)continue;for(var j=0;j<sets.length;j++){if(sets[j].warmup){warmups++;continue;}ts++;if(sets[j].done){ds++;vol+=(parseFloat(sets[j].weight)||0)*(parseFloat(sets[j].reps)||0);}}}
+  if(S.removedSets){for(var rk in S.removedSets){var rs=S.removedSets[rk];for(var j=0;j<rs.length;j++){if(rs[j].warmup){warmups++;continue;}if(rs[j].done){ts++;ds++;vol+=(parseFloat(rs[j].weight)||0)*(parseFloat(rs[j].reps)||0);}}}}
   el('finsum').innerHTML='PROTOCOL: '+esc(day.name)+'<br>WEEK: '+wd.week+' ('+wd.label+')<br>DURATION: '+Math.floor(elapsed/60)+' MIN<br>WORKING SETS: '+ds+' / '+ts+'<br>WARM-UP SETS: '+warmups+'<br>VOLUME: '+vol.toLocaleString()+' LBS';
   el('finmo').classList.add('visible');
 }
 function confirmFin(){
   var elapsed=Math.floor((Date.now()-S.start)/1000);var day=S.activeDay;var wd=getWeekData();var ts=0,vol=0;var rawSets=JSON.parse(JSON.stringify(S.sets));
+  // Exercises removed mid-session with "save sets to log" commit their completed work
+  if(S.removedSets){
+    for(var rk in S.removedSets){
+      if(!rawSets[rk])rawSets[rk]=JSON.parse(JSON.stringify(S.removedSets[rk]));
+      var rs=S.removedSets[rk];
+      for(var j=0;j<rs.length;j++){if(rs[j].done&&!rs[j].warmup){ts++;vol+=(parseFloat(rs[j].weight)||0)*(parseFloat(rs[j].reps)||0);}}
+    }
+  }
   for(var i=0;i<day.ex.length;i++){var sets=S.sets[day.ex[i].name];if(!sets)continue;for(var j=0;j<sets.length;j++){if(sets[j].done&&!sets[j].warmup){ts++;vol+=(parseFloat(sets[j].weight)||0)*(parseFloat(sets[j].reps)||0);}}}
   S.log.push({date:new Date().toISOString(),dayId:day.id,lbl:day.lbl,name:day.name,dur:Math.floor(elapsed/60)+' min',sets:ts,vol:Math.round(vol),rawSets:rawSets,week:wd.week,phase:wd.label});
   saveState();clearActive();releaseWakeLock();
-  S.activeDay=null;S.sets={};S.start=null;
+  S.activeDay=null;S.sets={};S.removedSets={};S.start=null;
   closeModal('finmo');if(S.tint)clearInterval(S.tint);skipRest();showToast('SESSION COMMITTED');showScreen('s-home');
   // Backup hygiene: nudge every 10 sessions if no recent export
   var n=S.log.length;
@@ -2015,7 +2063,7 @@ function updRest(){el('rcnt').textContent=rRem;el('rfill').style.strokeDashoffse
 // PROGRESS
 // ════════════════════════════════
 function maxA(arr){var m=1;for(var i=0;i<arr.length;i++){if(arr[i]>m)m=arr[i];}return m;}
-function swTab(tab,btn){aTab=tab;viewingSessionIdx=null;var ts=document.querySelectorAll('.ptb');for(var i=0;i<ts.length;i++)ts[i].classList.remove('active');if(btn)btn.classList.add('active');renderProg();}
+function swTab(tab,btn){aTab=tab;viewingSessionIdx=null;if(tab!=='heatmap')hmSel=null;var ts=document.querySelectorAll('.ptb');for(var i=0;i<ts.length;i++)ts[i].classList.remove('active');if(btn)btn.classList.add('active');renderProg();}
 function renderProg(){
   var c=el('pcontent');c.innerHTML='';
   if(aTab==='history'){if(viewingSessionIdx!==null)renderHistoryDetail(c,viewingSessionIdx);else renderHistoryList(c);return;}
@@ -2397,75 +2445,82 @@ function openSubstitute(exName){
 
 function doSubstitute(newName){
   if(!pendingSubExName)return;
-  var day=S.activeDay;
+  if(newName===pendingSubExName){pendingSubExName=null;closeModal('sub-ex-mo');return;}
+  if(S.sets[newName]){showToast('ALREADY IN THIS WORKOUT');return;}
+  var day=S.activeDay;var wd=getWeekData();
   for(var i=0;i<day.ex.length;i++){
     if(day.ex[i].name===pendingSubExName){
-      // Find default weight/type from LIB
+      var oldEx=day.ex[i];
+      var oldSets=S.sets[pendingSubExName]||[];
+      var doneSets=[];
+      for(var j=0;j<oldSets.length;j++){if(oldSets[j].done)doneSets.push(oldSets[j]);}
       var libEx=null;
       for(var j=0;j<LIB.length;j++){if(LIB[j].name===newName){libEx=LIB[j];break;}}
-      var oldEx=day.ex[i];
-      day.ex[i]=JSON.parse(JSON.stringify(oldEx));
-      day.ex[i].name=newName;
-      if(libEx)day.ex[i].type=libEx.type;
-      // Transfer sets
-      var oldSets=S.sets[pendingSubExName]||[];
-      S.sets[newName]=JSON.parse(JSON.stringify(oldSets));
-      delete S.sets[pendingSubExName];
+      // Build the incoming exercise with its own identity
+      var newEx=JSON.parse(JSON.stringify(oldEx));
+      newEx.name=newName;
+      newEx.notes=libEx?(libEx.tip||''):'';
+      if(libEx)newEx.type=libEx.type;
+      // Fresh prescription: the NEW exercise's own e1RM history scaled to
+      // this phase — never the old exercise's loaded weights
+      var dr=(wd.repMin||wd.reps);
+      var tw=getTargetWeight(newName,wd);
+      var dw=tw!==null?tw:'';
+      var nSets=oldEx.ds||oldSets.length||3;
+      var arr=[];
+      for(var j=0;j<nSets;j++)arr.push({weight:dw,reps:dr,done:false,warmup:false,rpe:0});
+      if(doneSets.length){
+        // Sets you actually performed stay logged under the exercise you
+        // performed them on — old exercise stays in the day, trimmed to
+        // its completed work, new exercise slots in right after it
+        S.sets[pendingSubExName]=doneSets;
+        oldEx.ds=doneSets.length;
+        day.ex.splice(i+1,0,newEx);
+      }else{
+        day.ex[i]=newEx;
+        delete S.sets[pendingSubExName];
+      }
+      S.sets[newName]=arr;
       break;
     }
   }
   pendingSubExName=null;
   closeModal('sub-ex-mo');
-  renderActive();
+  renderActive();saveActive();
   showToast('EXERCISE SWAPPED');
 }
 
 // ════════════════════════════════
-// WEIGHT PROGRESSION ESTIMATOR
+// PERIODIZED WEIGHT TARGETING
+// Weight prescriptions scale with the current phase. The engine takes the
+// best estimated 1RM from your last 3 sessions of an exercise and applies
+// this week's programmed intensity (%1RM from the CYCLE table). A 270 e1RM
+// becomes ~235 on an OVERLOAD week (.87) but ~175 on ENDURANCE (.65) —
+// no more 4-6 rep loads showing up on 12-15 rep days.
 // ════════════════════════════════
-function calcGoalWeight(lastWeight, lastReps, targetReps){
-  // Calculate e1RM from last session
-  if(!lastWeight||!lastReps||lastReps<1)return null;
-  var orm = lastWeight * (1 + lastReps/30);
-  // Back-calculate goal weight for target reps
-  var goalWeight = orm / (1 + targetReps/30);
-  // Round to nearest 2.5
-  goalWeight = Math.round(goalWeight/2.5)*2.5;
-  return goalWeight;
-}
-
-function getProgressionSuggestions(){
-  var wd=getWeekData();
-  var suggestions={};
-  // For each exercise, find the most recent session with data
-  var exNames={};
-  for(var i=0;i<S.days.length;i++){
-    for(var j=0;j<S.days[i].ex.length;j++){
-      var ex=S.days[i].ex[j];
-      if(ex.type!=='Core')exNames[ex.name]=true;
-    }
-  }
-  for(var exName in exNames){
-    // Find last logged working set
-    for(var i=S.log.length-1;i>=0;i--){
-      var w=S.log[i];
-      if(!w.rawSets||!w.rawSets[exName])continue;
-      var sets=w.rawSets[exName].filter(function(s){return s.done&&!s.warmup&&s.weight&&s.reps;});
-      if(!sets.length)continue;
-      // Use the heaviest set
-      var best=sets[0];
-      for(var j=1;j<sets.length;j++){if((sets[j].weight||0)>(best.weight||0))best=sets[j];}
-      var lastW=parseFloat(best.weight)||0;
-      var lastR=parseFloat(best.reps)||0;
-      // Only suggest if last reps differ from current target
-      if(lastR!==wd.reps&&lastW>0){
-        var goal=calcGoalWeight(lastW,lastR,wd.reps);
-        if(goal&&goal>0)suggestions[exName]={lastWeight:lastW,lastReps:lastR,goalWeight:goal,targetReps:wd.reps};
+function bestRecentE1RM(exName,maxSessions){
+  var found=0,best=0;
+  for(var i=S.log.length-1;i>=0&&found<maxSessions;i--){
+    var w=S.log[i];
+    if(!w.rawSets||!w.rawSets[exName])continue;
+    var sets=w.rawSets[exName];var has=false;
+    for(var j=0;j<sets.length;j++){
+      var s=sets[j];
+      if(s.done&&!s.warmup&&s.weight&&s.reps){
+        has=true;
+        var e=calcEpley(parseFloat(s.weight)||0,parseFloat(s.reps)||0);
+        if(e>best)best=e;
       }
-      break;
     }
+    if(has)found++;
   }
-  return suggestions;
+  return best;
+}
+function getTargetWeight(exName,wd){
+  var e1=bestRecentE1RM(exName,3);
+  if(!e1)return null;
+  var t=Math.round(e1*(wd.intensity||0.7)/2.5)*2.5;
+  return t>0?t:null;
 }
 
 // ════════════════════════════════
@@ -3133,6 +3188,95 @@ var MUSCLE_MAP = {
 };
 
 var ALL_MUSCLES=['Chest','Back','Shoulders','Biceps','Triceps','Forearms','Quads','Hamstrings','Glutes','Calves','Core'];
+// Detailed sub-muscles rendered on the body map and stat panel
+var DETAIL_MUSCLES=['Upper Chest','Mid Chest','Front Delts','Side Delts','Rear Delts','Traps','Lats','Lower Back','Biceps','Triceps','Forearms','Abs','Obliques','Quads','Hamstrings','Glutes','Calves'];
+
+// Resolve a coarse muscle group to sub-muscles using the exercise name.
+// Falls back to a sensible default for each group.
+function detailMuscles(exName,group){
+  var n=exName.toLowerCase();
+  if(group==='Chest'){
+    if(n.indexOf('incline')>=0)return ['Upper Chest'];
+    if(n.indexOf('decline')>=0||n.indexOf('dip')>=0)return ['Mid Chest'];
+    return ['Mid Chest'];
+  }
+  if(group==='Shoulders'){
+    if(n.indexOf('shrug')>=0)return ['Traps'];
+    if(n.indexOf('upright row')>=0)return ['Side Delts','Traps'];
+    if(n.indexOf('lateral')>=0||n.indexOf('side raise')>=0)return ['Side Delts'];
+    if(n.indexOf('rear delt')>=0||n.indexOf('reverse fly')>=0||n.indexOf('face pull')>=0)return ['Rear Delts'];
+    if(n.indexOf('front raise')>=0)return ['Front Delts'];
+    if(n.indexOf('press')>=0||n.indexOf('arnold')>=0)return ['Front Delts','Side Delts'];
+    return ['Front Delts','Side Delts'];
+  }
+  if(group==='Back'){
+    if(n.indexOf('shrug')>=0)return ['Traps'];
+    if(n.indexOf('face pull')>=0)return ['Rear Delts','Traps'];
+    if(n.indexOf('deadlift')>=0||n.indexOf('rack pull')>=0||n.indexOf('good morning')>=0||n.indexOf('hyperextension')>=0||n.indexOf('back extension')>=0)return ['Lower Back','Traps'];
+    if(n.indexOf('row')>=0||n.indexOf('pulldown')>=0||n.indexOf('pull-up')>=0||n.indexOf('pull up')>=0||n.indexOf('pullup')>=0||n.indexOf('pullover')>=0||n.indexOf('straight arm')>=0)return ['Lats'];
+    return ['Lats'];
+  }
+  if(group==='Core'){
+    if(n.indexOf('oblique')>=0||n.indexOf('twist')>=0||n.indexOf('side ')>=0||n.indexOf('woodchop')>=0||n.indexOf('wood chop')>=0)return ['Obliques'];
+    return ['Abs'];
+  }
+  // Biceps/Triceps/Forearms/Quads/Hamstrings/Glutes/Calves are already detailed
+  return [group];
+}
+
+// Keyword fallback for custom exercises missing from MUSCLE_MAP
+function guessMuscleGroups(exName){
+  var n=exName.toLowerCase();
+  if(n.indexOf('curl')>=0&&n.indexOf('leg')<0&&n.indexOf('hamstring')<0)return {primary:['Biceps'],secondary:['Forearms']};
+  if(n.indexOf('leg curl')>=0||n.indexOf('hamstring')>=0||n.indexOf('nordic')>=0)return {primary:['Hamstrings'],secondary:[]};
+  if(n.indexOf('pushdown')>=0||n.indexOf('tricep')>=0||n.indexOf('skull')>=0||n.indexOf('skullcrusher')>=0)return {primary:['Triceps'],secondary:[]};
+  if(n.indexOf('squat')>=0||n.indexOf('lunge')>=0||n.indexOf('leg press')>=0||n.indexOf('leg extension')>=0)return {primary:['Quads'],secondary:['Glutes']};
+  if(n.indexOf('calf')>=0)return {primary:['Calves'],secondary:[]};
+  if(n.indexOf('glute')>=0||n.indexOf('hip thrust')>=0)return {primary:['Glutes'],secondary:['Hamstrings']};
+  if(n.indexOf('row')>=0||n.indexOf('pulldown')>=0||n.indexOf('pull')>=0||n.indexOf('shrug')>=0||n.indexOf('deadlift')>=0)return {primary:['Back'],secondary:['Biceps']};
+  if(n.indexOf('bench')>=0||n.indexOf('chest')>=0||n.indexOf('fly')>=0||n.indexOf('push-up')>=0||n.indexOf('push up')>=0||n.indexOf('dip')>=0)return {primary:['Chest'],secondary:['Triceps']};
+  if(n.indexOf('shoulder')>=0||n.indexOf('delt')>=0||n.indexOf('raise')>=0||n.indexOf('overhead')>=0||n.indexOf('ohp')>=0)return {primary:['Shoulders'],secondary:['Triceps']};
+  if(n.indexOf('plank')>=0||n.indexOf('crunch')>=0||n.indexOf('ab ')>=0||n.indexOf('sit-up')>=0||n.indexOf('leg raise')>=0)return {primary:['Core'],secondary:[]};
+  if(n.indexOf('wrist')>=0||n.indexOf('forearm')>=0||n.indexOf('grip')>=0||n.indexOf('farmer')>=0)return {primary:['Forearms'],secondary:[]};
+  return null;
+}
+
+// Full detailed breakdown: weighted sets, volume, contributing exercises,
+// and last-trained timestamps per sub-muscle
+function getDetailedMuscleVolume(days){
+  var detail={};
+  for(var i=0;i<DETAIL_MUSCLES.length;i++)detail[DETAIL_MUSCLES[i]]={sets:0,vol:0,ex:{},last:null};
+  var cutoff=Date.now()-(days*24*60*60*1000);
+  for(var i=S.log.length-1;i>=0;i--){
+    var session=S.log[i];
+    var t=new Date(session.date).getTime();
+    if(t<cutoff)break;
+    if(!session.rawSets)continue;
+    for(var exName in session.rawSets){
+      var sets=session.rawSets[exName];
+      var doneSets=sets.filter(function(s){return s.done&&!s.warmup;});
+      if(!doneSets.length)continue;
+      var exVol=0;
+      for(var j=0;j<doneSets.length;j++)exVol+=(parseFloat(doneSets[j].weight)||0)*(parseFloat(doneSets[j].reps)||0);
+      var map=MUSCLE_MAP[exName]||guessMuscleGroups(exName);
+      if(!map)continue;
+      function add(group,factor){
+        var subs=detailMuscles(exName,group);
+        for(var k=0;k<subs.length;k++){
+          var m=subs[k];
+          if(!detail[m])continue;
+          detail[m].sets+=doneSets.length*factor/subs.length;
+          detail[m].vol+=exVol*factor/subs.length;
+          detail[m].ex[exName]=(detail[m].ex[exName]||0)+doneSets.length;
+          if(!detail[m].last||t>detail[m].last)detail[m].last=t;
+        }
+      }
+      for(var j=0;j<map.primary.length;j++)add(map.primary[j],1);
+      for(var j=0;j<map.secondary.length;j++)add(map.secondary[j],0.5);
+    }
+  }
+  return detail;
+}
 
 function getMuscleVolume(days){
   // days = number of days to look back (7 = last week)
@@ -3172,14 +3316,26 @@ function muscleColor(score, max){
   return '#ffb300';              // peak/overtrained - amber
 }
 
+var hmDays=7;var hmSel=null;
 function renderHeatmap(cont){
-  var scores7=getMuscleVolume(7);
-  var max7=Math.max(1,Math.max.apply(null,Object.values(scores7)));
+  var detail=getDetailedMuscleVolume(hmDays);
+  var maxScore=1;
+  for(var m in detail){if(detail[m].sets>maxScore)maxScore=detail[m].sets;}
 
-  // Header
+  // Header + period toggle
   var hdr=document.createElement('div');
   hdr.className='cc';
-  hdr.innerHTML='<div class="ct">MUSCLE ACTIVATION — LAST 7 DAYS</div>';
+  hdr.innerHTML='<div class="ct">MUSCLE ACTIVATION — LAST '+hmDays+' DAYS</div>';
+  var toggle=document.createElement('div');
+  toggle.className='hm-toggle';
+  toggle.innerHTML='<button class="hm-tbtn'+(hmDays===7?' active':'')+'" data-days="7">7 DAYS</button><button class="hm-tbtn'+(hmDays===30?' active':'')+'" data-days="30">30 DAYS</button>';
+  toggle.onclick=function(e){
+    var b=e.target.closest?e.target.closest('[data-days]'):null;
+    if(!b)return;
+    hmDays=parseInt(b.getAttribute('data-days'));
+    renderProg();
+  };
+  hdr.appendChild(toggle);
 
   // Legend
   var legend=document.createElement('div');
@@ -3195,143 +3351,198 @@ function renderHeatmap(cont){
   }
   hdr.appendChild(legend);
 
-  // Front + Back SVG body maps
+  // Front + back body maps
   var bodyWrap=document.createElement('div');
   bodyWrap.className='heatmap-wrap';
-
-  // Front body
   var frontDiv=document.createElement('div');
   frontDiv.className='heatmap-body';
-  frontDiv.innerHTML='<div class="heatmap-label">FRONT</div>'+buildFrontSVG(scores7,max7);
-
-  // Back body
+  frontDiv.innerHTML='<div class="heatmap-label">FRONT</div>'+buildFrontSVG(detail,maxScore);
   var backDiv=document.createElement('div');
   backDiv.className='heatmap-body';
-  backDiv.innerHTML='<div class="heatmap-label">BACK</div>'+buildBackSVG(scores7,max7);
-
+  backDiv.innerHTML='<div class="heatmap-label">BACK</div>'+buildBackSVG(detail,maxScore);
   bodyWrap.appendChild(frontDiv);
   bodyWrap.appendChild(backDiv);
   hdr.appendChild(bodyWrap);
+
+  // Tap-to-inspect: one delegated listener for both SVGs and the stat rows
+  hdr.addEventListener('click',function(e){
+    var r=e.target.closest?e.target.closest('[data-m]'):null;
+    if(!r)return;
+    var m=r.getAttribute('data-m');
+    hmSel=(hmSel===m)?null:m;
+    renderProg();
+  });
+
+  // Detail panel for the selected muscle
+  if(hmSel&&detail[hmSel]){
+    var d=detail[hmSel];
+    var panel=document.createElement('div');
+    panel.className='hm-detail';
+    var lastTxt='NEVER';
+    if(d.last){
+      var daysAgo=Math.floor((Date.now()-d.last)/864e5);
+      lastTxt=daysAgo===0?'TODAY':daysAgo===1?'YESTERDAY':daysAgo+' DAYS AGO';
+    }
+    var html='<div class="hm-detail-title">'+esc(hmSel.toUpperCase())+'</div>'
+      +'<div class="hm-detail-meta">WEIGHTED SETS: '+(Math.round(d.sets*10)/10)
+      +' &nbsp;&middot;&nbsp; VOLUME: '+Math.round(d.vol).toLocaleString()+' LBS'
+      +'<br>LAST TRAINED: '+lastTxt+'</div>';
+    panel.innerHTML=html;
+    var exNames=Object.keys(d.ex).sort(function(a,b){return d.ex[b]-d.ex[a];});
+    if(exNames.length){
+      for(var i=0;i<exNames.length;i++){
+        var row=document.createElement('div');
+        row.className='hm-ex-row';
+        row.innerHTML='<div class="hm-ex-name">'+esc(exNames[i])+'</div><div class="hm-ex-sets">'+d.ex[exNames[i]]+' SETS</div>';
+        panel.appendChild(row);
+      }
+    }else{
+      var none=document.createElement('div');
+      none.className='hm-detail-meta';
+      none.textContent='No exercises hit this muscle in the window.';
+      panel.appendChild(none);
+    }
+    hdr.appendChild(panel);
+  }else{
+    var hint=document.createElement('div');
+    hint.className='hm-hint';
+    hint.textContent='TAP A MUSCLE FOR DETAIL';
+    hdr.appendChild(hint);
+  }
   cont.appendChild(hdr);
 
-  // Muscle stats bars
+  // Detailed muscle stat bars — tappable, synced with the body map
   var statsCard=document.createElement('div');
   statsCard.className='cc';
-  statsCard.innerHTML='<div class="ct">SETS PER MUSCLE GROUP</div>';
+  statsCard.innerHTML='<div class="ct">SETS PER MUSCLE — DETAILED</div>';
   var grid=document.createElement('div');
   grid.className='muscle-stats';
-
-  // Sort by score desc
-  var sorted=ALL_MUSCLES.slice().sort(function(a,b){return scores7[b]-scores7[a];});
+  var sorted=DETAIL_MUSCLES.slice().sort(function(a,b){return detail[b].sets-detail[a].sets;});
   for(var i=0;i<sorted.length;i++){
     var muscle=sorted[i];
-    var score=Math.round(scores7[muscle]*10)/10;
-    var pct=Math.round(score/max7*100);
-    var color=muscleColor(scores7[muscle],max7);
+    var score=Math.round(detail[muscle].sets*10)/10;
+    var pct=Math.round(detail[muscle].sets/maxScore*100);
+    var color=muscleColor(detail[muscle].sets,maxScore);
     var row=document.createElement('div');
     row.className='muscle-stat-row';
+    row.setAttribute('data-m',muscle);
+    row.style.cursor='pointer';
+    if(hmSel===muscle)row.style.borderColor='var(--am)';
     row.innerHTML='<div class="muscle-stat-name">'+muscle.toUpperCase()+'</div>'
       +'<div class="muscle-stat-bar"><div class="muscle-stat-fill" style="width:'+pct+'%;background:'+color+';"></div></div>'
       +'<div class="muscle-stat-val" style="color:'+color+';">'+score+'</div>';
     grid.appendChild(row);
   }
   statsCard.appendChild(grid);
+  statsCard.addEventListener('click',function(e){
+    var r=e.target.closest?e.target.closest('[data-m]'):null;
+    if(!r)return;
+    var m=r.getAttribute('data-m');
+    hmSel=(hmSel===m)?null:m;
+    renderProg();
+  });
   cont.appendChild(statsCard);
 }
 
-function buildFrontSVG(scores, max){
-  var c=muscleColor;
+function hmRegion(path,muscle,detail,max,extra){
+  var sel=hmSel===muscle?' sel':'';
+  return '<path d="'+path+'" fill="'+muscleColor(detail[muscle]?detail[muscle].sets:0,max)+'" stroke="#0a0e14" stroke-width="1.5" class="hm-region'+sel+'" data-m="'+muscle+'"'+(extra||'')+'/>';
+}
+function hmEllipse(cx,cy,rx,ry,muscle,detail,max){
+  var sel=hmSel===muscle?' sel':'';
+  return '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" fill="'+muscleColor(detail[muscle]?detail[muscle].sets:0,max)+'" stroke="#0a0e14" stroke-width="1.5" class="hm-region'+sel+'" data-m="'+muscle+'"/>';
+}
+function buildFrontSVG(detail, max){
   return '<svg width="130" height="280" viewBox="0 0 130 280" xmlns="http://www.w3.org/2000/svg">'
   // Head
   +'<ellipse cx="65" cy="22" rx="18" ry="20" fill="#1a2a3a" stroke="#2e3f4a" stroke-width="1"/>'
   // Neck
   +'<rect x="58" y="40" width="14" height="12" rx="3" fill="#1a2a3a" stroke="#2e3f4a" stroke-width="1"/>'
-  // Chest
-  +'<path d="M35,52 Q65,48 95,52 L98,90 Q65,95 32,90 Z" fill="'+c(scores['Chest'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Left shoulder
-  +'<ellipse cx="25" cy="65" rx="13" ry="16" fill="'+c(scores['Shoulders'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Right shoulder
-  +'<ellipse cx="105" cy="65" rx="13" ry="16" fill="'+c(scores['Shoulders'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Left bicep
-  +'<path d="M13,80 Q8,95 10,115 L22,115 Q24,95 22,80 Z" fill="'+c(scores['Biceps'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Right bicep
-  +'<path d="M117,80 Q122,95 120,115 L108,115 Q106,95 108,80 Z" fill="'+c(scores['Biceps'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Left forearm
-  +'<path d="M10,116 Q6,135 8,155 L20,155 Q22,135 22,116 Z" fill="'+c(scores['Forearms'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Right forearm
-  +'<path d="M120,116 Q124,135 122,155 L110,155 Q108,135 108,116 Z" fill="'+c(scores['Forearms'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Core/Abs
-  +'<path d="M38,90 Q65,95 92,90 L90,140 Q65,144 40,140 Z" fill="'+c(scores['Core'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Left quad
-  +'<path d="M40,144 Q38,145 35,175 Q34,195 38,210 L58,210 Q60,195 60,175 Q60,150 55,144 Z" fill="'+c(scores['Quads'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Right quad
-  +'<path d="M90,144 Q92,145 95,175 Q96,195 92,210 L72,210 Q70,195 70,175 Q70,150 75,144 Z" fill="'+c(scores['Quads'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Left knee
+  // Upper chest band
+  +hmRegion('M35,52 Q65,48 95,52 L96,70 Q65,73 34,70 Z','Upper Chest',detail,max)
+  // Mid/lower chest band
+  +hmRegion('M34,70 Q65,73 96,70 L98,90 Q65,95 32,90 Z','Mid Chest',detail,max)
+  // Front delts (front view shows the anterior head)
+  +hmEllipse(25,65,13,16,'Front Delts',detail,max)
+  +hmEllipse(105,65,13,16,'Front Delts',detail,max)
+  // Biceps
+  +hmRegion('M13,80 Q8,95 10,115 L22,115 Q24,95 22,80 Z','Biceps',detail,max)
+  +hmRegion('M117,80 Q122,95 120,115 L108,115 Q106,95 108,80 Z','Biceps',detail,max)
+  // Forearms
+  +hmRegion('M10,116 Q6,135 8,155 L20,155 Q22,135 22,116 Z','Forearms',detail,max)
+  +hmRegion('M120,116 Q124,135 122,155 L110,155 Q108,135 108,116 Z','Forearms',detail,max)
+  // Obliques — side strips
+  +hmRegion('M38,90 L46,92 L46,138 L40,140 Z','Obliques',detail,max)
+  +hmRegion('M92,90 L84,92 L84,138 L90,140 Z','Obliques',detail,max)
+  // Abs — center column
+  +hmRegion('M46,92 Q65,95 84,92 L84,138 Q65,142 46,138 Z','Abs',detail,max)
+  // Quads
+  +hmRegion('M40,144 Q38,145 35,175 Q34,195 38,210 L58,210 Q60,195 60,175 Q60,150 55,144 Z','Quads',detail,max)
+  +hmRegion('M90,144 Q92,145 95,175 Q96,195 92,210 L72,210 Q70,195 70,175 Q70,150 75,144 Z','Quads',detail,max)
+  // Knees
   +'<ellipse cx="48" cy="215" rx="10" ry="8" fill="#1a2a3a" stroke="#2e3f4a" stroke-width="1"/>'
-  // Right knee
   +'<ellipse cx="82" cy="215" rx="10" ry="8" fill="#1a2a3a" stroke="#2e3f4a" stroke-width="1"/>'
-  // Left calf
-  +'<path d="M38,223 Q35,245 37,265 L58,265 Q60,245 58,223 Z" fill="'+c(scores['Calves'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Right calf
-  +'<path d="M92,223 Q95,245 93,265 L72,265 Q70,245 72,223 Z" fill="'+c(scores['Calves'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Calves
+  +hmRegion('M38,223 Q35,245 37,265 L58,265 Q60,245 58,223 Z','Calves',detail,max)
+  +hmRegion('M92,223 Q95,245 93,265 L72,265 Q70,245 72,223 Z','Calves',detail,max)
   // Labels
-  +'<text x="65" y="76" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">CHEST</text>'
-  +'<text x="65" y="118" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">CORE</text>'
-  +'<text x="48" y="182" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">QUAD</text>'
-  +'<text x="82" y="182" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">QUAD</text>'
-  +'<text x="48" y="246" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">CALF</text>'
-  +'<text x="82" y="246" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">CALF</text>'
+  +'<text x="65" y="63" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="4.5" fill="#040608" opacity=".7" pointer-events="none">UP CHEST</text>'
+  +'<text x="65" y="82" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="4.5" fill="#040608" opacity=".7" pointer-events="none">CHEST</text>'
+  +'<text x="65" y="118" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7" pointer-events="none">ABS</text>'
+  +'<text x="48" y="182" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7" pointer-events="none">QUAD</text>'
+  +'<text x="82" y="182" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7" pointer-events="none">QUAD</text>'
+  +'<text x="48" y="246" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7" pointer-events="none">CALF</text>'
+  +'<text x="82" y="246" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7" pointer-events="none">CALF</text>'
   +'</svg>';
 }
 
-function buildBackSVG(scores, max){
-  var c=muscleColor;
+function buildBackSVG(detail, max){
   return '<svg width="130" height="280" viewBox="0 0 130 280" xmlns="http://www.w3.org/2000/svg">'
   // Head
   +'<ellipse cx="65" cy="22" rx="18" ry="20" fill="#1a2a3a" stroke="#2e3f4a" stroke-width="1"/>'
   // Neck
   +'<rect x="58" y="40" width="14" height="12" rx="3" fill="#1a2a3a" stroke="#2e3f4a" stroke-width="1"/>'
-  // Upper back / traps
-  +'<path d="M35,52 Q65,48 95,52 L98,90 Q65,88 32,90 Z" fill="'+c(scores['Back'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Left shoulder (rear)
-  +'<ellipse cx="25" cy="65" rx="13" ry="16" fill="'+c(scores['Shoulders'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Right shoulder (rear)
-  +'<ellipse cx="105" cy="65" rx="13" ry="16" fill="'+c(scores['Shoulders'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Left tricep
-  +'<path d="M13,80 Q8,95 10,115 L22,115 Q24,95 22,80 Z" fill="'+c(scores['Triceps'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Right tricep
-  +'<path d="M117,80 Q122,95 120,115 L108,115 Q106,95 108,80 Z" fill="'+c(scores['Triceps'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Left forearm
-  +'<path d="M10,116 Q6,135 8,155 L20,155 Q22,135 22,116 Z" fill="'+c(scores['Forearms'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Right forearm
-  +'<path d="M120,116 Q124,135 122,155 L110,155 Q108,135 108,116 Z" fill="'+c(scores['Forearms'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Lower back / lats
-  +'<path d="M38,90 Q65,88 92,90 L90,140 Q65,144 40,140 Z" fill="'+c(scores['Back'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Left glute
-  +'<path d="M40,140 Q38,142 36,165 Q35,180 40,185 L60,185 Q64,175 62,155 Q60,142 55,140 Z" fill="'+c(scores['Glutes'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Right glute
-  +'<path d="M90,140 Q92,142 94,165 Q95,180 90,185 L70,185 Q66,175 68,155 Q70,142 75,140 Z" fill="'+c(scores['Glutes'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Left hamstring
-  +'<path d="M38,185 Q35,200 36,210 L58,210 Q60,200 60,185 Z" fill="'+c(scores['Hamstrings'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Right hamstring
-  +'<path d="M92,185 Q95,200 94,210 L72,210 Q70,200 70,185 Z" fill="'+c(scores['Hamstrings'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Left knee
+  // Traps — upper band
+  +hmRegion('M35,52 Q65,48 95,52 L96,72 Q65,70 34,72 Z','Traps',detail,max)
+  // Rear delts
+  +hmEllipse(25,65,13,16,'Rear Delts',detail,max)
+  +hmEllipse(105,65,13,16,'Rear Delts',detail,max)
+  // Triceps
+  +hmRegion('M13,80 Q8,95 10,115 L22,115 Q24,95 22,80 Z','Triceps',detail,max)
+  +hmRegion('M117,80 Q122,95 120,115 L108,115 Q106,95 108,80 Z','Triceps',detail,max)
+  // Forearms
+  +hmRegion('M10,116 Q6,135 8,155 L20,155 Q22,135 22,116 Z','Forearms',detail,max)
+  +hmRegion('M120,116 Q124,135 122,155 L110,155 Q108,135 108,116 Z','Forearms',detail,max)
+  // Lats — two side panels
+  +hmRegion('M34,72 Q48,74 50,76 L50,122 Q42,124 38,118 Q34,100 34,72 Z','Lats',detail,max)
+  +hmRegion('M96,72 Q82,74 80,76 L80,122 Q88,124 92,118 Q96,100 96,72 Z','Lats',detail,max)
+  // Mid spine column (structure)
+  +'<path d="M50,76 Q65,74 80,76 L80,118 Q65,120 50,118 Z" fill="#1a2a3a" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Lower back
+  +hmRegion('M40,118 Q65,124 90,118 L90,140 Q65,144 40,140 Z','Lower Back',detail,max)
+  // Glutes
+  +hmRegion('M40,140 Q38,142 36,165 Q35,180 40,185 L60,185 Q64,175 62,155 Q60,142 55,140 Z','Glutes',detail,max)
+  +hmRegion('M90,140 Q92,142 94,165 Q95,180 90,185 L70,185 Q66,175 68,155 Q70,142 75,140 Z','Glutes',detail,max)
+  // Hamstrings
+  +hmRegion('M38,185 Q35,200 36,210 L58,210 Q60,200 60,185 Z','Hamstrings',detail,max)
+  +hmRegion('M92,185 Q95,200 94,210 L72,210 Q70,200 70,185 Z','Hamstrings',detail,max)
+  // Knees
   +'<ellipse cx="48" cy="215" rx="10" ry="8" fill="#1a2a3a" stroke="#2e3f4a" stroke-width="1"/>'
-  // Right knee
   +'<ellipse cx="82" cy="215" rx="10" ry="8" fill="#1a2a3a" stroke="#2e3f4a" stroke-width="1"/>'
-  // Left calf
-  +'<path d="M38,223 Q35,245 37,265 L58,265 Q60,245 58,223 Z" fill="'+c(scores['Calves'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
-  // Right calf
-  +'<path d="M92,223 Q95,245 93,265 L72,265 Q70,245 72,223 Z" fill="'+c(scores['Calves'],max)+'" stroke="#0a0e14" stroke-width="1.5"/>'
+  // Calves
+  +hmRegion('M38,223 Q35,245 37,265 L58,265 Q60,245 58,223 Z','Calves',detail,max)
+  +hmRegion('M92,223 Q95,245 93,265 L72,265 Q70,245 72,223 Z','Calves',detail,max)
   // Labels
-  +'<text x="65" y="72" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">BACK</text>'
-  +'<text x="65" y="118" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">BACK</text>'
-  +'<text x="48" y="165" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">GLUTE</text>'
-  +'<text x="82" y="165" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">GLUTE</text>'
-  +'<text x="48" y="200" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">HAM</text>'
-  +'<text x="82" y="200" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">HAM</text>'
-  +'<text x="48" y="246" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">CALF</text>'
-  +'<text x="82" y="246" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7">CALF</text>'
+  +'<text x="65" y="63" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7" pointer-events="none">TRAPS</text>'
+  +'<text x="42" y="98" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="4.5" fill="#040608" opacity=".7" pointer-events="none">LAT</text>'
+  +'<text x="88" y="98" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="4.5" fill="#040608" opacity=".7" pointer-events="none">LAT</text>'
+  +'<text x="65" y="132" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="4.5" fill="#040608" opacity=".7" pointer-events="none">LOW BACK</text>'
+  +'<text x="48" y="165" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7" pointer-events="none">GLUTE</text>'
+  +'<text x="82" y="165" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7" pointer-events="none">GLUTE</text>'
+  +'<text x="48" y="200" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7" pointer-events="none">HAM</text>'
+  +'<text x="82" y="200" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7" pointer-events="none">HAM</text>'
+  +'<text x="48" y="246" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7" pointer-events="none">CALF</text>'
+  +'<text x="82" y="246" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7" pointer-events="none">CALF</text>'
   +'</svg>';
 }
 
