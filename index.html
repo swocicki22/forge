@@ -848,7 +848,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 
 <!-- MODALS -->
 <div class="mo" id="finmo"><div class="md"><div class="mh"></div><div class="mti">COMMIT SESSION?</div><div id="finsum" style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--st);margin-bottom:12px;line-height:1.9;letter-spacing:.04em;"></div><button class="mb" onclick="confirmFin()">COMMIT TO LOG</button><button class="mca" onclick="closeModal('finmo')">CONTINUE</button></div></div>
-<div class="mo" id="edit-ex-mo"><div class="md"><div class="mh"></div><div class="mti" id="edit-ex-title">EDIT EXERCISE</div><div class="fl">Name</div><input class="fi" id="ef-name" placeholder="e.g. Barbell Bench Press"/><div class="fl">Type</div><input class="fi" id="ef-type" placeholder="e.g. Compound, Power, Core"/><div class="fl">Superset Group (optional)</div><input class="fi" id="ef-ss" placeholder="e.g. A1, B2"/><div class="fl">Sets / Reps / Default Weight (lbs)</div><div class="fr"><input class="fi" id="ef-sets" type="number" placeholder="Sets" inputmode="numeric"/><input class="fi" id="ef-reps" type="number" placeholder="Reps" inputmode="numeric"/><input class="fi" id="ef-weight" type="number" placeholder="lbs" inputmode="decimal"/></div><div class="fl">Notes / Coaching Cues</div><textarea class="fta" id="ef-notes" placeholder="Form cues, tempo, tips..."></textarea><button class="mb" onclick="saveExercise()">SAVE</button><button class="mca" onclick="closeModal('edit-ex-mo')">CANCEL</button><button class="mb-red" id="del-ex-btn" onclick="deleteExercise()" style="display:none;">DELETE</button></div></div>
+<div class="mo" id="edit-ex-mo"><div class="md"><div class="mh"></div><div class="mti" id="edit-ex-title">EDIT EXERCISE</div><div class="fl">Name</div><input class="fi" id="ef-name" placeholder="e.g. Barbell Bench Press"/><div class="fl">Type</div><input class="fi" id="ef-type" placeholder="e.g. Compound, Power, Core" oninput="syncEfLoadedRow()"/><div class="rest-toggle" id="ef-loaded-row" style="margin-top:10px;display:none;"><div><div style="font-family:Rajdhani,sans-serif;font-weight:600;font-size:13px;color:var(--tx);">Loaded (uses weight)</div><div style="font-family:Share Tech Mono,monospace;font-size:7px;letter-spacing:.1em;color:var(--s3);margin-top:2px;">ON = log plate/stack weight &nbsp;·&nbsp; OFF = bodyweight</div></div><div class="toggle-sw" id="ef-loaded-sw" onclick="toggleEfLoaded()"></div></div><div class="fl">Superset Group (optional)</div><input class="fi" id="ef-ss" placeholder="e.g. A1, B2"/><div class="fl">Sets / Reps / Default Weight (lbs)</div><div class="fr"><input class="fi" id="ef-sets" type="number" placeholder="Sets" inputmode="numeric"/><input class="fi" id="ef-reps" type="number" placeholder="Reps" inputmode="numeric"/><input class="fi" id="ef-weight" type="number" placeholder="lbs" inputmode="decimal"/></div><div class="fl">Notes / Coaching Cues</div><textarea class="fta" id="ef-notes" placeholder="Form cues, tempo, tips..."></textarea><button class="mb" onclick="saveExercise()">SAVE</button><button class="mca" onclick="closeModal('edit-ex-mo')">CANCEL</button><button class="mb-red" id="del-ex-btn" onclick="deleteExercise()" style="display:none;">DELETE</button></div></div>
 <div class="mo" id="add-day-mo"><div class="md"><div class="mh"></div><div class="mti">NEW PROTOCOL DAY</div><div class="fl">Day Name</div><input class="fi" id="nd-name" placeholder="e.g. Upper Power"/><div class="fl">Tag</div><input class="fi" id="nd-tag" placeholder="e.g. UPPER POWER"/><div class="fl">Cardio Finisher (optional)</div><input class="fi" id="nd-cardio" placeholder="e.g. 20 min HIIT Bike"/><button class="mb" onclick="saveNewDay()">CREATE</button><button class="mca" onclick="closeModal('add-day-mo')">CANCEL</button></div></div>
 <div class="mo" id="edit-day-mo"><div class="md"><div class="mh"></div><div class="mti">EDIT PROTOCOL</div><div class="fl">Day Name</div><input class="fi" id="ed-name"/><div class="fl">Tag</div><input class="fi" id="ed-tag"/><div class="fl">Cardio Finisher</div><input class="fi" id="ed-cardio"/><button class="mb" onclick="saveDayEdit()">SAVE</button><button class="mca" onclick="closeModal('edit-day-mo')">CANCEL</button><button class="mb-red" onclick="deleteDay()">DELETE DAY</button></div></div>
 <div class="mo" id="notes-mo"><div class="md"><div class="mh"></div><div class="mti" id="notes-ex-name">NOTES</div><div id="notes-content" style="font-family:Rajdhani,sans-serif;font-size:13px;color:var(--st);line-height:1.7;margin-bottom:12px;"></div><button class="mb" onclick="closeModal('notes-mo')">CLOSE</button></div></div>
@@ -968,7 +968,7 @@ var SUPPS=[
 // ════════════════════════════════
 // USER SYSTEM
 // ════════════════════════════════
-var APP_VERSION='3.1';
+var APP_VERSION='4.1';
 var USERS_KEY='forge_users_v4';
 var currentUserId=null;
 var pinBuffer='';
@@ -1324,10 +1324,10 @@ function todayKey(){return dateKey(new Date());}
 // PRESETS
 // ════════════════════════════════
 var AB_PRESET=[
-  {name:'Cable Crunch',type:'Core',ds:3,dr:15,dw:50,ss:'',notes:'Kneel at cable. Pull elbows to knees. Round spine fully. 3 sec negative. Add weight progressively.'},
+  {name:'Cable Crunch',type:'Core',loaded:true,ds:3,dr:15,dw:50,ss:'',notes:'Kneel at cable. Pull elbows to knees with the stack — log the pin weight. Round spine fully, 3 sec negative. Add weight as 15 reps gets easy.'},
   {name:'Hanging Leg Raise',type:'Core',ds:3,dr:15,dw:0,ss:'',notes:'Dead hang. Raise legs to 90 degrees or higher. Posterior pelvic tilt at top. No swinging.'},
-  {name:'Decline Sit-Up',type:'Core',ds:3,dr:15,dw:25,ss:'',notes:'Hold plate on chest. Full ROM. Control descent. 3 sec negative.'},
-  {name:'Russian Twist',type:'Core',ds:3,dr:20,dw:25,ss:'',notes:'20 total reps. Hold plate or dumbbell. Lean back 45 degrees. Rotate fully side to side.'},
+  {name:'Decline Sit-Up',type:'Core',loaded:true,ds:3,dr:15,dw:25,ss:'',notes:'Hold plate on chest — log the plate weight. Full ROM. Control descent, 3 sec negative.'},
+  {name:'Russian Twist',type:'Core',loaded:true,ds:3,dr:20,dw:25,ss:'',notes:'20 total reps. Hold plate or dumbbell — log the weight. Lean back 45 degrees, lead with the ribs, rotate fully side to side.'},
   {name:'Plank',type:'Core',ds:3,dr:45,dw:0,ss:'',notes:'45 sec hold. Squeeze glutes and core. Neutral spine. Build to 60+ sec over time.'},
   {name:'Side Plank',type:'Core',ds:2,dr:30,dw:0,ss:'',notes:'30 sec each side. Hips up. Straight line head to feet. Progress to weighted hip dips.'}
 ];
@@ -1481,7 +1481,14 @@ var LIB=[
   {name:'Plank',muscle:'Core',type:'Compound',tip:'Squeeze everything. Neutral spine.'},
   {name:'Side Plank',muscle:'Core',type:'Compound',tip:'Hip up. Straight line head to feet.'},
   {name:'Dead Bug',muscle:'Core',type:'Compound',tip:'Lower back pressed to floor. Slow and controlled.'},
-  {name:'Russian Twist',muscle:'Core',type:'Isolation',tip:'Lean back 45 degrees. Rotate fully.'},
+  {name:'Russian Twist',muscle:'Core',type:'Isolation',tip:'Lean back 45 degrees. Lead with ribs, rotate fully. Hold a plate to load it.'},
+  {name:'Cable Woodchop (High-Low)',muscle:'Core',type:'Athletic',tip:'Rotational power for the drive and crossover. Pull stack hip-to-opposite-shoulder. Log the pin weight.'},
+  {name:'Landmine Rotation',muscle:'Core',type:'Athletic',tip:'Explosive trunk rotation — direct carryover to shooting and passing force. Hips lead, arms follow.'},
+  {name:'Pallof Press (Cable)',muscle:'Core',type:'Athletic',tip:'Anti-rotation. Resist the stack pulling you sideways. Press out, hold 2 sec. Builds the brace that protects the lower back.'},
+  {name:'Cable Side Bend',muscle:'Core',type:'Isolation',tip:'Loaded lateral flexion for the obliques/sides. One side at a time, full stretch to full crunch.'},
+  {name:'Suitcase Carry',muscle:'Core',type:'Athletic',tip:'Load one hand, walk tall, resist leaning. Hits obliques and deep core as anti-lateral-flexion.'},
+  {name:'Hanging Knee Raise (Weighted)',muscle:'Core',type:'Isolation',tip:'Lower-ab focus. Posterior pelvic tilt to curl the hips up — do not just swing the knees. Hold a dumbbell between feet to load.'},
+  {name:'Reverse Crunch',muscle:'Core',type:'Isolation',tip:'Targets the lower abs specifically. Curl hips off the floor, control the descent.'},
   {name:'Reverse Crunch',muscle:'Core',type:'Isolation',tip:'Posterior pelvic tilt. Bring hips off floor.'},
   // CHEST
   {name:'Dumbbell Fly',muscle:'Chest',type:'Isolation',tip:'Wide arc. Slight bend in elbows. Stretch at bottom.'},
@@ -1520,6 +1527,14 @@ var LIB=[
   {name:'Diamond Push-Up',muscle:'Arms',type:'Compound',tip:'Hands form diamond. Tricep emphasis. Keep elbows tight.'},
   {name:'Rope Hammer Curl',muscle:'Arms',type:'Isolation',tip:'Neutral grip on rope. Split at top for brachialis peak.'},
   // CORE
+  {name:'Box Jump',muscle:'Plyo',type:'Athletic',tip:'Cardio-acceleration / explosive. Land soft, full hip extension. Step down, do not jump down. Vertical-jump carryover.'},
+  {name:'Squat Jump',muscle:'Plyo',type:'Athletic',tip:'Cardio-acceleration. Explode up every rep, absorb the landing. Alactic power for fast breaks.'},
+  {name:'Lateral Bound',muscle:'Plyo',type:'Athletic',tip:'Cardio-acceleration. Side-to-side power — mirrors defensive slides and crossovers. Stick each landing.'},
+  {name:'Medicine Ball Slam',muscle:'Plyo',type:'Athletic',tip:'Cardio-acceleration. Full-body, core-driven. Slam hard, reset fast.'},
+  {name:'Jump Rope',muscle:'Plyo',type:'Athletic',tip:'Cardio-acceleration default. Light, fast, continuous. Easiest minute-filler between sets.'},
+  {name:'Mountain Climber',muscle:'Plyo',type:'Athletic',tip:'Cardio-acceleration. Drive knees fast, hips low, core tight.'},
+  {name:'Skater Hops',muscle:'Plyo',type:'Athletic',tip:'Cardio-acceleration. Lateral single-leg bounds for change-of-direction strength.'},
+  {name:'Depth Jump',muscle:'Plyo',type:'Athletic',tip:'Advanced reactive plyo. Step off box, land and immediately explode up. Minimize ground contact.'},
   {name:'Dragon Flag',muscle:'Core',type:'Compound',tip:'Full body lever. Lower under control. Advanced movement.'},
   {name:'Hollow Body Hold',muscle:'Core',type:'Compound',tip:'Lower back pressed down. Arms and legs extended. Full tension.'},
   {name:'L-Sit',muscle:'Core',type:'Compound',tip:'Legs parallel to floor. Hold position. Extreme core strength.'},
@@ -1764,9 +1779,21 @@ function toggleRest(){var day=getDay(editingDayId);day.rest=!day.rest;saveState(
 function openEditDay(){var day=getDay(editingDayId);el('ed-name').value=day.name;el('ed-tag').value=day.tag;el('ed-cardio').value=day.cardio||'';el('edit-day-mo').classList.add('visible');}
 function saveDayEdit(){var day=getDay(editingDayId);var name=el('ed-name').value.trim();if(!name){showToast('NAME REQUIRED');return;}day.name=name;day.tag=el('ed-tag').value.trim()||name.toUpperCase();day.cardio=el('ed-cardio').value.trim()||null;el('editor-title').textContent=day.name.toUpperCase();saveState();closeModal('edit-day-mo');renderEditor();showToast('UPDATED');}
 function deleteDay(){var idx=getDayIdx(editingDayId);if(idx===-1)return;S.days.splice(idx,1);for(var i=0;i<S.days.length;i++)S.days[i].lbl=(i+1<10?'0'+(i+1):''+(i+1));saveState();closeModal('edit-day-mo');showScreen('s-workout');showToast('DELETED');}
-function openAddExercise(isCore){editingExIdx=null;el('edit-ex-title').textContent='ADD EXERCISE';el('ef-name').value='';el('ef-type').value=isCore?'Core':'';el('ef-ss').value='';el('ef-sets').value='3';el('ef-reps').value='10';el('ef-weight').value='';el('ef-notes').value='';el('del-ex-btn').style.display='none';el('edit-ex-mo').classList.add('visible');}
-function openEditExercise(idx){var day=getDay(editingDayId);var ex=day.ex[idx];editingExIdx=idx;el('edit-ex-title').textContent='EDIT: '+ex.name;el('ef-name').value=ex.name;el('ef-type').value=ex.type;el('ef-ss').value=ex.ss||'';el('ef-sets').value=ex.ds;el('ef-reps').value=ex.dr;el('ef-weight').value=ex.dw||'';el('ef-notes').value=ex.notes||'';el('del-ex-btn').style.display='block';el('edit-ex-mo').classList.add('visible');}
-function saveExercise(){var name=el('ef-name').value.trim();if(!name){showToast('NAME REQUIRED');return;}var ex={name:name,type:el('ef-type').value.trim()||'Custom',ss:el('ef-ss').value.trim(),ds:parseInt(el('ef-sets').value)||3,dr:parseInt(el('ef-reps').value)||10,dw:parseFloat(el('ef-weight').value)||0,notes:el('ef-notes').value.trim()};var day=getDay(editingDayId);if(editingExIdx!==null){day.ex[editingExIdx]=ex;showToast('UPDATED');}else{day.ex.push(ex);showToast('ADDED');}saveState();closeModal('edit-ex-mo');renderEditor();}
+var efLoaded=false;
+function toggleEfLoaded(){efLoaded=!efLoaded;var sw=el('ef-loaded-sw');if(sw){if(efLoaded)sw.classList.add('on');else sw.classList.remove('on');}}
+function syncEfLoadedRow(){
+  // The Loaded toggle is only meaningful for Core movements; for everything
+  // else weight is always on. Show it when type is Core (or blank-from-core).
+  var type=(el('ef-type').value||'').trim().toLowerCase();
+  var row=el('ef-loaded-row');
+  if(!row)return;
+  if(type==='core'){row.style.display='flex';}
+  else{row.style.display='none';}
+}
+function setEfLoaded(v){efLoaded=!!v;var sw=el('ef-loaded-sw');if(sw){if(efLoaded)sw.classList.add('on');else sw.classList.remove('on');}}
+function openAddExercise(isCore){editingExIdx=null;el('edit-ex-title').textContent='ADD EXERCISE';el('ef-name').value='';el('ef-type').value=isCore?'Core':'';el('ef-ss').value='';el('ef-sets').value='3';el('ef-reps').value='10';el('ef-weight').value='';el('ef-notes').value='';el('del-ex-btn').style.display='none';setEfLoaded(false);syncEfLoadedRow();el('edit-ex-mo').classList.add('visible');}
+function openEditExercise(idx){var day=getDay(editingDayId);var ex=day.ex[idx];editingExIdx=idx;el('edit-ex-title').textContent='EDIT: '+ex.name;el('ef-name').value=ex.name;el('ef-type').value=ex.type;el('ef-ss').value=ex.ss||'';el('ef-sets').value=ex.ds;el('ef-reps').value=ex.dr;el('ef-weight').value=ex.dw||'';el('ef-notes').value=ex.notes||'';el('del-ex-btn').style.display='block';var isL=(ex.loaded!==undefined)?ex.loaded:(ex.type==='Core'?coreFlags(ex.name).loaded:false);setEfLoaded(isL);syncEfLoadedRow();el('edit-ex-mo').classList.add('visible');}
+function saveExercise(){var name=el('ef-name').value.trim();if(!name){showToast('NAME REQUIRED');return;}var type=el('ef-type').value.trim()||'Custom';var ex={name:name,type:type,ss:el('ef-ss').value.trim(),ds:parseInt(el('ef-sets').value)||3,dr:parseInt(el('ef-reps').value)||10,dw:parseFloat(el('ef-weight').value)||0,notes:el('ef-notes').value.trim()};if(type==='Core'){ex.loaded=efLoaded;ex.timed=coreFlags(name).timed;}var day=getDay(editingDayId);if(editingExIdx!==null){day.ex[editingExIdx]=ex;showToast('UPDATED');}else{day.ex.push(ex);showToast('ADDED');}saveState();closeModal('edit-ex-mo');renderEditor();}
 function deleteExercise(){if(editingExIdx===null)return;var day=getDay(editingDayId);day.ex.splice(editingExIdx,1);saveState();closeModal('edit-ex-mo');renderEditor();showToast('REMOVED');}
 function openAddDay(){el('nd-name').value='';el('nd-tag').value='';el('nd-cardio').value='';el('add-day-mo').classList.add('visible');}
 function saveNewDay(){var name=el('nd-name').value.trim();if(!name){showToast('NAME REQUIRED');return;}var num=S.days.length+1;var lbl=num<10?'0'+num:''+num;S.days.push({id:'c_'+Date.now(),lbl:lbl,name:name,tag:el('nd-tag').value.trim()||name.toUpperCase(),rest:false,cardio:el('nd-cardio').value.trim()||null,ex:[]});saveState();closeModal('add-day-mo');renderSel();showToast('CREATED');}
@@ -1810,7 +1837,16 @@ function exByName(name){var day=S.activeDay;if(!day)return null;for(var i=0;i<da
 function buildSetRowHTML(ex,set,j){
   var ek=ekOf(ex.name);var ea=escAttr(ex.name);
   if(ex.type==='Core'){
-    return '<div class="sr'+(set.done?' done':'')+'" id="sr-'+ek+'-'+j+'"><div class="sn">'+(j+1)+'</div><div class="step" style="opacity:.3;pointer-events:none;"><button class="sbtn">-</button><input class="sinp" value="BW" readonly/><button class="sbtn">+</button></div><div class="step"><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="reps" data-idx="'+j+'" data-d="-1">-</button><input class="sinp" type="number" inputmode="numeric" id="r-'+ek+'-'+j+'" value="'+(set.reps||'')+'" data-ex="'+ea+'" data-f="reps" data-idx="'+j+'"/><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="reps" data-idx="'+j+'" data-d="1">+</button></div><div style="width:28px;"></div><button class="schk'+(set.done?' done':'')+'" data-act="chk" data-ex="'+ea+'" data-idx="'+j+'">'+(set.done?'&#10003;':'')+'</button></div>';
+    var timed=ex.timed||/plank|hold|l-sit|hollow/i.test(ex.name);
+    var repLabel=timed?'sec':'reps';
+    // Weight column: editable stack/plate load when loaded, locked BW otherwise
+    var wcol;
+    if(ex.loaded){
+      wcol='<div class="step"><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'" data-d="-5">-</button><input class="sinp" type="number" inputmode="decimal" placeholder="lbs" id="w-'+ek+'-'+j+'" value="'+(set.weight||'')+'" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'"/><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'" data-d="5">+</button></div>';
+    }else{
+      wcol='<div class="step" style="opacity:.3;pointer-events:none;"><button class="sbtn">-</button><input class="sinp" value="BW" readonly/><button class="sbtn">+</button></div>';
+    }
+    return '<div class="sr'+(set.done?' done':'')+'" id="sr-'+ek+'-'+j+'"><div class="sn">'+(j+1)+'</div>'+wcol+'<div class="step"><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="reps" data-idx="'+j+'" data-d="-1">-</button><input class="sinp" type="number" inputmode="numeric" placeholder="'+repLabel+'" id="r-'+ek+'-'+j+'" value="'+(set.reps||'')+'" data-ex="'+ea+'" data-f="reps" data-idx="'+j+'"/><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="reps" data-idx="'+j+'" data-d="1">+</button></div><div style="width:28px;"></div><button class="schk'+(set.done?' done':'')+'" data-act="chk" data-ex="'+ea+'" data-idx="'+j+'">'+(set.done?'&#10003;':'')+'</button></div>';
   }
   var rowClass='sr'+(set.done?' done':'')+(set.warmup?' warmup':'');var numDisplay=set.warmup?'WU':(j+1);
   var h='<div class="'+rowClass+'" id="sr-'+ek+'-'+j+'"><div class="sn">'+numDisplay+'</div>';
@@ -1879,7 +1915,9 @@ function renderActive(){
       var sh='';
       for(var j=0;j<sets.length;j++){sh+=buildSetRowHTML(ex,sets[j],j);}
       var notesBtn=ex.notes?'<button class="info-btn" data-act="notes" data-ek="'+ek+'">i</button>':'';
-      blk.innerHTML='<div class="eh"><div class="en">'+esc(ex.name)+'</div><div class="et" style="color:var(--en);">CORE</div>'+notesBtn+'</div><div class="shr"><div class="sc">#</div><div class="sc">WEIGHT</div><div class="sc">REPS</div><div class="sc"></div><div class="sc">&#10003;</div></div>'+sh;
+      var coreRepHdr=(ex.timed||/plank|hold|l-sit|hollow/i.test(ex.name))?'SEC':'REPS';
+      var coreWtHdr=ex.loaded?'WEIGHT':'BW';
+      blk.innerHTML='<div class="eh"><div class="en">'+esc(ex.name)+'</div><div class="et" style="color:var(--en);">CORE</div>'+notesBtn+'</div><div class="shr"><div class="sc">#</div><div class="sc">'+coreWtHdr+'</div><div class="sc">'+coreRepHdr+'</div><div class="sc"></div><div class="sc">&#10003;</div></div>'+sh;
       list.appendChild(blk);
     }
   }
@@ -1946,8 +1984,15 @@ function confirmAddExToWorkout(){
   var name=el('aew-name').value.trim();if(!name){showToast('NAME REQUIRED');return;}
   var type=el('aew-type').value.trim()||'Custom';var sets=parseInt(el('aew-sets').value)||3;var weight=parseFloat(el('aew-weight').value)||0;var wd=getWeekData();
   var newEx={name:name,type:type,ds:sets,dr:(wd.repMin||wd.reps),dw:weight,ss:'',notes:''};
+  if(type==='Core'){var cf=coreFlags(name);newEx.loaded=cf.loaded;newEx.timed=cf.timed;}
   S.activeDay.ex.push(newEx);var arr=[];for(var i=0;i<sets;i++)arr.push({weight:weight,reps:(wd.repMin||wd.reps),done:false,warmup:false,rpe:0});
   S.sets[name]=arr;closeModal('add-ex-workout-mo');renderActive();saveActive();showToast('EXERCISE ADDED');
+}
+function coreFlags(name){
+  var n=name.toLowerCase();
+  var loaded=/cable crunch|woodchop|wood chop|pallof|weighted|cable side|landmine rotation|russian twist|decline sit|side bend|suitcase|hanging knee raise \(weighted\)|knee raise \(weighted\)/.test(n);
+  var timed=/plank|hold|l-sit|hollow|dead ?hang/.test(n);
+  return {loaded:loaded,timed:timed};
 }
 function showNotes(ek){var day=S.activeDay;var ex=null;for(var i=0;i<day.ex.length;i++){if(day.ex[i].name.replace(/[^a-zA-Z0-9]/g,'_')===ek){ex=day.ex[i];break;}}if(!ex||!ex.notes)return;el('notes-ex-name').textContent=ex.name;el('notes-content').textContent=ex.notes;el('notes-mo').classList.add('visible');}
 function updProg(){var day=S.activeDay;var tot=0,dn=0;for(var i=0;i<day.ex.length;i++){var sets=S.sets[day.ex[i].name];if(!sets)continue;for(var j=0;j<sets.length;j++){if(!sets[j].warmup)tot++;if(sets[j].done&&!sets[j].warmup)dn++;}}el('pfill').style.width=(tot?Math.round(dn/tot*100):0)+'%';}
@@ -2479,6 +2524,8 @@ function doSubstitute(newName){
       newEx.name=newName;
       newEx.notes=libEx?(libEx.tip||''):'';
       if(libEx)newEx.type=libEx.type;
+      if(newEx.type==='Core'){var ncf=coreFlags(newName);newEx.loaded=ncf.loaded;newEx.timed=ncf.timed;}
+      else{delete newEx.loaded;delete newEx.timed;}
       // Fresh prescription: the NEW exercise's own e1RM history scaled to
       // this phase — never the old exercise's loaded weights
       var dr=(wd.repMin||wd.reps);
@@ -3272,7 +3319,8 @@ function guessMuscleGroups(exName){
   if(n.indexOf('row')>=0||n.indexOf('pulldown')>=0||n.indexOf('pull')>=0||n.indexOf('shrug')>=0||n.indexOf('deadlift')>=0)return {primary:['Back'],secondary:['Biceps']};
   if(n.indexOf('bench')>=0||n.indexOf('chest')>=0||n.indexOf('fly')>=0||n.indexOf('push-up')>=0||n.indexOf('push up')>=0||n.indexOf('dip')>=0)return {primary:['Chest'],secondary:['Triceps']};
   if(n.indexOf('shoulder')>=0||n.indexOf('delt')>=0||n.indexOf('raise')>=0||n.indexOf('overhead')>=0||n.indexOf('ohp')>=0)return {primary:['Shoulders'],secondary:['Triceps']};
-  if(n.indexOf('plank')>=0||n.indexOf('crunch')>=0||n.indexOf('ab ')>=0||n.indexOf('sit-up')>=0||n.indexOf('leg raise')>=0)return {primary:['Core'],secondary:[]};
+  if(n.indexOf('plank')>=0||n.indexOf('crunch')>=0||n.indexOf('ab ')>=0||n.indexOf('sit-up')>=0||n.indexOf('leg raise')>=0||n.indexOf('knee raise')>=0||n.indexOf('woodchop')>=0||n.indexOf('wood chop')>=0||n.indexOf('pallof')>=0||n.indexOf('landmine rotation')>=0||n.indexOf('side bend')>=0||n.indexOf('suitcase')>=0||n.indexOf('russian twist')>=0)return {primary:['Core'],secondary:[]};
+  if(n.indexOf('jump')>=0||n.indexOf('bound')>=0||n.indexOf('hop')>=0||n.indexOf('slam')>=0||n.indexOf('climber')>=0||n.indexOf('skater')>=0||n.indexOf('plyo')>=0)return {primary:['Quads'],secondary:['Glutes','Calves']};
   if(n.indexOf('wrist')>=0||n.indexOf('forearm')>=0||n.indexOf('grip')>=0||n.indexOf('farmer')>=0)return {primary:['Forearms'],secondary:[]};
   return null;
 }
@@ -4576,52 +4624,85 @@ function buildMealName(protein, carb, veg, fat, mealType){
   return prefix+' — '+(parts.join(' & ')||'Protein Meal');
 }
 
-function buildMealDesc(protein, carb, veg, fat, sauce, mealType, isTraining){
-  var lines=[];
+function rr(arr,i){return arr.length?arr[i%arr.length]:null;}
+
+function buildMealDesc(protein, carb, veg, fat, sauce, mealType, isTraining, fruit, extras){
+  var lines=[];extras=extras||{};
   if(mealType==='postWkt'){
-    var shake=getCheckedByRole('shake');
-    var fruit=getCheckedByRole('fruit');
-    var liquid=getCheckedByRole('liquid');
-    if(shake.length)lines.push('2 scoops '+shake[0].label);
-    if(fruit.length)lines.push('1 '+fruit[Math.floor(Math.random()*fruit.length)].label);
-    lines.push((liquid.length?liquid[0].label:'Water')+' — 8oz');
+    var shakes=getCheckedByRole('shake');
+    var fruits=getCheckedByRole('fruit');
+    var liquids=getCheckedByRole('liquid');
+    var shake=rr(shakes,extras.idx||0);
+    var fr=rr(fruits,extras.idx||0);
+    var liq=rr(liquids,extras.idx||0);
+    lines.push('2 scoops '+(shake?shake.label:'whey protein'));
+    if(fr)lines.push('1 '+fr.label);
+    lines.push((liq?liq.label:'Water')+' — 8oz');
     lines.push('Within 30 min of finishing');
     return lines.join('\n');
   }
+  if(mealType==='preBed'){
+    var casein=getCheckedByRole('casein');
+    if(casein.length){lines.push('1 scoop '+casein[0].label+' with water or almond milk');}
+    else {
+      var pp=protein;
+      if(pp&&pp.label==='Cottage Cheese')lines.push('1 cup Cottage Cheese');
+      else if(pp&&pp.label==='Greek Yogurt')lines.push('1 cup Greek Yogurt');
+      else lines.push('1 cup Cottage Cheese or Greek Yogurt');
+    }
+    if(fat&&fat.label!=='Olive Oil'&&fat.label!=='Butter'){
+      if(fat.label==='Almonds')lines.push('Small handful almonds');
+      else if(fat.label==='Walnuts')lines.push('Small handful walnuts');
+      else if(fat.label==='Almond Butter')lines.push('1 tbsp almond butter');
+    }
+    lines.push('Slow-digesting protein before the fast');
+    return lines.join('\n');
+  }
   // Protein
-  if(protein){
-    if(protein.role==='protein'){
-      if(protein.label==='Eggs'||protein.label==='Egg Whites'){
-        lines.push('3 whole eggs'+(getCheckedByRole('protein').find(function(p){return p.label==='Egg Whites';})?' + egg whites':''));
-      } else if(protein.label==='Greek Yogurt'){
-        lines.push('1.5 cups '+protein.label);
-      } else if(protein.label==='Cottage Cheese'){
-        lines.push('1.5 cups '+protein.label);
-      } else {
-        lines.push('6oz '+protein.label+(mealType==='final'?' (seasoned)':mealType==='preWkt'?' (grilled)':' (cooked)'));
-      }
+  if(protein&&protein.role==='protein'){
+    if(protein.label==='Eggs'){
+      var hasWhites=getCheckedByRole('protein').filter(function(p){return p.label==='Egg Whites';}).length>0;
+      lines.push('3 whole eggs'+(hasWhites?' + 4 egg whites':''));
+    } else if(protein.label==='Egg Whites'){
+      lines.push('6 egg whites + 1 whole egg');
+    } else if(protein.label==='Greek Yogurt'){
+      lines.push('1.5 cups '+protein.label);
+    } else if(protein.label==='Cottage Cheese'){
+      lines.push('1.5 cups '+protein.label);
+    } else if(protein.label==='Turkey Bacon'){
+      lines.push('4 strips '+protein.label);
+    } else {
+      lines.push('6oz '+protein.label+(mealType==='final'?' (seasoned)':mealType==='preWkt'?' (grilled)':' (cooked)'));
     }
   }
-  // Fat for cooking eggs/beef
-  if(fat&&(protein&&(protein.label==='Eggs'||protein.label==='Ground Beef'||protein.label==='Ground Turkey'))){
-    lines.push('1 tbsp '+fat.label);
+  // Cooking fat for eggs/beef/turkey
+  if(fat&&protein&&(protein.label==='Eggs'||protein.label==='Egg Whites'||protein.label==='Ground Beef'||protein.label==='Ground Turkey')){
+    if(fat.label==='Olive Oil'||fat.label==='Butter')lines.push('1 tbsp '+fat.label+' (to cook)');
   }
   // Carb
   if(carb&&mealType!=='final'){
     if(carb.label==='White Rice')lines.push('1 cup white rice');
     else if(carb.label==='Sweet Potato')lines.push('1 medium sweet potato (baked)');
-    else if(carb.label==='Oats')lines.push('1 cup oats cooked');
-    else if(carb.label==='Quinoa')lines.push('1/2 cup quinoa');
+    else if(carb.label==='Oats')lines.push('1 cup oats (cooked)');
+    else if(carb.label==='Quinoa')lines.push('3/4 cup quinoa');
     else if(carb.label==='Black Beans')lines.push('1/2 cup black beans');
     else if(carb.label==='Granola')lines.push('1/4 cup '+carb.label);
     else lines.push(carb.label);
   }
+  // Fruit — breakfast topping or a side, finally placed
+  if(fruit&&(mealType==='breakfast'||mealType==='preWkt')){
+    if(fruit.label==='Banana')lines.push('1 banana');
+    else if(fruit.label==='Mixed Berries')lines.push('1/2 cup mixed berries');
+    else if(fruit.label==='Apple')lines.push('1 apple');
+    else lines.push('1 serving '+fruit.label);
+  }
   // Veg
   if(veg){
-    lines.push('1 cup '+veg.label+(veg.label.indexOf('Frozen')>=0?' (steamed)':veg.label==='Mixed Greens'||veg.label==='Baby Spinach'?' (fresh)':' (cooked)'));
+    var prep=veg.label.indexOf('Frozen')>=0?' (steamed)':(veg.label==='Mixed Greens'||veg.label==='Baby Spinach'||veg.label==='Cherry Tomatoes'||veg.label==='Cucumber')?' (fresh)':' (cooked)';
+    lines.push('1 cup '+veg.label+prep);
   }
-  // Fat topping
-  if(fat&&protein&&protein.label!=='Eggs'){
+  // Fat topping (non-cooking)
+  if(fat&&!(protein&&(protein.label==='Eggs'||protein.label==='Egg Whites'))){
     if(fat.label==='Avocado')lines.push('1/2 avocado');
     else if(fat.label==='Olive Oil')lines.push('1 tbsp olive oil');
     else if(fat.label==='Almonds')lines.push('1/4 cup almonds');
@@ -4630,10 +4711,11 @@ function buildMealDesc(protein, carb, veg, fat, sauce, mealType, isTraining){
   }
   // Sauce
   if(sauce)lines.push(sauce.label+' to taste');
-  // Drink
-  var drinks=getCheckedByRole('drink');
-  if(mealType==='breakfast'&&drinks.length){
-    lines.push('Black coffee or '+drinks[0].label);
+  // Drink — rotate through everything bought, not just coffee
+  if(mealType==='breakfast'){
+    var drinks=getCheckedByRole('drink');
+    var dr2=rr(drinks,extras.idx||0);
+    lines.push(dr2?('Black coffee or '+dr2.label):'Black coffee');
   }
   return lines.join('\n')||'Prepare with available ingredients';
 }
@@ -4645,14 +4727,14 @@ function generateMealPlan(){
   var fats=getCheckedByRole('fat');
   var sauces=getCheckedByRole('sauce');
   var shakes=getCheckedByRole('shake');
+  var fruits=getCheckedByRole('fruit');
 
-  // Warn if missing essentials
   var missing=[];
   if(!proteins.length)missing.push('a protein source');
   if(!shakes.length)missing.push('whey protein (for post-workout shakes)');
   if(missing.length){
     showToast('MISSING: '+missing.join(', ').toUpperCase());
-    if(!proteins.length)return; // can't build without protein
+    if(!proteins.length)return;
   }
 
   var days=['01','02','03','04','05','06','07'];
@@ -4660,65 +4742,100 @@ function generateMealPlan(){
               'Day 04 — Upper Hypertrophy','Day 05 — Lower Hypertrophy','Day 06 — Full Athletic','Day 07 — Lower Mobility'];
   var types=['T','T','R','T','T','T','R'];
 
+  // Round-robin counters per role so every purchased item rotates in across
+  // the week rather than repeating index 0
+  var pc=0,cc=0,vc=0,fc=0,sc=0,frc=0;
   var generated=[];
   for(var d=0;d<7;d++){
     var isTraining=types[d]==='T';
     var meals=[];
-    var pi=d%proteins.length;
-    var ci=d%Math.max(carbs.length,1);
-    var vi=d%Math.max(vegs.length,1);
-    var fi=d%Math.max(fats.length,1);
-    var si2=d%Math.max(sauces.length,1);
 
-    var prot=proteins[pi];
-    var carb=carbs.length?carbs[ci]:null;
-    var veg=vegs.length?vegs[vi]:null;
-    var fat=fats.length?fats[fi]:null;
-    var sauce=sauces.length?sauces[si2]:null;
-
-    // Vary protein sources across meals within a day
-    var prot2=proteins[(pi+1)%proteins.length];
-    var prot3=proteins[(pi+2)%proteins.length];
-    var carb2=carbs.length?carbs[(ci+1)%carbs.length]:null;
-    var veg2=vegs.length?vegs[(vi+1)%vegs.length]:null;
-
-    // Breakfast
+    // Breakfast: protein + fruit topping (+ carb only on training days)
+    var bP=rr(proteins,pc++);
+    var bFr=rr(fruits,frc++);
+    var bC=isTraining?rr(carbs,cc++):null;
+    var bF=rr(fats,fc++);
     meals.push({
       time:'12:00 PM',
-      name:buildMealName(prot,isTraining?carb:null,null,fat,'breakfast'),
-      desc:buildMealDesc(prot,isTraining?carb:null,null,fat,sauce,'breakfast',isTraining),
-      p:50,c:isTraining?30:10,f:15
+      name:'Break Fast — '+(bP?bP.label:'Protein'),
+      desc:buildMealDesc(bP,bC,null,bF,null,'breakfast',isTraining,bFr,{idx:d}),
+      p:50,c:isTraining?30:12,f:15
     });
-    // Pre-workout (training days) or Midday (rest days)
+
     if(isTraining){
+      // Pre-workout: protein + carb + veg
+      var preP=rr(proteins,pc++);
+      var preC=rr(carbs,cc++);
+      var preV=rr(vegs,vc++);
       meals.push({
         time:'2:30 PM',
-        name:buildMealName(prot2,carb2,veg,null,'preWkt'),
-        desc:buildMealDesc(prot2,carb2,veg,null,sauce,'preWkt',true),
+        name:'Pre-Workout — '+(preP?preP.label:'')+' & '+(preC?preC.label:'Rice'),
+        desc:buildMealDesc(preP,preC,preV,null,rr(sauces,sc++),'preWkt',true,null,{idx:d}),
         p:48,c:55,f:6
       });
-      // Post-workout shake
+      // Post-workout shake (rotates shake + fruit + liquid)
       meals.push({
         time:'POST',
         name:'Post-Workout Shake',
-        desc:buildMealDesc(null,null,null,null,null,'postWkt',true),
+        desc:buildMealDesc(null,null,null,null,null,'postWkt',true,null,{idx:d}),
         p:45,c:28,f:3
       });
-    } else {
+      // Final meal: protein + veg + fat
+      var fP=rr(proteins,pc++);
+      var fV=rr(vegs,vc++);
+      var fF=rr(fats,fc++);
       meals.push({
-        time:'3:00 PM',
-        name:buildMealName(prot2,null,veg,fat,'preWkt'),
-        desc:buildMealDesc(prot2,null,veg,fat,null,'preWkt',false),
-        p:40,c:10,f:15
+        time:'7:00 PM',
+        name:'Final Meal — '+(fP?fP.label:'Protein')+' & Greens',
+        desc:buildMealDesc(fP,null,fV,fF,rr(sauces,sc++),'final',true,null,{idx:d}),
+        p:45,c:15,f:20
+      });
+      // Pre-bed casein/slow protein before the fast (only if bought)
+      if(getCheckedByRole('casein').length||proteins.filter(function(x){return x.label==='Cottage Cheese'||x.label==='Greek Yogurt';}).length){
+        meals.push({
+          time:'9:30 PM',
+          name:'Pre-Fast — Slow Protein',
+          desc:buildMealDesc(rr(proteins,pc++),null,null,rr(fats,fc++),null,'preBed',true,null,{idx:d}),
+          p:30,c:6,f:9
+        });
+      }
+    } else {
+      // Rest day: a protein+veg+fat midday, plus a fruit/nut snack so rest-day
+      // fruit and nuts you bought get used
+      var mP=rr(proteins,pc++);
+      var mV=rr(vegs,vc++);
+      var mF=rr(fats,fc++);
+      meals.push({
+        time:'2:00 PM',
+        name:'Midday — '+(mP?mP.label:'Protein')+' Plate',
+        desc:buildMealDesc(mP,null,mV,mF,rr(sauces,sc++),'preWkt',false,null,{idx:d}),
+        p:42,c:12,f:16
+      });
+      var snackFr=rr(fruits,frc++);
+      var snackF=rr(fats,fc++);
+      var snackLines=[];
+      if(snackFr)snackLines.push('1 '+snackFr.label);
+      if(snackF&&snackF.label==='Almonds')snackLines.push('1/4 cup almonds');
+      else if(snackF&&snackF.label==='Walnuts')snackLines.push('1/4 cup walnuts');
+      else if(snackF&&snackF.label==='Almond Butter')snackLines.push('1 tbsp almond butter');
+      var snackProt=proteins.filter(function(x){return x.label==='Greek Yogurt'||x.label==='Cottage Cheese';});
+      if(snackProt.length)snackLines.unshift('1 cup '+snackProt[0].label);
+      meals.push({
+        time:'4:30 PM',
+        name:'Snack — Fruit & Protein',
+        desc:snackLines.join('\n')||'1 cup Greek yogurt + berries',
+        p:25,c:20,f:10
+      });
+      // Final meal
+      var rP=rr(proteins,pc++);
+      var rV=rr(vegs,vc++);
+      meals.push({
+        time:'7:00 PM',
+        name:'Final Meal — '+(rP?rP.label:'Protein')+' & Greens',
+        desc:buildMealDesc(rP,null,rV,rr(fats,fc++),rr(sauces,sc++),'final',false,null,{idx:d}),
+        p:45,c:8,f:20
       });
     }
-    // Final meal
-    meals.push({
-      time:'7:00 PM',
-      name:buildMealName(prot3,null,veg2,fat,'final'),
-      desc:buildMealDesc(prot3,null,veg2,fat,sauce,'final',isTraining),
-      p:45,c:isTraining?15:8,f:20
-    });
 
     generated.push({
       day:days[d],
@@ -4733,7 +4850,28 @@ function generateMealPlan(){
     });
   }
 
-  // Save generated plan
+  // Coverage pass: any checked item that never landed in a description gets
+  // appended as an "options" note to a relevant day, so nothing you bought
+  // is silently ignored.
+  var allChecked=getCheckedItems();
+  var planText=JSON.stringify(generated).toLowerCase();
+  var unused=allChecked.filter(function(it){
+    return planText.indexOf(it.label.toLowerCase())<0;
+  });
+  if(unused.length){
+    var byRole={};
+    for(var i=0;i<unused.length;i++){(byRole[unused[i].role]=byRole[unused[i].role]||[]).push(unused[i].label);}
+    var noteLines=[];
+    for(var r in byRole)noteLines.push(byRole[r].join(', '));
+    generated[0].meals.push({
+      time:'NOTE',
+      name:'Also In Your Cart — Rotate These In',
+      desc:'These purchased items can swap into any meal of the same type:\n'+noteLines.join('\n'),
+      p:0,c:0,f:0
+    });
+  }
+
+// Save generated plan
   if(!S.bio.generatedPlan)S.bio.generatedPlan={};
   S.bio.generatedPlan.days=generated;
   S.bio.generatedPlan.date=new Date().toISOString();
