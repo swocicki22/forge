@@ -968,7 +968,7 @@ var SUPPS=[
 // ════════════════════════════════
 // USER SYSTEM
 // ════════════════════════════════
-var APP_VERSION='4.1';
+var APP_VERSION='4.2';
 var USERS_KEY='forge_users_v4';
 var currentUserId=null;
 var pinBuffer='';
@@ -1837,11 +1837,14 @@ function exByName(name){var day=S.activeDay;if(!day)return null;for(var i=0;i<da
 function buildSetRowHTML(ex,set,j){
   var ek=ekOf(ex.name);var ea=escAttr(ex.name);
   if(ex.type==='Core'){
-    var timed=ex.timed||/plank|hold|l-sit|hollow/i.test(ex.name);
+    var timed=(ex.timed!==undefined)?ex.timed:/plank|hold|l-sit|hollow|dead ?hang/i.test(ex.name);
     var repLabel=timed?'sec':'reps';
-    // Weight column: editable stack/plate load when loaded, locked BW otherwise
+    // Weight column: editable stack/plate load when loaded, locked BW otherwise.
+    // When the flag is absent (older saved exercises), infer from the name so
+    // cable/weighted core is editable without needing a data migration.
+    var isLoaded=(ex.loaded!==undefined)?ex.loaded:coreFlags(ex.name).loaded;
     var wcol;
-    if(ex.loaded){
+    if(isLoaded){
       wcol='<div class="step"><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'" data-d="-5">-</button><input class="sinp" type="number" inputmode="decimal" placeholder="lbs" id="w-'+ek+'-'+j+'" value="'+(set.weight||'')+'" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'"/><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'" data-d="5">+</button></div>';
     }else{
       wcol='<div class="step" style="opacity:.3;pointer-events:none;"><button class="sbtn">-</button><input class="sinp" value="BW" readonly/><button class="sbtn">+</button></div>';
@@ -1915,8 +1918,10 @@ function renderActive(){
       var sh='';
       for(var j=0;j<sets.length;j++){sh+=buildSetRowHTML(ex,sets[j],j);}
       var notesBtn=ex.notes?'<button class="info-btn" data-act="notes" data-ek="'+ek+'">i</button>':'';
-      var coreRepHdr=(ex.timed||/plank|hold|l-sit|hollow/i.test(ex.name))?'SEC':'REPS';
-      var coreWtHdr=ex.loaded?'WEIGHT':'BW';
+      var coreTimed=(ex.timed!==undefined)?ex.timed:/plank|hold|l-sit|hollow|dead ?hang/i.test(ex.name);
+      var coreRepHdr=coreTimed?'SEC':'REPS';
+      var coreIsLoaded=(ex.loaded!==undefined)?ex.loaded:coreFlags(ex.name).loaded;
+      var coreWtHdr=coreIsLoaded?'WEIGHT':'BW';
       blk.innerHTML='<div class="eh"><div class="en">'+esc(ex.name)+'</div><div class="et" style="color:var(--en);">CORE</div>'+notesBtn+'</div><div class="shr"><div class="sc">#</div><div class="sc">'+coreWtHdr+'</div><div class="sc">'+coreRepHdr+'</div><div class="sc"></div><div class="sc">&#10003;</div></div>'+sh;
       list.appendChild(blk);
     }
@@ -1990,7 +1995,7 @@ function confirmAddExToWorkout(){
 }
 function coreFlags(name){
   var n=name.toLowerCase();
-  var loaded=/cable crunch|woodchop|wood chop|pallof|weighted|cable side|landmine rotation|russian twist|decline sit|side bend|suitcase|hanging knee raise \(weighted\)|knee raise \(weighted\)/.test(n);
+  var loaded=/cable|woodchop|wood chop|pallof|weighted|landmine rotation|russian twist|decline sit|side bend|suitcase|knee raise|hip thrust|machine crunch|weighted crunch/.test(n);
   var timed=/plank|hold|l-sit|hollow|dead ?hang/.test(n);
   return {loaded:loaded,timed:timed};
 }
@@ -2365,24 +2370,24 @@ var abDiffSelected = 'standard';
 
 var AB_PRESETS = {
   light: [
-    {name:'Cable Crunch',type:'Core',ds:2,dr:15,dw:40,ss:'',notes:'Kneel at cable. Pull elbows to knees. Round spine fully.'},
+    {name:'Cable Crunch',type:'Core',loaded:true,ds:2,dr:15,dw:40,ss:'',notes:'Kneel at cable. Pull elbows to knees. Round spine fully.'},
     {name:'Hanging Leg Raise',type:'Core',ds:2,dr:12,dw:0,ss:'',notes:'Raise legs to 90 degrees. Posterior pelvic tilt at top.'},
     {name:'Plank',type:'Core',ds:3,dr:30,dw:0,ss:'',notes:'30 sec hold. Squeeze core and glutes. Neutral spine.'},
-    {name:'Russian Twist',type:'Core',ds:2,dr:16,dw:10,ss:'',notes:'16 total reps. Lean back 45 degrees. Light weight.'}
+    {name:'Russian Twist',type:'Core',loaded:true,ds:2,dr:16,dw:10,ss:'',notes:'16 total reps. Lean back 45 degrees. Light weight.'}
   ],
   standard: [
-    {name:'Cable Crunch',type:'Core',ds:3,dr:15,dw:50,ss:'',notes:'Kneel at cable. Pull elbows to knees. Round spine fully. 3 sec negative.'},
+    {name:'Cable Crunch',type:'Core',loaded:true,ds:3,dr:15,dw:50,ss:'',notes:'Kneel at cable. Pull elbows to knees. Round spine fully. 3 sec negative.'},
     {name:'Hanging Leg Raise',type:'Core',ds:3,dr:15,dw:0,ss:'',notes:'Dead hang. Raise legs to 90 degrees or higher. No swinging.'},
-    {name:'Decline Sit-Up',type:'Core',ds:3,dr:15,dw:25,ss:'',notes:'Hold plate on chest. Full ROM. 3 sec negative.'},
-    {name:'Russian Twist',type:'Core',ds:3,dr:20,dw:25,ss:'',notes:'20 total reps. Hold plate. Lean back 45 degrees. Rotate fully.'},
+    {name:'Decline Sit-Up',type:'Core',loaded:true,ds:3,dr:15,dw:25,ss:'',notes:'Hold plate on chest. Full ROM. 3 sec negative.'},
+    {name:'Russian Twist',type:'Core',loaded:true,ds:3,dr:20,dw:25,ss:'',notes:'20 total reps. Hold plate. Lean back 45 degrees. Rotate fully.'},
     {name:'Plank',type:'Core',ds:3,dr:45,dw:0,ss:'',notes:'45 sec hold. Squeeze glutes and core. Neutral spine.'},
     {name:'Side Plank',type:'Core',ds:2,dr:30,dw:0,ss:'',notes:'30 sec each side. Hips up. Straight line head to feet.'}
   ],
   heavy: [
-    {name:'Cable Crunch',type:'Core',ds:4,dr:15,dw:70,ss:'',notes:'Kneel at cable. Pull elbows to knees. Heavy weight, full contraction. 3 sec negative.'},
+    {name:'Cable Crunch',type:'Core',loaded:true,ds:4,dr:15,dw:70,ss:'',notes:'Kneel at cable. Pull elbows to knees. Heavy weight, full contraction. 3 sec negative.'},
     {name:'Hanging Leg Raise',type:'Core',ds:4,dr:15,dw:0,ss:'',notes:'Add ankle weights for progression. Full ROM. Slow and controlled.'},
-    {name:'Decline Sit-Up',type:'Core',ds:4,dr:15,dw:45,ss:'',notes:'Heavy plate on chest. Full ROM. 3 sec negative. Feel the stretch.'},
-    {name:'Russian Twist',type:'Core',ds:3,dr:24,dw:35,ss:'',notes:'24 total reps. Heavy plate or dumbbell. Explosive rotation.'},
+    {name:'Decline Sit-Up',type:'Core',loaded:true,ds:4,dr:15,dw:45,ss:'',notes:'Heavy plate on chest. Full ROM. 3 sec negative. Feel the stretch.'},
+    {name:'Russian Twist',type:'Core',loaded:true,ds:3,dr:24,dw:35,ss:'',notes:'24 total reps. Heavy plate or dumbbell. Explosive rotation.'},
     {name:'Plank',type:'Core',ds:3,dr:60,dw:0,ss:'',notes:'60 sec hold. Add weight plate on back for progression.'},
     {name:'Side Plank',type:'Core',ds:3,dr:45,dw:0,ss:'',notes:'45 sec each side. Add hip dips for extra oblique work.'},
     {name:'Ab Wheel Rollout',type:'Core',ds:3,dr:12,dw:0,ss:'',notes:'Full extension. Pull back with abs. Keep lower back from caving.'}
@@ -4876,7 +4881,17 @@ function generateMealPlan(){
   S.bio.generatedPlan.days=generated;
   S.bio.generatedPlan.date=new Date().toISOString();
   saveState();
-  showToast('MEAL PLAN BUILT!');
+  // Coverage diagnostic: how many checked items actually landed in the plan
+  var _all=getCheckedItems();
+  var _txt=JSON.stringify(generated).toLowerCase();
+  var _placed=_all.filter(function(it){return _txt.indexOf(it.label.toLowerCase())>=0;}).length;
+  if(!_all.length){
+    showToast('NO ITEMS CHECKED — CHECK FOODS FIRST');
+  } else if(_placed<_all.length){
+    showToast('PLAN BUILT — '+_placed+'/'+_all.length+' ITEMS USED (see Day 01 note)');
+  } else {
+    showToast('PLAN BUILT — ALL '+_all.length+' ITEMS USED');
+  }
   renderBody();
 }
 
