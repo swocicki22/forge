@@ -1,8 +1,9 @@
 // ════════════════════════════════
 // FORGE SERVICE WORKER
 // Bump CACHE on every deploy or browsers will keep serving the old build.
+// v8 = app v4.3, peptide protocol module
 // ════════════════════════════════
-const CACHE = 'forge-v7';
+const CACHE = 'forge-v8';
 const ASSETS = [
   './',
   './index.html',
@@ -33,8 +34,28 @@ self.addEventListener('fetch', function (e) {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
 
-  // App shell: cache-first, refill cache on network fetch
   if (url.origin === location.origin) {
+    // Navigations: network-first so a fresh deploy shows up on the next launch
+    // instead of waiting for the old cached shell to be evicted. Falls back to
+    // cache the moment the network is unavailable, so offline still works.
+    if (e.request.mode === 'navigate') {
+      e.respondWith(
+        fetch(e.request).then(function (resp) {
+          if (resp && resp.status === 200) {
+            const copy = resp.clone();
+            caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
+          }
+          return resp;
+        }).catch(function () {
+          return caches.match(e.request).then(function (cached) {
+            return cached || caches.match('./index.html');
+          });
+        })
+      );
+      return;
+    }
+
+    // Everything else (icons, manifest): cache-first, refill on miss
     e.respondWith(
       caches.match(e.request).then(function (cached) {
         if (cached) return cached;

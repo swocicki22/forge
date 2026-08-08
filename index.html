@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-title" content="Forge">
 <meta name="theme-color" content="#040608">
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="forge-icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="forge-icon-512.png">
+<link rel="icon" type="image/png" sizes="192x192" href="forge-icon-192.png">
 <title>Forge</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
@@ -386,6 +389,81 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .past-supp-day{background:var(--card);border:1px solid var(--bl);border-radius:2px;padding:10px 12px;margin-bottom:5px;}
 .past-supp-date{font-family:Orbitron,sans-serif;font-size:9px;letter-spacing:.1em;color:var(--hlb);margin-bottom:8px;}
 
+/* ── PEPTIDE PROTOCOL ── */
+.pep-card{background:var(--card);border:1px solid var(--bl);border-radius:2px;padding:11px 12px;margin-bottom:6px;position:relative;overflow:hidden;}
+.pep-card.due{border-color:var(--hlbr);}
+.pep-card.done{border-color:rgba(76,175,80,.35);}
+.pep-card.off{opacity:.6;}
+.pep-head{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;}
+.pep-name{font-family:Orbitron,sans-serif;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--tx);flex:1;line-height:1.4;}
+.pep-pill{font-family:Orbitron,sans-serif;font-size:6px;letter-spacing:.12em;padding:4px 6px;border-radius:2px;flex-shrink:0;border:1px solid var(--border);color:var(--s2);white-space:nowrap;}
+.pep-pill.due{color:var(--hl);border-color:var(--hlbr);background:var(--hld);}
+.pep-pill.done{color:var(--gr);border-color:rgba(76,175,80,.3);background:rgba(76,175,80,.08);}
+.pep-pill.warn{color:var(--am);border-color:rgba(255,179,0,.3);background:rgba(255,179,0,.08);}
+.pep-dose{font-family:Share Tech Mono,monospace;font-size:10px;color:var(--t2);letter-spacing:.04em;display:flex;align-items:baseline;gap:6px;}
+.pep-dose b{font-family:Orbitron,sans-serif;font-size:19px;color:var(--hl);font-weight:900;letter-spacing:0;}
+.pep-sub{font-family:Share Tech Mono,monospace;font-size:7px;color:var(--s2);letter-spacing:.06em;line-height:1.7;}
+.pep-chips{display:flex;flex-wrap:wrap;gap:4px;margin:7px 0 3px;}
+.pep-chip{font-family:Share Tech Mono,monospace;font-size:7px;color:var(--s2);background:var(--card2);border:1px solid var(--border);border-radius:2px;padding:3px 5px;}
+.pep-chip b{color:var(--hlb);font-weight:400;}
+.pep-meter{margin-top:8px;}
+.pep-meter-lbl{display:flex;justify-content:space-between;font-family:Share Tech Mono,monospace;font-size:7px;color:var(--s2);margin-bottom:3px;letter-spacing:.08em;}
+.pep-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.pep-bar-f{height:100%;border-radius:2px;transition:width .3s;}
+.pep-acts{display:flex;gap:5px;margin-top:10px;}
+.pep-btn{flex:1;background:transparent;border:1px solid var(--hlbr);color:var(--hlb);border-radius:2px;padding:9px;font-family:Orbitron,sans-serif;font-size:7px;letter-spacing:.1em;cursor:pointer;}
+.pep-btn:active{background:var(--hld);}
+.pep-btn.g{border-color:rgba(76,175,80,.35);color:var(--gr);}
+.pep-btn.sm{flex:0 0 auto;padding:9px 12px;border-color:var(--border);color:var(--s2);}
+.pep-site{display:inline-block;font-family:Share Tech Mono,monospace;font-size:7px;color:var(--am);border:1px solid rgba(255,179,0,.28);background:rgba(255,179,0,.06);border-radius:2px;padding:2px 5px;letter-spacing:.08em;}
+.pep-presets{display:flex;align-items:center;gap:4px;margin-top:9px;}
+.pep-presets-lbl{font-family:Share Tech Mono,monospace;font-size:7px;color:var(--s3);letter-spacing:.1em;margin-right:2px;}
+.pep-preset{flex:1;background:var(--card2);border:1px solid var(--border);border-radius:2px;padding:6px 2px;font-family:Orbitron,sans-serif;font-size:8px;font-weight:700;color:var(--s2);cursor:pointer;text-align:center;}
+.pep-preset.on{border-color:var(--hl);color:var(--hl);background:var(--hld);}
+.pep-preset:active{background:var(--hld);}
+.pep-grid14{display:flex;gap:2px;margin-top:9px;}
+.pep-d{flex:1;height:13px;border-radius:1px;background:var(--card2);border:1px solid var(--border);}
+.pep-d.hit{background:var(--gr);border-color:var(--gr);}
+.pep-d.miss{background:rgba(239,83,80,.22);border-color:rgba(239,83,80,.35);}
+.pep-d.na{opacity:.35;}
+.pep-d.today{box-shadow:0 0 0 1px var(--hl);}
+.pep-logline{display:flex;align-items:center;gap:7px;background:var(--card2);border:1px solid var(--border);border-radius:2px;padding:6px 8px;margin-top:4px;font-family:Share Tech Mono,monospace;font-size:8px;color:var(--t2);}
+.pep-logline .x{margin-left:auto;color:var(--s3);font-size:11px;cursor:pointer;padding:0 3px;}
+.pep-add{width:100%;background:transparent;border:1px dashed var(--bl);border-radius:2px;padding:11px;font-family:Orbitron,sans-serif;font-size:8px;letter-spacing:.12em;color:var(--s2);cursor:pointer;margin-top:5px;}
+.pep-add:active{background:var(--card);}
+.pep-note{background:rgba(255,179,0,.05);border:1px solid rgba(255,179,0,.18);border-radius:2px;padding:8px 10px;margin-bottom:7px;font-family:Share Tech Mono,monospace;font-size:7px;color:var(--am);line-height:1.8;letter-spacing:.03em;}
+.pep-empty{border:1px dashed var(--border);border-radius:2px;padding:14px;text-align:center;font-family:Share Tech Mono,monospace;font-size:8px;color:var(--s2);margin-bottom:5px;}
+/* recon calculator */
+.recon-out{background:var(--card2);border:1px solid var(--hlbr);border-radius:2px;padding:14px 12px;margin-top:14px;text-align:center;}
+.recon-big{font-family:Orbitron,sans-serif;font-size:34px;font-weight:900;color:var(--hl);line-height:1;text-shadow:0 0 18px rgba(79,195,247,.35);}
+.recon-unit{font-family:Share Tech Mono,monospace;font-size:8px;color:var(--s2);letter-spacing:.16em;margin-top:6px;}
+.recon-row{display:flex;justify-content:space-between;font-family:Share Tech Mono,monospace;font-size:8px;color:var(--t2);padding:5px 0;border-top:1px solid var(--border);}
+.recon-row span:last-child{color:var(--hlb);}
+.syr-wrap{margin-top:12px;}
+.syr-track{position:relative;height:24px;background:var(--card);border:1px solid var(--bl);border-radius:12px;overflow:hidden;}
+.syr-fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(79,195,247,.35),rgba(79,195,247,.8));transition:width .2s;}
+.syr-ticks{position:absolute;inset:0;display:flex;pointer-events:none;}
+.syr-tick{flex:1;border-right:1px solid rgba(79,195,247,.13);}
+.syr-lbl{display:flex;justify-content:space-between;font-family:Share Tech Mono,monospace;font-size:6px;color:var(--s3);margin-top:4px;letter-spacing:.1em;}
+/* editor bits */
+.pep-site-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:4px;}
+.pep-site-btn{background:var(--card);border:1px solid var(--bl);border-radius:2px;padding:8px 2px;font-family:Share Tech Mono,monospace;font-size:7px;color:var(--s2);cursor:pointer;text-align:center;letter-spacing:.04em;}
+.pep-site-btn.on{border-color:var(--am);color:var(--am);background:rgba(255,179,0,.08);}
+.pep-day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:4px;}
+.pep-day-btn{background:var(--card);border:1px solid var(--bl);border-radius:2px;padding:8px 0;font-family:Orbitron,sans-serif;font-size:7px;color:var(--s2);cursor:pointer;text-align:center;}
+.pep-day-btn.on{border-color:var(--hl);color:var(--hl);background:var(--hld);}
+.pep-freq-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;margin-top:4px;}
+.pep-freq-btn{background:var(--card);border:1px solid var(--bl);border-radius:2px;padding:9px 4px;font-family:Orbitron,sans-serif;font-size:7px;letter-spacing:.08em;color:var(--s2);cursor:pointer;text-align:center;}
+.pep-freq-btn.on{border-color:var(--hl);color:var(--hl);background:var(--hld);}
+.pep-comp-row{display:grid;grid-template-columns:1fr 74px 30px;gap:5px;margin-bottom:4px;}
+.pep-comp-del{background:none;border:1px solid var(--border);border-radius:2px;color:var(--s3);font-size:12px;cursor:pointer;}
+.pep-prev{background:var(--card2);border:1px solid var(--hlbr);border-radius:2px;padding:9px 11px;margin-top:10px;font-family:Share Tech Mono,monospace;font-size:8px;color:var(--hlb);line-height:1.8;letter-spacing:.04em;}
+.pep-step{display:grid;grid-template-columns:38px 1fr 38px;gap:6px;align-items:center;margin-top:4px;}
+.pep-step button{background:var(--card);border:1px solid var(--bl);border-radius:2px;color:var(--hl);font-family:Orbitron,sans-serif;font-size:14px;padding:9px 0;cursor:pointer;}
+.pep-step button:active{background:var(--hld);}
+.pep-hist-day{background:var(--card);border:1px solid var(--bl);border-radius:2px;padding:10px 12px;margin-bottom:5px;}
+.pep-hist-date{font-family:Orbitron,sans-serif;font-size:9px;letter-spacing:.1em;color:var(--hlb);margin-bottom:8px;display:flex;justify-content:space-between;}
+
 /* ── RPE SELECTOR ── */
 .rpe-wrap{margin-top:16px;margin-bottom:4px;}
 .rpe-label{font-family:Orbitron,sans-serif;font-size:7px;letter-spacing:.14em;color:var(--s2);text-transform:uppercase;margin-bottom:8px;text-align:center;}
@@ -627,7 +705,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
       <div class="us-btn-icon">&#9851;</div>
       <div class="us-btn-inner">
         <span>RESET WORKOUT HISTORY</span>
-        <em class="us-btn-desc">Clears sessions, PRs, body weight, water & supplement logs. Keeps your workout days & exercises.</em>
+        <em class="us-btn-desc">Clears sessions, PRs, body weight, water, supplement & peptide dose logs. Keeps your workout days & exercises.</em>
       </div>
     </button>
 
@@ -939,6 +1017,158 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
   </div>
 </div>
 
+<!-- ══════════ PEPTIDE EDITOR ══════════ -->
+<div class="mo" id="pep-mo" style="z-index:250;">
+  <div class="md">
+    <div class="mh"></div>
+    <div class="mti" id="pep-mo-title">ADD PEPTIDE</div>
+
+    <div class="fl">Name</div>
+    <input class="fi" id="pf-name" placeholder="e.g. KLOW Blend"/>
+
+    <div class="fl">Vial (mg) / BAC Water (mL) / Dose (units)</div>
+    <div class="fr">
+      <input class="fi" id="pf-vial" type="number" step="any" inputmode="decimal" placeholder="mg" oninput="pfPreview()"/>
+      <input class="fi" id="pf-bac" type="number" step="any" inputmode="decimal" placeholder="mL" oninput="pfPreview()"/>
+      <input class="fi" id="pf-dose" type="number" step="any" inputmode="decimal" placeholder="units" oninput="pfPreview()"/>
+    </div>
+    <div class="pep-prev" id="pf-preview">&mdash;</div>
+
+    <div class="fl">Components (optional &mdash; for blends)</div>
+    <div id="pf-comps"></div>
+    <button class="pep-add" style="margin-top:2px;padding:8px;" onclick="pfAddComp('',null)">+ ADD COMPONENT</button>
+
+    <div class="fl">Frequency</div>
+    <div class="pep-freq-grid">
+      <div class="pep-freq-btn" data-f="daily" onclick="pfSetFreq('daily')">DAILY</div>
+      <div class="pep-freq-btn" data-f="days" onclick="pfSetFreq('days')">SET DAYS</div>
+      <div class="pep-freq-btn" data-f="eod" onclick="pfSetFreq('eod')">EVERY OTHER DAY</div>
+      <div class="pep-freq-btn" data-f="everyn" onclick="pfSetFreq('everyn')">EVERY N DAYS</div>
+      <div class="pep-freq-btn" data-f="training" onclick="pfSetFreq('training')" style="grid-column:span 2;">TRAINING DAYS ONLY</div>
+    </div>
+    <div id="pf-training-hint" style="display:none;font-family:Share Tech Mono,monospace;font-size:7px;color:var(--s2);line-height:1.7;margin-top:5px;">Due on any day you log a session. Rest days are skipped automatically and never count against compliance.</div>
+    <div id="pf-days-wrap" style="display:none;"><div class="pep-day-grid" id="pf-days"><div class="pep-day-btn" data-d="0" onclick="pfToggleDay(0)">S</div><div class="pep-day-btn" data-d="1" onclick="pfToggleDay(1)">M</div><div class="pep-day-btn" data-d="2" onclick="pfToggleDay(2)">T</div><div class="pep-day-btn" data-d="3" onclick="pfToggleDay(3)">W</div><div class="pep-day-btn" data-d="4" onclick="pfToggleDay(4)">T</div><div class="pep-day-btn" data-d="5" onclick="pfToggleDay(5)">F</div><div class="pep-day-btn" data-d="6" onclick="pfToggleDay(6)">S</div></div></div>
+    <div id="pf-everyn-wrap" style="display:none;margin-top:5px;">
+      <input class="fi" id="pf-everyn" type="number" inputmode="numeric" placeholder="e.g. 3"/>
+    </div>
+
+    <div class="fl">Timing / Route</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+      <select class="fi" id="pf-time"><option>AM</option><option>PM</option><option>BED</option><option>PRE-WORKOUT</option><option>POST-WORKOUT</option><option>AM + PM</option></select>
+      <select class="fi" id="pf-route"><option>SubQ</option><option>IM</option><option>Oral</option><option>Nasal</option><option>Topical</option></select>
+    </div>
+
+    <div class="fl">Injection Sites In Rotation</div>
+    <div class="pep-site-grid" id="pf-sites"></div>
+
+    <div class="fl">Cycle Start / Length (weeks)</div>
+    <div style="display:grid;grid-template-columns:1fr 90px;gap:6px;">
+      <input class="fi" id="pf-cyclestart" type="date"/>
+      <input class="fi" id="pf-cycleweeks" type="number" inputmode="numeric" placeholder="wks"/>
+    </div>
+
+    <div class="fl">Date Mixed / Discard After (days)</div>
+    <div style="display:grid;grid-template-columns:1fr 90px;gap:6px;">
+      <input class="fi" id="pf-recondate" type="date"/>
+      <input class="fi" id="pf-bacdays" type="number" inputmode="numeric" placeholder="28"/>
+    </div>
+
+    <div class="rest-toggle" id="pf-active-row" style="margin-top:12px;">
+      <div>
+        <div style="font-family:Rajdhani,sans-serif;font-weight:600;font-size:13px;color:var(--tx);">Active</div>
+        <div style="font-family:Share Tech Mono,monospace;font-size:7px;letter-spacing:.1em;color:var(--s3);margin-top:2px;">OFF = paused, stays in the list</div>
+      </div>
+      <div class="toggle-sw" id="pf-active-sw" onclick="pfToggleActive()"></div>
+    </div>
+
+    <div class="fl">Notes / Protocol</div>
+    <textarea class="fta" id="pf-notes" placeholder="Timing rules, titration plan, cautions..."></textarea>
+
+    <button class="mb" onclick="savePeptide()">SAVE</button>
+    <button class="mca" onclick="closeModal('pep-mo')">CANCEL</button>
+    <button class="mb-red" id="pf-del-btn" onclick="deletePeptide()" style="display:none;">DELETE PEPTIDE</button>
+  </div>
+</div>
+
+<!-- ══════════ LOG DOSE ══════════ -->
+<div class="mo" id="pep-log-mo" style="z-index:260;">
+  <div class="md">
+    <div class="mh"></div>
+    <div class="mti" id="pep-log-title">LOG DOSE</div>
+    <div class="fl">Units (U-100 syringe)</div>
+    <div class="pep-step">
+      <button onclick="plStep(-1)">&minus;</button>
+      <input class="fi" id="pl-units" type="number" step="any" inputmode="decimal" style="text-align:center;font-family:Orbitron,sans-serif;font-size:18px;" oninput="plPreview()"/>
+      <button onclick="plStep(1)">+</button>
+    </div>
+    <div class="pep-prev" id="pl-preview">&mdash;</div>
+    <div class="syr-wrap">
+      <div class="syr-track"><div class="syr-fill" id="pl-syr" style="width:0%;"></div><div class="syr-ticks" id="pl-ticks"></div></div>
+      <div class="syr-lbl"><span>0</span><span>25</span><span>50</span><span>75</span><span>100 U</span></div>
+    </div>
+    <div class="fl">Injection Site</div>
+    <div class="pep-site-grid" id="pl-sites"></div>
+    <div class="fl">Time</div>
+    <input class="fi" id="pl-time" type="time"/>
+    <div class="fl">Note (optional)</div>
+    <input class="fi" id="pl-note" placeholder="e.g. slight sting, fasted"/>
+    <button class="mb" onclick="savePepDose()">LOG IT</button>
+    <button class="mca" onclick="closeModal('pep-log-mo')">CANCEL</button>
+  </div>
+</div>
+
+<!-- ══════════ RECONSTITUTION CALCULATOR ══════════ -->
+<div class="mo" id="recon-mo" style="z-index:260;">
+  <div class="md">
+    <div class="mh"></div>
+    <div class="mti">RECONSTITUTION CALCULATOR</div>
+    <div class="fl">Load From Saved Peptide</div>
+    <select class="fi" id="rc-pick" onchange="rcLoad()"></select>
+    <div class="fl">Peptide In Vial (mg)</div>
+    <input class="fi" id="rc-mg" type="number" step="any" inputmode="decimal" placeholder="e.g. 80" oninput="rcCalc()"/>
+    <div class="fl">Bacteriostatic Water Added (mL)</div>
+    <input class="fi" id="rc-ml" type="number" step="any" inputmode="decimal" placeholder="e.g. 4" oninput="rcCalc()"/>
+    <div class="fl">Solve For</div>
+    <div class="pep-freq-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="pep-freq-btn on" data-m="dose" onclick="rcMode('dose')">DOSE &rarr; UNITS</div>
+      <div class="pep-freq-btn" data-m="units" onclick="rcMode('units')">UNITS &rarr; DOSE</div>
+    </div>
+    <div id="rc-dose-wrap">
+      <div class="fl">Target Dose</div>
+      <div style="display:grid;grid-template-columns:1fr 90px;gap:6px;">
+        <input class="fi" id="rc-dose" type="number" step="any" inputmode="decimal" placeholder="e.g. 3000" oninput="rcCalc()"/>
+        <select class="fi" id="rc-unit" onchange="rcCalc()"><option value="mcg">mcg</option><option value="mg">mg</option></select>
+      </div>
+    </div>
+    <div id="rc-units-wrap" style="display:none;">
+      <div class="fl">Units On Syringe</div>
+      <input class="fi" id="rc-units" type="number" step="any" inputmode="decimal" placeholder="e.g. 15" oninput="rcCalc()"/>
+    </div>
+    <div class="recon-out">
+      <div class="recon-big" id="rc-big">&mdash;</div>
+      <div class="recon-unit" id="rc-biglbl">UNITS ON A U-100 SYRINGE</div>
+    </div>
+    <div class="syr-wrap">
+      <div class="syr-track"><div class="syr-fill" id="rc-syr" style="width:0%;"></div><div class="syr-ticks" id="rc-ticks"></div></div>
+      <div class="syr-lbl"><span>0</span><span>25</span><span>50</span><span>75</span><span>100 U</span></div>
+    </div>
+    <div style="margin-top:12px;" id="rc-rows"></div>
+    <div class="pep-note" style="margin-top:10px;">1 unit on a U-100 insulin syringe = 0.01 mL. Draw BAC water down the vial wall, never straight onto the powder, and swirl &mdash; don't shake.</div>
+    <button class="mca" onclick="closeModal('recon-mo')">CLOSE</button>
+  </div>
+</div>
+
+<!-- ══════════ PEPTIDE HISTORY / BACKFILL ══════════ -->
+<div class="mo" id="pep-hist-mo" style="z-index:250;">
+  <div class="md">
+    <div class="mh"></div>
+    <div class="mti">PEPTIDE DOSE HISTORY</div>
+    <div style="font-family:Share Tech Mono,monospace;font-size:8px;color:var(--s2);margin-bottom:10px;">Last 14 days. Tap a peptide to add or clear that day's dose.</div>
+    <div id="pep-hist-content"></div>
+    <button class="mb" onclick="closeModal('pep-hist-mo');renderBody();">DONE</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -965,10 +1195,34 @@ var SUPPS=[
   {id:'longevity',name:'Blueprint Longevity Mix',detail:'1 scoop in 6-24oz water — with food, morning. Contains creatine, CaAKG, taurine, glycine, L-theanine, glutathione, vitamin C, magnesium citrate (150mg) & more. Pineapple Yuzu.'}
 ];
 
+var PEP_SITES=['L Abdo','R Abdo','L Delt','R Delt','L Thigh','R Thigh','L Glute','R Glute'];
+var PEP_BAC_DEFAULT_DAYS=28;
+
+// Starting protocol. Every field is editable in-app — these are only the
+// values the vials were set up with, not a prescription.
+function defaultPeptides(){
+  return [
+    {id:'klow',name:'KLOW Blend',active:true,
+     vialMg:80,bacMl:3,reconDate:'2026-08-07',bacDays:28,
+     comps:[{n:'GHK-Cu',mg:50},{n:'BPC-157',mg:10},{n:'TB-500',mg:10},{n:'KPV',mg:10}],
+     doseUnits:5,presets:[5,8,10],freq:'training',days:[1,2,3,4,5],everyN:2,time:'AM',route:'SubQ',
+     sites:['L Abdo','R Abdo','L Delt','R Delt','L Thigh','R Thigh'],siteIdx:0,
+     cycleStart:'2026-08-07',cycleWeeks:16,
+     notes:'80mg blend at 5:1:1:1 \u2014 GHK-Cu 50 / BPC-157 10 / TB-500 10 / KPV 10.\n\nMIXED WITH 3mL BAC WATER = 26.7mg/mL, so 1 unit = 267mcg of blend. Vial holds 300 units.\n\n5 units = 1333mcg: GHK-Cu 833mcg, BPC-157 167mcg, TB-500 167mcg, KPV 167mcg.\n8 units = 2133mcg: GHK-Cu 1.33mg, and 267mcg of each of the other three.\n10 units = 2667mcg: GHK-Cu 1.67mg, and 333mcg of each.\n\nTap the 5 / 8 / 10 chips on the card to change dose \u2014 the vial gauge recalculates instantly.\n\nTRAINING DAYS ONLY. At 5 days a week: 5u = 60 doses (12 wks), 8u = 37 (7.4 wks), 10u = 30 (6 wks).\nTrain less in a given week and the vial simply stretches further. The cycle bar is a loose guide \u2014 the VIAL gauge is the real endpoint.\n\nRotate sites every shot \u2014 GHK-Cu stings and can leave a temporary reddish weal. Food and time of day do not matter for this one.\n\nAT 5 UNITS BPC-157 IS 167mcg, under the usual 250-500mcg range. If you are chasing a specific injury, 8-10 units puts every component back in its normal window.'},
+    {id:'cjcipa',name:'CJC-1295 no DAC + Ipamorelin',active:true,
+     vialMg:10,bacMl:2,reconDate:'2026-08-07',bacDays:28,
+     comps:[{n:'CJC-1295',mg:5},{n:'Ipamorelin',mg:5}],
+     doseUnits:5,presets:[5,8,10],freq:'training',days:[1,2,3,4,5],everyN:2,time:'BED',route:'SubQ',
+     sites:['L Abdo','R Abdo','L Delt','R Delt'],siteIdx:0,
+     cycleStart:'2026-08-07',cycleWeeks:11,
+     notes:'10mg blend, 5mg CJC-1295 + 5mg Ipamorelin.\n\nMIXED WITH 2mL BAC WATER = 5mg/mL, so 1 unit = 50mcg of blend (25mcg of each). Vial holds 200 units.\n\n5 units = 125mcg of each. 8 units = 200mcg of each. 10 units = 250mcg of each.\n\nTRAINING DAYS ONLY. At 5 days a week: 5u = 40 doses (8 wks), 8u = 25 (5 wks), 10u = 20 (4 wks).\nTrain less in a given week and the vial stretches further. Watch the VIAL gauge, not the cycle bar.\n\nTIMING IS THE WHOLE POINT: inject before bed, at least 2 hours after your last meal. Carbs and fat blunt the GH pulse this stack exists to create.\n\n5 units is already past the dose that saturates the GH pulse, so going higher mostly burns through the vial faster rather than buying more effect. This is the one where the low end is genuinely fine.\n\nNote: GH-stack protocols are usually run independently of training rather than only on lift days \u2014 tied to training here because that is how you asked for it.'}
+  ];
+}
+
 // ════════════════════════════════
 // USER SYSTEM
 // ════════════════════════════════
-var APP_VERSION='4.2';
+var APP_VERSION='4.3';
 var USERS_KEY='forge_users_v4';
 var currentUserId=null;
 var pinBuffer='';
@@ -1033,7 +1287,7 @@ function saveUsers(users){
 }
 function getUserData(userId){
   try{var d=localStorage.getItem('forge_user_'+userId);if(d)return JSON.parse(d);}catch(e){}
-  return {log:[],prs:{},days:null,bio:{},suppLog:{},waterLog:{},bwLog:[],weekStart:null,lastExport:null};
+  return {log:[],prs:{},days:null,bio:{},suppLog:{},waterLog:{},bwLog:[],peptides:null,pepLog:{},weekStart:null,lastExport:null};
 }
 function saveUserData(userId,data){
   return lsSet('forge_user_'+userId,JSON.stringify(data));
@@ -1204,7 +1458,7 @@ function backToSplash(){
 // ════════════════════════════════
 // APP STATE (per user)
 // ════════════════════════════════
-var S={log:[],prs:{},days:null,bio:{},suppLog:{},waterLog:{},bwLog:[],activeDay:null,sets:{},start:null,tint:null,rint:null,rdur:90};
+var S={log:[],prs:{},days:null,bio:{},suppLog:{},waterLog:{},bwLog:[],peptides:[],pepLog:{},activeDay:null,sets:{},start:null,tint:null,rint:null,rdur:90};
 var aTab='volume';
 var aMuscle='All';
 var rRem=0;
@@ -1216,6 +1470,8 @@ function loadUserIntoApp(user){
   var data=getUserData(user.id);
   S.log=data.log||[];S.prs=data.prs||{};S.days=data.days||null;S.bio=data.bio||{};
   S.suppLog=data.suppLog||{};S.waterLog=data.waterLog||{};S.bwLog=data.bwLog||[];
+  S.peptides=(data.peptides===undefined||data.peptides===null)?defaultPeptides():data.peptides;
+  S.pepLog=data.pepLog||{};
   S.weekStart=data.weekStart||null;
   S.lastExport=data.lastExport||null;
   S.activeDay=null;S.sets={};S.start=null;
@@ -1226,7 +1482,7 @@ function loadUserIntoApp(user){
     S.weekStart=legacy?(parseInt(legacy)||Date.now()):Date.now();
   }
   // Migration: re-key legacy unpadded date keys (2026-6-9 → 2026-06-09)
-  migrateDateKeys(S.suppLog);migrateDateKeys(S.waterLog);
+  migrateDateKeys(S.suppLog);migrateDateKeys(S.waterLog);migrateDateKeys(S.pepLog);
   if(S.bio&&S.bio.ifData&&S.bio.ifData.log)migrateDateKeys(S.bio.ifData.log);
   if(!S.days)S.days=buildPresets();
   else{var synced=syncMissingDays();if(synced)showToast('NEW DAYS ADDED');}
@@ -1313,7 +1569,7 @@ document.addEventListener('visibilitychange',function(){
 
 function saveState(){
   if(!currentUserId)return;
-  saveUserData(currentUserId,{log:S.log,prs:S.prs,days:S.days,bio:S.bio,suppLog:S.suppLog,waterLog:S.waterLog,bwLog:S.bwLog,weekStart:S.weekStart,lastExport:S.lastExport});
+  saveUserData(currentUserId,{log:S.log,prs:S.prs,days:S.days,bio:S.bio,suppLog:S.suppLog,waterLog:S.waterLog,bwLog:S.bwLog,peptides:S.peptides,pepLog:S.pepLog,weekStart:S.weekStart,lastExport:S.lastExport});
 }
 
 function el(id){return document.getElementById(id);}
@@ -2239,12 +2495,575 @@ function renderBody(){
   var compCard=document.createElement('div');compCard.className='bio-card';compCard.style.marginTop='10px;';compCard.innerHTML='<div class="bio-label" style="margin-bottom:8px;">7-DAY COMPLIANCE</div>';
   for(var i=0;i<SUPPS.length;i++){var supp=SUPPS[i];var comp=get7DayComp(supp.id);var row2=document.createElement('div');row2.style.cssText='display:flex;align-items:center;gap:7px;margin-bottom:6px;';row2.innerHTML='<div style="width:90px;font-family:\'Rajdhani\',sans-serif;font-size:11px;color:var(--t2);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+supp.name.split(' ')[0]+'</div><div style="flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="height:100%;width:'+comp+'%;background:var(--gr);border-radius:2px;"></div></div><div style="font-family:\'Orbitron\',sans-serif;font-size:8px;color:var(--gr);width:26px;text-align:right;">'+comp+'%</div>';compCard.appendChild(row2);}
   cont.appendChild(compCard);
+  renderPeptideSection(cont);
 }
 function addWater(oz){var today=todayKey();S.waterLog[today]=(S.waterLog[today]||0)+oz;if(S.waterLog[today]<0)S.waterLog[today]=0;saveState();renderBody();}
 function resetWater(){var today=todayKey();S.waterLog[today]=0;saveState();renderBody();}
 function toggleSupp(sid){var today=todayKey();if(!S.suppLog[today])S.suppLog[today]={};S.suppLog[today][sid]=!S.suppLog[today][sid];saveState();}
 function getSuppStreak(sid){var streak=0;var d=new Date();for(var i=0;i<30;i++){var dd=new Date(d);dd.setDate(dd.getDate()-i);var key=dateKey(dd);if(S.suppLog[key]&&S.suppLog[key][sid])streak++;else break;}return streak;}
 function get7DayComp(sid){var hits=0;var d=new Date();for(var i=0;i<7;i++){var dd=new Date(d);dd.setDate(dd.getDate()-i);var key=dateKey(dd);if(S.suppLog[key]&&S.suppLog[key][sid])hits++;}return Math.round(hits/7*100);}
+// ════════════════════════════════
+// PEPTIDE PROTOCOL
+// ════════════════════════════════
+function pepById(id){for(var i=0;i<S.peptides.length;i++){if(S.peptides[i].id===id)return S.peptides[i];}return null;}
+function pepNewId(){return 'p'+Date.now().toString(36)+Math.floor(Math.random()*1000).toString(36);}
+function parseKey(k){if(!k||typeof k!=='string')return null;var a=k.split('-');var d=new Date(+a[0],(+a[1])-1,+a[2]);return isNaN(d.getTime())?null:d;}
+function dayDiff(a,b){return Math.round((b.getTime()-a.getTime())/86400000);}
+
+// mcg delivered per 1 unit on a U-100 syringe (1 unit = 0.01 mL)
+function pepConc(p){var mg=parseFloat(p.vialMg)||0,ml=parseFloat(p.bacMl)||0;if(!mg||!ml)return 0;return (mg*1000)/ml/100;}
+function pepMcg(p,u){var units=(u===undefined||u===null)?(parseFloat(p.doseUnits)||0):(parseFloat(u)||0);return pepConc(p)*units;}
+function fmtMcg(v){if(v>=1000)return (Math.round(v/10)/100)+'mg';return Math.round(v)+'mcg';}
+function pepComps(p,u){
+  var tot=0,i,out=[];var cs=p.comps||[];
+  for(i=0;i<cs.length;i++)tot+=parseFloat(cs[i].mg)||0;
+  var dose=pepMcg(p,u);
+  for(i=0;i<cs.length;i++)out.push({n:cs[i].n,mcg:tot?((parseFloat(cs[i].mg)||0)/tot*dose):0});
+  return out;
+}
+function pepFreqLabel(p){
+  if(p.freq==='daily')return 'DAILY';
+  if(p.freq==='training')return 'TRAINING DAYS';
+  if(p.freq==='eod')return 'EVERY OTHER DAY';
+  if(p.freq==='everyn')return 'EVERY '+(parseInt(p.everyN,10)||2)+' DAYS';
+  var dn=['SU','MO','TU','WE','TH','FR','SA'],o=[],i;
+  for(i=0;i<7;i++)if((p.days||[]).indexOf(i)>=0)o.push(dn[i]);
+  if(o.length===7)return 'DAILY';
+  return o.length?o.join(' '):'NO DAYS SET';
+}
+function pepCycle(p){
+  var s=parseKey(p.cycleStart);if(!s)return null;
+  var t=parseKey(todayKey());
+  var total=(parseInt(p.cycleWeeks,10)||0)*7;
+  var day=dayDiff(s,t)+1;
+  return {day:day,total:total,left:total?(total-day+1):0,done:total?(day>total):false,pending:day<1};
+}
+function pepDue(p,key){
+  if(!p.active)return false;
+  var d=parseKey(key);if(!d)return false;
+  var st=parseKey(p.cycleStart);
+  if(st){
+    if(dayDiff(st,d)<0)return false;
+    var total=(parseInt(p.cycleWeeks,10)||0)*7;
+    if(total&&dayDiff(st,d)>=total)return false;
+  }
+  if(p.freq==='daily')return true;
+  if(p.freq==='training')return pepTrainedOn(key);
+  if(p.freq==='days')return (p.days||[]).indexOf(d.getDay())>=0;
+  var anchor=st||d;
+  if(p.freq==='eod'){var df=dayDiff(anchor,d);return ((df%2)+2)%2===0;}
+  if(p.freq==='everyn'){var n=parseInt(p.everyN,10)||2;if(n<1)n=1;var dn2=dayDiff(anchor,d);return ((dn2%n)+n)%n===0;}
+  return true;
+}
+// Did a workout get logged on this date? Drives freq:'training'.
+function pepTrainedOn(key){
+  if(!S.log||!S.log.length)return false;
+  for(var i=S.log.length-1;i>=0;i--){
+    var d=S.log[i]&&S.log[i].date;
+    if(!d)continue;
+    var dd=new Date(d);
+    if(isNaN(dd.getTime()))continue;
+    if(dateKey(dd)===key)return true;
+  }
+  return false;
+}
+function pepLogsFor(pid,key){var d=S.pepLog[key];if(!d)return [];return d[pid]||[];}
+function pepNextSite(p){var sl=(p.sites&&p.sites.length)?p.sites:PEP_SITES;return sl[((p.siteIdx||0)%sl.length+sl.length)%sl.length];}
+function pepUsedMl(p){
+  var tot=0,k,arr,i;
+  for(k in S.pepLog){
+    if(!S.pepLog.hasOwnProperty(k))continue;
+    arr=S.pepLog[k][p.id];if(!arr)continue;
+    for(i=0;i<arr.length;i++)tot+=(parseFloat(arr[i].u)||0)*0.01;
+  }
+  return tot;
+}
+function pepVial(p){
+  var ml=parseFloat(p.bacMl)||0;
+  var used=pepUsedMl(p);
+  var left=Math.max(0,ml-used);
+  // Summing 0.01mL increments accumulates float error; anything under a
+  // microlitre is empty, and the dose count needs a tolerance wide enough
+  // that a full final dose is not rounded away after dozens of draws.
+  if(left<1e-6)left=0;
+  var per=(parseFloat(p.doseUnits)||0)*0.01;
+  return {ml:ml,used:used,left:left,doses:per?Math.floor(left/per+1e-6):0,pct:ml?Math.max(0,Math.min(100,Math.round(left/ml*100))):0};
+}
+function pepBacAge(p){var r=parseKey(p.reconDate);if(!r)return null;return dayDiff(r,parseKey(todayKey()));}
+
+function logPepDose(pid,units,site,note,timeStr){
+  var p=pepById(pid);if(!p)return;
+  var key=todayKey();
+  if(!S.pepLog[key])S.pepLog[key]={};
+  if(!S.pepLog[key][pid])S.pepLog[key][pid]=[];
+  var now=new Date();
+  S.pepLog[key][pid].push({
+    t:timeStr||(('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2)),
+    u:parseFloat(units)||0,
+    mcg:Math.round(pepMcg(p,units)),
+    site:site||'',
+    note:note||''
+  });
+  var sl=(p.sites&&p.sites.length)?p.sites:PEP_SITES;
+  var idx=sl.indexOf(site);
+  p.siteIdx=(((idx>=0?idx:(p.siteIdx||0))+1)%sl.length+sl.length)%sl.length;
+  if(!p.reconDate)p.reconDate=key;
+  if(!p.cycleStart)p.cycleStart=key;
+  saveState();
+}
+function setPepDose(pid,units){
+  var p=pepById(pid);if(!p)return;
+  p.doseUnits=units;
+  saveState();renderBody();
+  showToast(units+'U = '+fmtMcg(pepMcg(p)));
+}
+function removePepDose(pid,key,i){
+  var arr=(S.pepLog[key]||{})[pid];
+  if(!arr)return;
+  arr.splice(i,1);
+  if(!arr.length)delete S.pepLog[key][pid];
+  saveState();renderBody();
+}
+
+// ── SECTION RENDER ──────────────────────────────────────────────────────
+function renderPeptideSection(cont){
+  var t=document.createElement('div');t.className='bio-title';t.textContent='Peptide Protocol';cont.appendChild(t);
+  var key=todayKey(),i;
+
+  if(!S.peptides.length){
+    var es=document.createElement('div');es.className='pep-empty';
+    es.textContent='NO PEPTIDES CONFIGURED';
+    cont.appendChild(es);
+  }
+
+  for(i=0;i<S.peptides.length;i++){
+    (function(p){
+      var logs=pepLogsFor(p.id,key);
+      var due=pepDue(p,key);
+      var cyc=pepCycle(p);
+      var v=pepVial(p);
+      var age=pepBacAge(p);
+      var st='',lbl='OFF DAY';
+      if(!p.active){st='';lbl='PAUSED';}
+      else if(cyc&&cyc.done){st='';lbl='CYCLE DONE';}
+      else if(cyc&&cyc.pending){st='';lbl='STARTS '+p.cycleStart.slice(5);}
+      else if(logs.length){st='done';lbl='DONE '+logs[logs.length-1].t;}
+      else if(due){st='due';lbl='DUE '+(p.time||'');}
+      else if(p.freq==='training'){st='warn';lbl='AFTER LIFT';}
+
+      var card=document.createElement('div');
+      card.className='pep-card'+(logs.length?' done':((due||(p.freq==='training'&&p.active))&&p.active?' due':' off'));
+
+      var h='<div class="pep-head"><div class="pep-name">'+esc(p.name)+'</div><div class="pep-pill '+st+'">'+esc(lbl)+'</div></div>';
+      h+='<div class="pep-dose"><b>'+(parseFloat(p.doseUnits)||0)+'</b><span>units</span><span style="color:var(--s3);">/</span><span style="color:var(--hlb);">'+fmtMcg(pepMcg(p))+'</span><span style="color:var(--s3);">/</span><span>'+esc(p.route||'SubQ')+'</span></div>';
+      h+='<div class="pep-sub">'+(parseFloat(p.vialMg)||0)+'mg in '+(parseFloat(p.bacMl)||0)+'mL &nbsp;=&nbsp; '+Math.round(pepConc(p))+'mcg per unit &nbsp;&middot;&nbsp; draw '+((parseFloat(p.doseUnits)||0)*0.01).toFixed(2)+'mL</div>';
+
+      var cps=pepComps(p);
+      if(cps.length>1){
+        h+='<div class="pep-chips">';
+        for(var j=0;j<cps.length;j++)h+='<div class="pep-chip">'+esc(cps[j].n)+' <b>'+fmtMcg(cps[j].mcg)+'</b></div>';
+        h+='</div>';
+      }
+      h+='<div class="pep-sub" style="margin-top:7px;">'+pepFreqLabel(p)+' &nbsp;&middot;&nbsp; '+esc(p.time||'')+' &nbsp;&middot;&nbsp; NEXT SITE <span class="pep-site">'+esc(pepNextSite(p))+'</span></div>';
+
+      if(cyc&&cyc.total){
+        var cd=Math.max(0,Math.min(cyc.total,cyc.day));
+        var cpct=Math.round(cd/cyc.total*100);
+        h+='<div class="pep-meter"><div class="pep-meter-lbl"><span>CYCLE</span><span>DAY '+cd+' / '+cyc.total+(cyc.done?' &mdash; COMPLETE':(cyc.pending?'':' &middot; '+Math.max(0,cyc.left)+'D LEFT'))+'</span></div><div class="pep-bar"><div class="pep-bar-f" style="width:'+cpct+'%;background:'+(cyc.done?'var(--gr)':'var(--hl)')+';"></div></div></div>';
+      }
+      h+='<div class="pep-meter"><div class="pep-meter-lbl"><span>VIAL</span><span>'+v.left.toFixed(2)+'mL &middot; ~'+v.doses+' DOSES LEFT</span></div><div class="pep-bar"><div class="pep-bar-f" style="width:'+v.pct+'%;background:'+(v.pct<20?'var(--am)':'var(--hl)')+';"></div></div></div>';
+
+      if(age!==null){
+        var lim=parseInt(p.bacDays,10)||PEP_BAC_DEFAULT_DAYS;
+        var rem=lim-age;
+        h+='<div class="pep-sub" style="margin-top:6px;color:'+(rem<=5?'var(--am)':'var(--s2)')+';">MIXED '+age+'D AGO &middot; '+(rem>0?rem+'D BEFORE DISCARD':'PAST THE '+lim+'-DAY WINDOW')+'</div>';
+      }
+
+      var pre=(p.presets&&p.presets.length)?p.presets:[];
+      if(pre.length){
+        h+='<div class="pep-presets"><span class="pep-presets-lbl">DOSE</span>';
+        for(var q=0;q<pre.length;q++){
+          var pu=pre[q];
+          h+='<div class="pep-preset'+((parseFloat(p.doseUnits)||0)===pu?' on':'')+'" data-pre="'+pu+'">'+pu+'u</div>';
+        }
+        h+='</div>';
+        var curV=pepVial(p);
+        h+='<div class="pep-sub" style="margin-top:4px;">at '+(parseFloat(p.doseUnits)||0)+'u &rarr; '+fmtMcg(pepMcg(p))+' per shot &middot; '+curV.doses+' doses left'+(curV.doses?' &middot; ~'+(Math.round(curV.doses/5*10)/10)+' wks at 5/wk':'')+'</div>';
+      }
+      h+='<div class="pep-grid14">';
+      for(var d=13;d>=0;d--){
+        var dd=new Date();dd.setDate(dd.getDate()-d);
+        var kk=dateKey(dd);
+        var wasDue=pepDue(p,kk);
+        var hit=pepLogsFor(p.id,kk).length>0;
+        var cls=hit?'hit':(wasDue?(d===0?'':'miss'):'na');
+        h+='<div class="pep-d '+cls+(d===0?' today':'')+'"></div>';
+      }
+      h+='</div>';
+
+      for(var L=0;L<logs.length;L++){
+        h+='<div class="pep-logline"><span style="color:var(--gr);">&#10003;</span><span>'+esc(logs[L].t)+'</span><span>'+(logs[L].u)+'u</span><span style="color:var(--s3);">'+fmtMcg(logs[L].mcg||pepMcg(p,logs[L].u))+'</span><span style="color:var(--am);">'+esc(logs[L].site||'')+'</span><span class="x" data-rm="'+L+'">&#10005;</span></div>';
+      }
+
+      h+='<div class="pep-acts"><button class="pep-btn'+(logs.length?' g':'')+'" data-act="log">'+(logs.length?'LOG ANOTHER':'LOG DOSE')+'</button><button class="pep-btn sm" data-act="edit">EDIT</button></div>';
+
+      card.innerHTML=h;
+      var lb=card.querySelector('[data-act="log"]');
+      lb.onclick=function(){openPepLog(p.id);};
+      card.querySelector('[data-act="edit"]').onclick=function(){openPepEditor(p.id);};
+      var pres=card.querySelectorAll('[data-pre]');
+      for(var q2=0;q2<pres.length;q2++){
+        (function(u){pres[q2].onclick=function(e){e.stopPropagation();setPepDose(p.id,u);};})(parseFloat(pres[q2].getAttribute('data-pre')));
+      }
+      var rms=card.querySelectorAll('[data-rm]');
+      for(var r=0;r<rms.length;r++){
+        (function(idx){rms[r].onclick=function(e){e.stopPropagation();removePepDose(p.id,key,idx);};})(parseInt(rms[r].getAttribute('data-rm'),10));
+      }
+      cont.appendChild(card);
+
+      if(p.notes){
+        var nb=document.createElement('div');
+        nb.className='pep-sub';
+        nb.style.cssText='padding:2px 4px 9px;white-space:pre-wrap;';
+        nb.textContent=p.notes;
+        cont.appendChild(nb);
+      }
+    })(S.peptides[i]);
+  }
+
+  var row=document.createElement('div');row.style.cssText='display:flex;gap:5px;margin-top:5px;';
+  var b1=document.createElement('button');b1.className='pep-add';b1.textContent='+ ADD PEPTIDE';b1.onclick=function(){openPepEditor(null);};
+  var b2=document.createElement('button');b2.className='pep-add';b2.textContent='RECON CALC';b2.onclick=openRecon;
+  var b3=document.createElement('button');b3.className='pep-add';b3.textContent='HISTORY';b3.onclick=openPepHist;
+  row.appendChild(b1);row.appendChild(b2);row.appendChild(b3);
+  cont.appendChild(row);
+
+  var warn=document.createElement('div');warn.className='pep-note';warn.style.marginTop='8px';
+  warn.textContent='These are research compounds, not FDA-approved drugs. The app tracks the numbers you enter — it does not verify them. Confirm dose, cycle length and site technique with whoever supplied and supervises them.';
+  cont.appendChild(warn);
+}
+
+// ── EDITOR ──────────────────────────────────────────────────────────────
+var pepEditId=null,pepEditComps=[],pepEditFreq='daily',pepEditDays=[],pepEditSites=[],pepEditActive=true;
+
+function openPepEditor(id){
+  pepEditId=id;
+  var p=id?pepById(id):null;
+  el('pep-mo-title').textContent=p?'EDIT PEPTIDE':'ADD PEPTIDE';
+  el('pf-del-btn').style.display=p?'block':'none';
+  el('pf-name').value=p?p.name:'';
+  el('pf-vial').value=p?p.vialMg:'';
+  el('pf-bac').value=p?p.bacMl:'';
+  el('pf-dose').value=p?p.doseUnits:'';
+  el('pf-everyn').value=p?(p.everyN||2):2;
+  el('pf-time').value=p?(p.time||'AM'):'AM';
+  el('pf-route').value=p?(p.route||'SubQ'):'SubQ';
+  el('pf-cyclestart').value=p&&p.cycleStart?p.cycleStart:'';
+  el('pf-cycleweeks').value=p&&p.cycleWeeks?p.cycleWeeks:'';
+  el('pf-recondate').value=p&&p.reconDate?p.reconDate:'';
+  el('pf-bacdays').value=p&&p.bacDays?p.bacDays:PEP_BAC_DEFAULT_DAYS;
+  el('pf-notes').value=p?(p.notes||''):'';
+  pepEditComps=p?JSON.parse(JSON.stringify(p.comps||[])):[];
+  pepEditDays=p?(p.days||[]).slice():[0,1,2,3,4,5,6];
+  pepEditSites=p?(p.sites||PEP_SITES).slice():PEP_SITES.slice(0,6);
+  pepEditActive=p?p.active!==false:true;
+  pfSetFreq(p?(p.freq||'daily'):'daily');
+  pfRenderComps();pfRenderSites();pfSyncActive();pfPreview();
+  el('pep-mo').classList.add('visible');
+}
+function pfSyncActive(){var sw=el('pf-active-sw');if(pepEditActive)sw.classList.add('on');else sw.classList.remove('on');}
+function pfToggleActive(){pepEditActive=!pepEditActive;pfSyncActive();}
+function pfSetFreq(f){
+  pepEditFreq=f;
+  var btns=document.querySelectorAll('.pep-freq-btn[data-f]');
+  for(var i=0;i<btns.length;i++){
+    if(btns[i].getAttribute('data-f')===f)btns[i].classList.add('on');else btns[i].classList.remove('on');
+  }
+  el('pf-days-wrap').style.display=(f==='days')?'block':'none';
+  el('pf-everyn-wrap').style.display=(f==='everyn')?'block':'none';
+  el('pf-training-hint').style.display=(f==='training')?'block':'none';
+  pfRenderDays();
+}
+function pfRenderDays(){
+  var btns=el('pf-days').querySelectorAll('.pep-day-btn');
+  for(var i=0;i<btns.length;i++){
+    var d=parseInt(btns[i].getAttribute('data-d'),10);
+    if(pepEditDays.indexOf(d)>=0)btns[i].classList.add('on');else btns[i].classList.remove('on');
+  }
+}
+function pfToggleDay(d){
+  var i=pepEditDays.indexOf(d);
+  if(i>=0)pepEditDays.splice(i,1);else pepEditDays.push(d);
+  pfRenderDays();
+}
+function pfRenderComps(){
+  var w=el('pf-comps');w.innerHTML='';
+  for(var i=0;i<pepEditComps.length;i++){
+    (function(idx){
+      var r=document.createElement('div');r.className='pep-comp-row';
+      var a=document.createElement('input');a.className='fi';a.placeholder='Peptide';a.value=pepEditComps[idx].n||'';
+      a.oninput=function(){pepEditComps[idx].n=a.value;};
+      var b=document.createElement('input');b.className='fi';b.type='number';b.step='any';b.placeholder='mg';b.value=(pepEditComps[idx].mg===null||pepEditComps[idx].mg===undefined)?'':pepEditComps[idx].mg;
+      b.oninput=function(){pepEditComps[idx].mg=parseFloat(b.value)||0;pfPreview();};
+      var c=document.createElement('button');c.className='pep-comp-del';c.innerHTML='&#10005;';
+      c.onclick=function(){pepEditComps.splice(idx,1);pfRenderComps();pfPreview();};
+      r.appendChild(a);r.appendChild(b);r.appendChild(c);w.appendChild(r);
+    })(i);
+  }
+}
+function pfAddComp(n,mg){pepEditComps.push({n:n||'',mg:mg||0});pfRenderComps();}
+function pfRenderSites(){
+  var w=el('pf-sites');w.innerHTML='';
+  for(var i=0;i<PEP_SITES.length;i++){
+    (function(site){
+      var b=document.createElement('div');
+      b.className='pep-site-btn'+(pepEditSites.indexOf(site)>=0?' on':'');
+      b.textContent=site;
+      b.onclick=function(){
+        var k=pepEditSites.indexOf(site);
+        if(k>=0)pepEditSites.splice(k,1);else pepEditSites.push(site);
+        pfRenderSites();
+      };
+      w.appendChild(b);
+    })(PEP_SITES[i]);
+  }
+}
+function pfPreview(){
+  var mg=parseFloat(el('pf-vial').value)||0;
+  var ml=parseFloat(el('pf-bac').value)||0;
+  var u=parseFloat(el('pf-dose').value)||0;
+  if(!mg||!ml){el('pf-preview').innerHTML='Enter vial mg and BAC water mL.';return;}
+  var per=(mg*1000)/ml/100;
+  var dose=per*u;
+  var txt=Math.round(mg/ml*100)/100+' mg/mL &nbsp;&middot;&nbsp; '+Math.round(per)+' mcg per unit<br/>'+u+' units = <b>'+fmtMcg(dose)+'</b> ('+(u*0.01).toFixed(2)+' mL)';
+  var tot=0,i;
+  for(i=0;i<pepEditComps.length;i++)tot+=parseFloat(pepEditComps[i].mg)||0;
+  if(pepEditComps.length>1&&tot>0){
+    var parts=[];
+    for(i=0;i<pepEditComps.length;i++)parts.push(esc(pepEditComps[i].n||'?')+' '+fmtMcg((parseFloat(pepEditComps[i].mg)||0)/tot*dose));
+    txt+='<br/>'+parts.join(' &middot; ');
+    if(Math.abs(tot-mg)>0.001)txt+='<br/><span style="color:var(--am);">Components total '+tot+'mg but vial says '+mg+'mg.</span>';
+  }
+  if(u>0){
+    var doses=Math.floor((ml+1e-9)/(u*0.01));
+    txt+='<br/><span style="color:var(--s2);">Vial holds ~'+doses+' doses at this size.</span>';
+  }
+  el('pf-preview').innerHTML=txt;
+}
+function savePeptide(){
+  var name=el('pf-name').value.trim();
+  if(!name){showToast('NAME REQUIRED');return;}
+  var mg=parseFloat(el('pf-vial').value)||0;
+  var ml=parseFloat(el('pf-bac').value)||0;
+  var u=parseFloat(el('pf-dose').value)||0;
+  if(mg<=0||ml<=0){showToast('VIAL MG AND BAC ML REQUIRED');return;}
+  if(u<=0){showToast('DOSE MUST BE > 0');return;}
+  if(u>100){showToast('OVER 100 UNITS — CHECK THAT');return;}
+  if(pepEditFreq==='days'&&!pepEditDays.length){showToast('PICK AT LEAST ONE DAY');return;}
+  var comps=[];
+  for(var i=0;i<pepEditComps.length;i++){
+    if((pepEditComps[i].n||'').trim())comps.push({n:pepEditComps[i].n.trim(),mg:parseFloat(pepEditComps[i].mg)||0});
+  }
+  var p=pepEditId?pepById(pepEditId):null;
+  var isNew=!p;
+  if(!p){p={id:pepNewId(),siteIdx:0};S.peptides.push(p);}
+  p.name=name;p.vialMg=mg;p.bacMl=ml;p.doseUnits=u;
+  p.comps=comps;
+  p.freq=pepEditFreq;
+  p.days=pepEditDays.slice();
+  if(!p.presets)p.presets=[5,8,10];
+  p.everyN=parseInt(el('pf-everyn').value,10)||2;
+  p.time=el('pf-time').value;
+  p.route=el('pf-route').value;
+  p.sites=pepEditSites.length?pepEditSites.slice():PEP_SITES.slice();
+  p.cycleStart=el('pf-cyclestart').value||null;
+  p.cycleWeeks=parseInt(el('pf-cycleweeks').value,10)||0;
+  p.reconDate=el('pf-recondate').value||null;
+  p.bacDays=parseInt(el('pf-bacdays').value,10)||PEP_BAC_DEFAULT_DAYS;
+  p.notes=el('pf-notes').value;
+  p.active=pepEditActive;
+  if(p.siteIdx===undefined||p.siteIdx===null)p.siteIdx=0;
+  saveState();closeModal('pep-mo');renderBody();
+  showToast(isNew?'PEPTIDE ADDED':'SAVED');
+}
+function deletePeptide(){
+  if(!pepEditId)return;
+  if(!confirm('Delete this peptide? Logged doses stay in your history.'))return;
+  for(var i=0;i<S.peptides.length;i++){
+    if(S.peptides[i].id===pepEditId){S.peptides.splice(i,1);break;}
+  }
+  saveState();closeModal('pep-mo');renderBody();showToast('DELETED');
+}
+
+// ── LOG DOSE ────────────────────────────────────────────────────────────
+var pepLogId=null,pepLogSite='';
+function openPepLog(id){
+  var p=pepById(id);if(!p)return;
+  pepLogId=id;
+  pepLogSite=pepNextSite(p);
+  el('pep-log-title').textContent='LOG '+p.name.toUpperCase();
+  el('pl-units').value=p.doseUnits;
+  var now=new Date();
+  el('pl-time').value=('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2);
+  el('pl-note').value='';
+  var tw=el('pl-ticks');tw.innerHTML='';
+  for(var i=0;i<10;i++){var tk=document.createElement('div');tk.className='syr-tick';tw.appendChild(tk);}
+  plRenderSites();plPreview();
+  el('pep-log-mo').classList.add('visible');
+}
+function plRenderSites(){
+  var p=pepById(pepLogId);if(!p)return;
+  var sl=(p.sites&&p.sites.length)?p.sites:PEP_SITES;
+  var w=el('pl-sites');w.innerHTML='';
+  for(var i=0;i<sl.length;i++){
+    (function(site){
+      var b=document.createElement('div');
+      b.className='pep-site-btn'+(site===pepLogSite?' on':'');
+      b.textContent=site;
+      b.onclick=function(){pepLogSite=site;plRenderSites();};
+      w.appendChild(b);
+    })(sl[i]);
+  }
+}
+function plStep(d){
+  var v=parseFloat(el('pl-units').value)||0;
+  v=Math.round((v+d)*100)/100;
+  if(v<0)v=0;
+  el('pl-units').value=v;plPreview();
+}
+function plPreview(){
+  var p=pepById(pepLogId);if(!p)return;
+  var u=parseFloat(el('pl-units').value)||0;
+  var txt=u+' units = <b>'+fmtMcg(pepMcg(p,u))+'</b> &nbsp;&middot;&nbsp; '+(u*0.01).toFixed(2)+' mL';
+  var cps=pepComps(p,u);
+  if(cps.length>1){
+    var parts=[];
+    for(var i=0;i<cps.length;i++)parts.push(esc(cps[i].n)+' '+fmtMcg(cps[i].mcg));
+    txt+='<br/>'+parts.join(' &middot; ');
+  }
+  var v=pepVial(p);
+  if(v.left<u*0.01)txt+='<br/><span style="color:var(--am);">Only '+v.left.toFixed(2)+'mL left in this vial.</span>';
+  el('pl-preview').innerHTML=txt;
+  el('pl-syr').style.width=Math.max(0,Math.min(100,u))+'%';
+}
+function savePepDose(){
+  var u=parseFloat(el('pl-units').value)||0;
+  if(u<=0){showToast('DOSE MUST BE > 0');return;}
+  if(u>100){showToast('OVER 100 UNITS — CHECK THAT');return;}
+  logPepDose(pepLogId,u,pepLogSite,el('pl-note').value.trim(),el('pl-time').value);
+  closeModal('pep-log-mo');renderBody();showToast('DOSE LOGGED');
+}
+
+// ── RECONSTITUTION CALCULATOR ───────────────────────────────────────────
+var rcSolve='dose';
+function openRecon(){
+  var sel=el('rc-pick');
+  sel.innerHTML='<option value="">— manual entry —</option>';
+  for(var i=0;i<S.peptides.length;i++){
+    var o=document.createElement('option');o.value=S.peptides[i].id;o.textContent=S.peptides[i].name;sel.appendChild(o);
+  }
+  var tw=el('rc-ticks');tw.innerHTML='';
+  for(var j=0;j<10;j++){var tk=document.createElement('div');tk.className='syr-tick';tw.appendChild(tk);}
+  rcCalc();
+  el('recon-mo').classList.add('visible');
+}
+function rcLoad(){
+  var p=pepById(el('rc-pick').value);
+  if(!p){rcCalc();return;}
+  el('rc-mg').value=p.vialMg;
+  el('rc-ml').value=p.bacMl;
+  el('rc-units').value=p.doseUnits;
+  el('rc-dose').value=Math.round(pepMcg(p));
+  el('rc-unit').value='mcg';
+  rcCalc();
+}
+function rcMode(m){
+  rcSolve=m;
+  var btns=document.querySelectorAll('.pep-freq-btn[data-m]');
+  for(var i=0;i<btns.length;i++){
+    if(btns[i].getAttribute('data-m')===m)btns[i].classList.add('on');else btns[i].classList.remove('on');
+  }
+  el('rc-dose-wrap').style.display=(m==='dose')?'block':'none';
+  el('rc-units-wrap').style.display=(m==='units')?'block':'none';
+  rcCalc();
+}
+function rcCalc(){
+  var mg=parseFloat(el('rc-mg').value)||0;
+  var ml=parseFloat(el('rc-ml').value)||0;
+  var big=el('rc-big'),lbl=el('rc-biglbl'),rows=el('rc-rows');
+  if(!mg||!ml){big.innerHTML='&mdash;';rows.innerHTML='';el('rc-syr').style.width='0%';return;}
+  var perUnit=(mg*1000)/ml/100;
+  var units,doseMcg;
+  if(rcSolve==='dose'){
+    var raw=parseFloat(el('rc-dose').value)||0;
+    doseMcg=el('rc-unit').value==='mg'?raw*1000:raw;
+    units=perUnit?doseMcg/perUnit:0;
+    big.textContent=Math.round(units*100)/100;
+    lbl.textContent='UNITS ON A U-100 SYRINGE';
+  }else{
+    units=parseFloat(el('rc-units').value)||0;
+    doseMcg=perUnit*units;
+    big.textContent=fmtMcg(doseMcg);
+    lbl.textContent='PER '+units+'-UNIT INJECTION';
+  }
+  el('rc-syr').style.width=Math.max(0,Math.min(100,units))+'%';
+  var h='';
+  h+='<div class="recon-row"><span>CONCENTRATION</span><span>'+(Math.round(mg/ml*1000)/1000)+' mg/mL</span></div>';
+  h+='<div class="recon-row"><span>PER UNIT (0.01 mL)</span><span>'+(Math.round(perUnit*10)/10)+' mcg</span></div>';
+  h+='<div class="recon-row"><span>VOLUME DRAWN</span><span>'+(units*0.01).toFixed(3)+' mL</span></div>';
+  if(units>0)h+='<div class="recon-row"><span>DOSES PER VIAL</span><span>'+Math.floor((ml+1e-9)/(units*0.01))+'</span></div>';
+  if(units>100)h+='<div class="recon-row"><span style="color:var(--am);">OVER SYRINGE CAPACITY</span><span style="color:var(--am);">ADD MORE BAC WATER</span></div>';
+  if(units>0&&units<3)h+='<div class="recon-row"><span style="color:var(--am);">HARD TO MEASURE</span><span style="color:var(--am);">USE MORE BAC WATER</span></div>';
+  var p=pepById(el('rc-pick').value);
+  if(p&&p.comps&&p.comps.length>1){
+    var tot=0,i;
+    for(i=0;i<p.comps.length;i++)tot+=parseFloat(p.comps[i].mg)||0;
+    for(i=0;i<p.comps.length;i++){
+      h+='<div class="recon-row"><span>'+esc(p.comps[i].n)+'</span><span>'+fmtMcg(tot?((parseFloat(p.comps[i].mg)||0)/tot*doseMcg):0)+'</span></div>';
+    }
+  }
+  rows.innerHTML=h;
+}
+
+// ── HISTORY / BACKFILL ──────────────────────────────────────────────────
+function openPepHist(){renderPepHist();el('pep-hist-mo').classList.add('visible');}
+function renderPepHist(){
+  var cont=el('pep-hist-content');cont.innerHTML='';
+  for(var i=0;i<14;i++){
+    var d=new Date();d.setDate(d.getDate()-i);
+    var key=dateKey(d);
+    var block=document.createElement('div');block.className='pep-hist-day';
+    var label=i===0?'Today':i===1?'Yesterday':d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+    var hd=document.createElement('div');hd.className='pep-hist-date';
+    hd.innerHTML='<span>'+label+'</span><span style="color:var(--s3);">'+key+'</span>';
+    block.appendChild(hd);
+    if(!S.peptides.length){
+      var e=document.createElement('div');e.className='pep-sub';e.textContent='No peptides configured.';block.appendChild(e);
+    }
+    for(var j=0;j<S.peptides.length;j++){
+      (function(p,k){
+        var logs=pepLogsFor(p.id,k);
+        var on=logs.length>0;
+        var due=pepDue(p,k);
+        var item=document.createElement('div');item.className='supp-item';item.style.marginBottom='3px';
+        var detail=on?(logs.length+'x &middot; '+logs[0].u+'u &middot; '+esc(logs[0].site||'')):(due?'due — not logged':'off day');
+        item.innerHTML='<div class="supp-check'+(on?' on':'')+'">'+(on?'&#10003;':'')+'</div>'
+          +'<div style="flex:1;"><div class="supp-name" style="font-size:12px;">'+esc(p.name)+'</div><div class="supp-detail">'+detail+'</div></div>';
+        item.onclick=function(){
+          if(!S.pepLog[k])S.pepLog[k]={};
+          if(pepLogsFor(p.id,k).length){delete S.pepLog[k][p.id];}
+          else{
+            S.pepLog[k][p.id]=[{t:'--:--',u:parseFloat(p.doseUnits)||0,mcg:Math.round(pepMcg(p)),site:pepNextSite(p),note:'backfilled'}];
+          }
+          saveState();renderPepHist();
+        };
+        block.appendChild(item);
+      })(S.peptides[j],key);
+    }
+    cont.appendChild(block);
+  }
+}
+
 var BIO_LIMITS={weight:[50,1000],height:[20,300],age:[5,120],bf:[1,80],goalweight:[50,1000],waterGoal:[8,400]};
 function saveBio(){
   var fields=['weight','height','age','bf','goalweight','waterGoal'];var bad=[];
@@ -2320,8 +3139,8 @@ function confirmReset(type){
   pendingResetType=type;
   var titles={history:'RESET WORKOUT HISTORY',all:'RESET EVERYTHING',delete:'DELETE PROFILE'};
   var bodies={
-    history:'This will permanently delete:\n— All logged sessions\n— All PRs\n— Body weight entries\n— Water & supplement logs\n\nYour workout days and exercises will be kept.',
-    all:'This will permanently delete:\n— All logged sessions\n— All PRs\n— Body weight entries\n— Water & supplement logs\n— All custom workout days\n\nWorkouts will reset to default presets. Your profile stays.',
+    history:'This will permanently delete:\n— All logged sessions\n— All PRs\n— Body weight entries\n— Water, supplement & peptide dose logs\n\nYour workout days, exercises and peptide setups will be kept.',
+    all:'This will permanently delete:\n— All logged sessions\n— All PRs\n— Body weight entries\n— Water, supplement & peptide dose logs\n— All custom workout days\n\nWorkouts will reset to default presets. Your profile stays.',
     delete:'This will permanently delete this entire profile including all sessions, PRs, and data.\n\nThis cannot be undone.'
   };
   el('confirm-reset-title').textContent=titles[type];
@@ -2333,11 +3152,11 @@ function confirmReset(type){
 function executeReset(){
   closeModal('confirm-reset-mo');
   if(pendingResetType==='history'){
-    S.log=[];S.prs={};S.bwLog=[];S.suppLog={};S.waterLog={};S.bio={};
+    S.log=[];S.prs={};S.bwLog=[];S.suppLog={};S.waterLog={};S.pepLog={};S.bio={};
     S.weekStart=Date.now();
     saveState();renderHome();renderSel();showToast('HISTORY CLEARED');
   } else if(pendingResetType==='all'){
-    S.log=[];S.prs={};S.bwLog=[];S.suppLog={};S.waterLog={};S.bio={};S.days=buildPresets();
+    S.log=[];S.prs={};S.bwLog=[];S.suppLog={};S.waterLog={};S.pepLog={};S.bio={};S.days=buildPresets();
     S.weekStart=Date.now();
     saveState();renderHome();renderSel();showToast('FULL RESET COMPLETE');
   } else if(pendingResetType==='delete'){
@@ -2989,6 +3808,8 @@ function exportBackup(){
       suppLog:S.suppLog,
       waterLog:S.waterLog,
       bwLog:S.bwLog,
+      peptides:S.peptides,
+      pepLog:S.pepLog,
       weekStart:S.weekStart
     }
   };
@@ -3050,6 +3871,9 @@ function validateBackup(b){
   if(!isObj(d.prs))return 'PR DATA CORRUPT';
   if(!isObj(d.bio))return 'BIO DATA CORRUPT';
   if(!isObj(d.suppLog))return 'SUPPLEMENT LOG CORRUPT';
+  if(!isArr(d.peptides)&&d.peptides!==null)return 'PEPTIDE LIST CORRUPT';
+  if(!isObj(d.pepLog))return 'PEPTIDE LOG CORRUPT';
+  if(d.peptides){for(var pi=0;pi<d.peptides.length;pi++){var pp=d.peptides[pi];if(!pp||typeof pp!=='object'||Array.isArray(pp)||typeof pp.id!=='string')return 'PEPTIDE '+(pi+1)+' CORRUPT';}}
   if(!isObj(d.waterLog))return 'WATER LOG CORRUPT';
   if(d.log){
     for(var i=0;i<d.log.length;i++){
@@ -3097,17 +3921,19 @@ function importBackup(event){
 function confirmImport(){
   if(!pendingImport){closeModal('import-confirm-mo');return;}
   // Snapshot current data so a bad restore is reversible
-  lsSet('forge_preimport_'+currentUserId,JSON.stringify({log:S.log,prs:S.prs,days:S.days,bio:S.bio,suppLog:S.suppLog,waterLog:S.waterLog,bwLog:S.bwLog,weekStart:S.weekStart,lastExport:S.lastExport}));
+  lsSet('forge_preimport_'+currentUserId,JSON.stringify({log:S.log,prs:S.prs,days:S.days,bio:S.bio,suppLog:S.suppLog,waterLog:S.waterLog,bwLog:S.bwLog,peptides:S.peptides,pepLog:S.pepLog,weekStart:S.weekStart,lastExport:S.lastExport}));
   var d=pendingImport.data;
   if(d.log!==undefined)S.log=d.log;
   if(d.prs!==undefined)S.prs=d.prs;
   if(d.days!==undefined)S.days=d.days;
   if(d.bio!==undefined)S.bio=d.bio;
   if(d.suppLog!==undefined)S.suppLog=d.suppLog;
+  if(d.peptides!==undefined&&d.peptides!==null)S.peptides=d.peptides;
+  if(d.pepLog!==undefined)S.pepLog=d.pepLog;
   if(d.waterLog!==undefined)S.waterLog=d.waterLog;
   if(d.bwLog!==undefined)S.bwLog=d.bwLog;
   if(d.weekStart)S.weekStart=d.weekStart;
-  migrateDateKeys(S.suppLog);migrateDateKeys(S.waterLog);
+  migrateDateKeys(S.suppLog);migrateDateKeys(S.waterLog);migrateDateKeys(S.pepLog);
   if(S.bio&&S.bio.ifData&&S.bio.ifData.log)migrateDateKeys(S.bio.ifData.log);
   pendingImport=null;
   saveState();
@@ -3124,6 +3950,7 @@ function undoImport(){
   try{snap=JSON.parse(raw);}catch(e){showToast('SNAPSHOT CORRUPT');return;}
   S.log=snap.log||[];S.prs=snap.prs||{};S.days=snap.days||buildPresets();S.bio=snap.bio||{};
   S.suppLog=snap.suppLog||{};S.waterLog=snap.waterLog||{};S.bwLog=snap.bwLog||[];
+  S.peptides=(snap.peptides===undefined||snap.peptides===null)?defaultPeptides():snap.peptides;S.pepLog=snap.pepLog||{};
   if(snap.weekStart)S.weekStart=snap.weekStart;
   if(snap.lastExport)S.lastExport=snap.lastExport;
   saveState();renderHome();renderSel();

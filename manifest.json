@@ -1,7 +1,7 @@
 {
   "name": "Forge",
   "short_name": "Forge",
-  "description": "Tactical training telemetry — workouts, nutrition, supplements.",
+  "description": "Tactical training telemetry — workouts, nutrition, supplements, peptides.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
