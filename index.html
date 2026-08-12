@@ -1228,7 +1228,7 @@ function defaultPeptides(){
 // ════════════════════════════════
 // USER SYSTEM
 // ════════════════════════════════
-var APP_VERSION='4.4';
+var APP_VERSION='4.5';
 var USERS_KEY='forge_users_v4';
 var currentUserId=null;
 var pinBuffer='';
@@ -4947,6 +4947,33 @@ var CUT_MEALS=[
   {id:'m4', time:'7:00 PM',  name:'Final Meal — Protein + Fats',    p:50,c:15,f:20, desc:'Salmon 6oz or lean beef 6oz, large salad, olive oil dressing, avocado'},
 ];
 
+var HUEL_OPTS=[
+  {name:'Breakfast \u2014 Huel Black RTD',
+   desc:'1 bottle Huel Black Edition Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster',
+   p:35,c:29,f:16},
+  {name:'Breakfast \u2014 Huel RTD',
+   desc:'1 bottle Huel Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster\nLower protein than Black \u2014 expect to run under target today',
+   p:21,c:39,f:18}
+];
+
+// Single source of truth for "which plan am I looking at".
+// A generated plan replaces the static one wholesale, so the Huel breakfast
+// options are grafted on here rather than baked into the static data only —
+// otherwise anyone with a custom plan never sees them.
+function getPlanDays(){
+  var days=(S.bio&&S.bio.generatedPlan&&S.bio.generatedPlan.days)?S.bio.generatedPlan.days:WEEK_MEAL_PLAN;
+  if(!days||!days.length)return WEEK_MEAL_PLAN;
+  for(var i=0;i<days.length;i++){
+    var d=days[i];
+    if(!d||!d.meals||!d.meals.length)continue;
+    var m=d.meals[0];
+    if(!m||(m.opts&&m.opts.length))continue;
+    m.opts=[HUEL_OPTS[0],HUEL_OPTS[1],
+            {name:m.name,desc:m.desc,p:m.p||0,c:m.c||0,f:m.f||0}];
+  }
+  return days;
+}
+
 // A meal may carry `opts`: interchangeable versions of the same slot.
 // The chosen index is remembered per plan-day so it sticks between sessions.
 function mealOptIdx(dayIdx,mealIdx){
@@ -5000,7 +5027,7 @@ function getSelectedDayIdx(){
 }
 
 function getDayMeals(){
-  var plan=(S.bio.generatedPlan&&S.bio.generatedPlan.days)?S.bio.generatedPlan.days:WEEK_MEAL_PLAN;
+  var plan=getPlanDays();
   var idx=getSelectedDayIdx();
   if(idx>=0&&idx<plan.length)return plan[idx].meals;
   return WEEK_MEAL_PLAN[0].meals;
@@ -5009,7 +5036,7 @@ function getDayMeals(){
 function renderDietSection(cont){
   var targets=calcMacroTargets();
   var log=getDietLog();
-  var plan=(S.bio.generatedPlan&&S.bio.generatedPlan.days)?S.bio.generatedPlan.days:WEEK_MEAL_PLAN;
+  var plan=getPlanDays();
   var selectedIdx=getSelectedDayIdx();
   var dayMeals=getDayMeals();
 
@@ -5382,7 +5409,7 @@ var openMealDays = {};
 
 function renderMealPlan(cont){
   // Use generated plan if available, otherwise use static plan
-  var planDays = (S.bio.generatedPlan && S.bio.generatedPlan.days) ? S.bio.generatedPlan.days : WEEK_MEAL_PLAN;
+  var planDays = getPlanDays();
   var isGenerated = !!(S.bio.generatedPlan && S.bio.generatedPlan.days);
 
   var title=document.createElement('div');

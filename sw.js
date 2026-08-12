@@ -1,9 +1,9 @@
 // ════════════════════════════════
 // FORGE SERVICE WORKER
 // Bump CACHE on every deploy or browsers will keep serving the old build.
-// v9 = app v4.4, bodyweight lock + HUEL breakfast
+// v10 = app v4.5, HUEL options work on generated plans too
 // ════════════════════════════════
-const CACHE = 'forge-v9';
+const CACHE = 'forge-v10';
 const ASSETS = [
   './',
   './index.html',
