@@ -1,9 +1,9 @@
 // ════════════════════════════════
 // FORGE SERVICE WORKER
 // Bump CACHE on every deploy or browsers will keep serving the old build.
-// v8 = app v4.3, peptide protocol module
+// v9 = app v4.4, bodyweight lock + HUEL breakfast
 // ════════════════════════════════
-const CACHE = 'forge-v8';
+const CACHE = 'forge-v9';
 const ASSETS = [
   './',
   './index.html',

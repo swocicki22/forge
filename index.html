@@ -529,6 +529,12 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .if-protocol-btn.active{background:var(--hld);border-color:var(--hlbr);color:var(--hl);}
 .monster-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(76,175,80,.08);border:1px solid rgba(76,175,80,.25);border-radius:2px;padding:5px 10px;font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--gr);margin-top:6px;}
 
+.meal-swap{display:flex;gap:4px;margin:-2px 0 6px 30px;flex-wrap:wrap;}
+.meal-swap-chip{font-family:Share Tech Mono,monospace;font-size:7px;color:var(--s2);background:var(--card2);border:1px solid var(--border);border-radius:2px;padding:4px 6px;cursor:pointer;letter-spacing:.04em;}
+.meal-swap-chip.on{border-color:var(--hl);color:var(--hl);background:var(--hld);}
+.meal-swap-chip b{font-weight:400;color:var(--hlb);}
+.meal-swap-chip:active{background:var(--hld);}
+
 /* ── DIET PLAN ── */
 .macro-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;}
 .macro-card{background:var(--card);border:1px solid var(--bl);border-radius:2px;padding:10px 6px;text-align:center;}
@@ -1222,7 +1228,7 @@ function defaultPeptides(){
 // ════════════════════════════════
 // USER SYSTEM
 // ════════════════════════════════
-var APP_VERSION='4.3';
+var APP_VERSION='4.4';
 var USERS_KEY='forge_users_v4';
 var currentUserId=null;
 var pinBuffer='';
@@ -2040,16 +2046,16 @@ function toggleEfLoaded(){efLoaded=!efLoaded;var sw=el('ef-loaded-sw');if(sw){if
 function syncEfLoadedRow(){
   // The Loaded toggle is only meaningful for Core movements; for everything
   // else weight is always on. Show it when type is Core (or blank-from-core).
-  var type=(el('ef-type').value||'').trim().toLowerCase();
+  // The Loaded toggle applies to every movement now — pull-ups, dips and
+  // push-ups all need a way to say "no external load".
   var row=el('ef-loaded-row');
   if(!row)return;
-  if(type==='core'){row.style.display='flex';}
-  else{row.style.display='none';}
+  row.style.display='flex';
 }
 function setEfLoaded(v){efLoaded=!!v;var sw=el('ef-loaded-sw');if(sw){if(efLoaded)sw.classList.add('on');else sw.classList.remove('on');}}
-function openAddExercise(isCore){editingExIdx=null;el('edit-ex-title').textContent='ADD EXERCISE';el('ef-name').value='';el('ef-type').value=isCore?'Core':'';el('ef-ss').value='';el('ef-sets').value='3';el('ef-reps').value='10';el('ef-weight').value='';el('ef-notes').value='';el('del-ex-btn').style.display='none';setEfLoaded(false);syncEfLoadedRow();el('edit-ex-mo').classList.add('visible');}
-function openEditExercise(idx){var day=getDay(editingDayId);var ex=day.ex[idx];editingExIdx=idx;el('edit-ex-title').textContent='EDIT: '+ex.name;el('ef-name').value=ex.name;el('ef-type').value=ex.type;el('ef-ss').value=ex.ss||'';el('ef-sets').value=ex.ds;el('ef-reps').value=ex.dr;el('ef-weight').value=ex.dw||'';el('ef-notes').value=ex.notes||'';el('del-ex-btn').style.display='block';var isL=(ex.loaded!==undefined)?ex.loaded:(ex.type==='Core'?coreFlags(ex.name).loaded:false);setEfLoaded(isL);syncEfLoadedRow();el('edit-ex-mo').classList.add('visible');}
-function saveExercise(){var name=el('ef-name').value.trim();if(!name){showToast('NAME REQUIRED');return;}var type=el('ef-type').value.trim()||'Custom';var ex={name:name,type:type,ss:el('ef-ss').value.trim(),ds:parseInt(el('ef-sets').value)||3,dr:parseInt(el('ef-reps').value)||10,dw:parseFloat(el('ef-weight').value)||0,notes:el('ef-notes').value.trim()};if(type==='Core'){ex.loaded=efLoaded;ex.timed=coreFlags(name).timed;}var day=getDay(editingDayId);if(editingExIdx!==null){day.ex[editingExIdx]=ex;showToast('UPDATED');}else{day.ex.push(ex);showToast('ADDED');}saveState();closeModal('edit-ex-mo');renderEditor();}
+function openAddExercise(isCore){editingExIdx=null;el('edit-ex-title').textContent='ADD EXERCISE';el('ef-name').value='';el('ef-type').value=isCore?'Core':'';el('ef-ss').value='';el('ef-sets').value='3';el('ef-reps').value='10';el('ef-weight').value='';el('ef-notes').value='';el('del-ex-btn').style.display='none';setEfLoaded(!isCore);syncEfLoadedRow();el('edit-ex-mo').classList.add('visible');}
+function openEditExercise(idx){var day=getDay(editingDayId);var ex=day.ex[idx];editingExIdx=idx;el('edit-ex-title').textContent='EDIT: '+ex.name;el('ef-name').value=ex.name;el('ef-type').value=ex.type;el('ef-ss').value=ex.ss||'';el('ef-sets').value=ex.ds;el('ef-reps').value=ex.dr;el('ef-weight').value=ex.dw||'';el('ef-notes').value=ex.notes||'';el('del-ex-btn').style.display='block';setEfLoaded(exIsLoaded(ex));syncEfLoadedRow();el('edit-ex-mo').classList.add('visible');}
+function saveExercise(){var name=el('ef-name').value.trim();if(!name){showToast('NAME REQUIRED');return;}var type=el('ef-type').value.trim()||'Custom';var ex={name:name,type:type,ss:el('ef-ss').value.trim(),ds:parseInt(el('ef-sets').value)||3,dr:parseInt(el('ef-reps').value)||10,dw:parseFloat(el('ef-weight').value)||0,notes:el('ef-notes').value.trim()};ex.loaded=efLoaded;if(type==='Core'){ex.timed=coreFlags(name).timed;}var day=getDay(editingDayId);if(editingExIdx!==null){day.ex[editingExIdx]=ex;showToast('UPDATED');}else{day.ex.push(ex);showToast('ADDED');}saveState();closeModal('edit-ex-mo');renderEditor();}
 function deleteExercise(){if(editingExIdx===null)return;var day=getDay(editingDayId);day.ex.splice(editingExIdx,1);saveState();closeModal('edit-ex-mo');renderEditor();showToast('REMOVED');}
 function openAddDay(){el('nd-name').value='';el('nd-tag').value='';el('nd-cardio').value='';el('add-day-mo').classList.add('visible');}
 function saveNewDay(){var name=el('nd-name').value.trim();if(!name){showToast('NAME REQUIRED');return;}var num=S.days.length+1;var lbl=num<10?'0'+num:''+num;S.days.push({id:'c_'+Date.now(),lbl:lbl,name:name,tag:el('nd-tag').value.trim()||name.toUpperCase(),rest:false,cardio:el('nd-cardio').value.trim()||null,ex:[]});saveState();closeModal('add-day-mo');renderSel();showToast('CREATED');}
@@ -2098,7 +2104,7 @@ function buildSetRowHTML(ex,set,j){
     // Weight column: editable stack/plate load when loaded, locked BW otherwise.
     // When the flag is absent (older saved exercises), infer from the name so
     // cable/weighted core is editable without needing a data migration.
-    var isLoaded=(ex.loaded!==undefined)?ex.loaded:coreFlags(ex.name).loaded;
+    var isLoaded=exIsLoaded(ex);
     var wcol;
     if(isLoaded){
       wcol='<div class="step"><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'" data-d="-5">-</button><input class="sinp" type="number" inputmode="decimal" placeholder="lbs" id="w-'+ek+'-'+j+'" value="'+(set.weight||'')+'" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'"/><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'" data-d="5">+</button></div>';
@@ -2109,7 +2115,11 @@ function buildSetRowHTML(ex,set,j){
   }
   var rowClass='sr'+(set.done?' done':'')+(set.warmup?' warmup':'');var numDisplay=set.warmup?'WU':(j+1);
   var h='<div class="'+rowClass+'" id="sr-'+ek+'-'+j+'"><div class="sn">'+numDisplay+'</div>';
-  h+='<div class="step"><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'" data-d="-5">-</button><input class="sinp" type="number" inputmode="decimal" placeholder="lbs" id="w-'+ek+'-'+j+'" value="'+(set.weight||'')+'" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'"/><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'" data-d="5">+</button></div>';
+  if(exIsLoaded(ex)){
+    h+='<div class="step"><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'" data-d="-5">-</button><input class="sinp" type="number" inputmode="decimal" placeholder="lbs" id="w-'+ek+'-'+j+'" value="'+(set.weight||'')+'" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'"/><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'" data-d="5">+</button></div>';
+  }else{
+    h+='<div class="step" style="opacity:.3;pointer-events:none;"><button class="sbtn">-</button><input class="sinp" value="BW" readonly/><button class="sbtn">+</button></div>';
+  }
   h+='<div class="step"><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="reps" data-idx="'+j+'" data-d="-1">-</button><input class="sinp" type="number" inputmode="numeric" placeholder="reps" id="r-'+ek+'-'+j+'" value="'+(set.reps||'')+'" data-ex="'+ea+'" data-f="reps" data-idx="'+j+'"/><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="reps" data-idx="'+j+'" data-d="1">+</button></div>';
   h+='<button class="wu-btn'+(set.warmup?' on':'')+'" data-act="wu" data-ex="'+ea+'" data-idx="'+j+'" title="Warm-up">WU</button>';
   h+='<button class="schk'+(set.done?' done':'')+'" data-act="chk" data-ex="'+ea+'" data-idx="'+j+'">'+(set.done?'&#10003;':'')+'</button></div>';
@@ -2176,7 +2186,7 @@ function renderActive(){
       var notesBtn=ex.notes?'<button class="info-btn" data-act="notes" data-ek="'+ek+'">i</button>':'';
       var coreTimed=(ex.timed!==undefined)?ex.timed:/plank|hold|l-sit|hollow|dead ?hang/i.test(ex.name);
       var coreRepHdr=coreTimed?'SEC':'REPS';
-      var coreIsLoaded=(ex.loaded!==undefined)?ex.loaded:coreFlags(ex.name).loaded;
+      var coreIsLoaded=exIsLoaded(ex);
       var coreWtHdr=coreIsLoaded?'WEIGHT':'BW';
       blk.innerHTML='<div class="eh"><div class="en">'+esc(ex.name)+'</div><div class="et" style="color:var(--en);">CORE</div>'+notesBtn+'</div><div class="shr"><div class="sc">#</div><div class="sc">'+coreWtHdr+'</div><div class="sc">'+coreRepHdr+'</div><div class="sc"></div><div class="sc">&#10003;</div></div>'+sh;
       list.appendChild(blk);
@@ -2248,6 +2258,12 @@ function confirmAddExToWorkout(){
   if(type==='Core'){var cf=coreFlags(name);newEx.loaded=cf.loaded;newEx.timed=cf.timed;}
   S.activeDay.ex.push(newEx);var arr=[];for(var i=0;i<sets;i++)arr.push({weight:weight,reps:(wd.repMin||wd.reps),done:false,warmup:false,rpe:0});
   S.sets[name]=arr;closeModal('add-ex-workout-mo');renderActive();saveActive();showToast('EXERCISE ADDED');
+}
+function exIsLoaded(ex){
+  if(!ex)return true;
+  if(ex.loaded!==undefined)return !!ex.loaded;
+  if(ex.type==='Core')return coreFlags(ex.name).loaded;
+  return true;
 }
 function coreFlags(name){
   var n=name.toLowerCase();
@@ -4931,6 +4947,38 @@ var CUT_MEALS=[
   {id:'m4', time:'7:00 PM',  name:'Final Meal — Protein + Fats',    p:50,c:15,f:20, desc:'Salmon 6oz or lean beef 6oz, large salad, olive oil dressing, avocado'},
 ];
 
+// A meal may carry `opts`: interchangeable versions of the same slot.
+// The chosen index is remembered per plan-day so it sticks between sessions.
+function mealOptIdx(dayIdx,mealIdx){
+  var m=S.bio.mealOpt;
+  if(!m)return 0;
+  var v=m[dayIdx+'_'+mealIdx];
+  return (typeof v==='number')?v:0;
+}
+function setMealOpt(dayIdx,mealIdx,optIdx){
+  if(!S.bio)S.bio={};
+  if(!S.bio.mealOpt)S.bio.mealOpt={};
+  S.bio.mealOpt[dayIdx+'_'+mealIdx]=optIdx;
+  saveState();
+}
+// Resolve a meal to the version actually being eaten.
+function mealVariant(meal,dayIdx,mealIdx){
+  if(!meal||!meal.opts||!meal.opts.length)return meal;
+  var o=meal.opts[mealOptIdx(dayIdx,mealIdx)]||meal.opts[0];
+  return {time:meal.time,name:o.name,desc:o.desc,p:o.p,c:o.c,f:o.f,opts:meal.opts};
+}
+// Day totals computed from the selected variants, not the stored header
+// numbers — so swapping breakfast moves the targets honestly.
+function dayTotals(day,dayIdx){
+  var t={p:0,c:0,f:0},i,v;
+  if(!day||!day.meals)return {p:0,c:0,f:0,calories:0};
+  for(i=0;i<day.meals.length;i++){
+    v=mealVariant(day.meals[i],dayIdx,i);
+    t.p+=(v.p||0);t.c+=(v.c||0);t.f+=(v.f||0);
+  }
+  t.calories=t.p*4+t.c*4+t.f*9;
+  return t;
+}
 function getDietLog(){
   var today=todayKey();
   if(!S.bio.dietLog)S.bio.dietLog={};
@@ -4970,9 +5018,10 @@ function renderDietSection(cont){
   for(var i=0;i<dayMeals.length;i++){
     var mealId='dm_'+i;
     if(log[mealId]){
-      consumed.p+=(dayMeals[i].p||0);
-      consumed.c+=(dayMeals[i].c||0);
-      consumed.f+=(dayMeals[i].f||0);
+      var mv=mealVariant(dayMeals[i],selectedIdx,i);
+      consumed.p+=(mv.p||0);
+      consumed.c+=(mv.c||0);
+      consumed.f+=(mv.f||0);
     }
   }
   var consumedCal=consumed.p*4+consumed.c*4+consumed.f*9;
@@ -5055,7 +5104,7 @@ function renderDietSection(cont){
   cont.appendChild(mealTitle);
 
   for(var i=0;i<dayMeals.length;i++){
-    var meal=dayMeals[i];
+    var meal=mealVariant(dayMeals[i],selectedIdx,i);
     var mealId='dm_'+i;
     var on=!!log[mealId];
     var mealDesc=meal.desc?meal.desc.split('\\n').join(' · '):'';
@@ -5074,6 +5123,28 @@ function renderDietSection(cont){
       saveState();renderBody();
     };})(mealId);
     cont.appendChild(item);
+
+    // Swap chips for slots that have interchangeable options
+    var opts=dayMeals[i].opts;
+    if(opts&&opts.length>1){
+      var swapRow=document.createElement('div');swapRow.className='meal-swap';
+      var cur=mealOptIdx(selectedIdx,i);
+      for(var q=0;q<opts.length;q++){
+        (function(optIdx,mealIdx,o){
+          var chip=document.createElement('div');
+          chip.className='meal-swap-chip'+(optIdx===cur?' on':'');
+          var short=o.name.replace(/^Breakfast \u2014 /,'').replace(/^Break Fast \u2014 /,'');
+          chip.innerHTML=esc(short)+' <b>'+o.p+'P</b>';
+          chip.onclick=function(e){
+            e.stopPropagation();
+            setMealOpt(selectedIdx,mealIdx,optIdx);
+            renderBody();
+          };
+          swapRow.appendChild(chip);
+        })(q,i,opts[q]);
+      }
+      cont.appendChild(swapRow);
+    }
   }
 
   // Tips
@@ -5100,126 +5171,147 @@ var WEEK_MEAL_PLAN = [
     day:'01', label:'Day 01 — Upper Power', type:'T',
     calories:2100, protein:185, carbs:175, fat:65,
     meals:[
-      {time:'12:00 PM', name:'Break Fast — Power Eggs',
-       desc:'6 egg whites + 2 whole eggs scrambled in 1 tbsp butter\n1 cup Kirkland Greek yogurt (plain)\n1/2 cup frozen mixed berries (thawed)\nBlack coffee or Zero Ultra Monster',
-       p:55,c:25,f:18},
+      {time:'12:00 PM', name:'Breakfast \u2014 Huel Black RTD',
+       desc:'1 bottle Huel Black Edition Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster',
+       p:35,c:29,f:16,
+       opts:[{name:'Breakfast \u2014 Huel Black RTD',desc:'1 bottle Huel Black Edition Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster',p:35,c:29,f:16},
+             {name:'Breakfast \u2014 Huel RTD',desc:'1 bottle Huel Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster\nLower protein than Black \u2014 expect to run under target today',p:21,c:39,f:18},
+             {name:'Break Fast — Power Eggs',desc:'6 egg whites + 2 whole eggs scrambled in 1 tbsp butter\n1 cup Kirkland Greek yogurt (plain)\n1/2 cup frozen mixed berries (thawed)\nBlack coffee or Zero Ultra Monster',p:55,c:25,f:18}]},
       {time:'2:30 PM', name:'Pre-Workout — Rice & Chicken',
-       desc:'6oz Kirkland chicken breast (grilled)\n1 cup white rice\nHandful Kirkland baby spinach + olive oil drizzle\n16oz water',
-       p:50,c:60,f:8},
+       desc:'7oz Kirkland chicken breast (grilled)\n1 cup white rice\nHandful Kirkland baby spinach + olive oil drizzle\n16oz water',
+       p:58,c:60,f:9},
       {time:'POST', name:'Post-Workout Shake',
        desc:'2 scoops Kirkland whey protein\n1 banana\n8oz water or almond milk\nWithin 30 min of finishing',
        p:48,c:32,f:3},
       {time:'7:00 PM', name:'Final Meal — Beef & Avocado Bowl',
-       desc:'6oz 93% lean ground beef (seasoned)\nLarge mixed greens salad\n1/2 avocado\n2 tbsp olive oil + lemon dressing\n1/2 cup Kirkland frozen broccoli (steamed)',
-       p:45,c:12,f:28}
+       desc:'7oz 93% lean ground beef (seasoned)\nLarge mixed greens salad\n1/2 avocado\n2 tbsp olive oil + lemon dressing\n1/2 cup Kirkland frozen broccoli (steamed)',
+       p:52,c:12,f:30}
     ]
   },
   {
     day:'02', label:'Day 02 — Lower Power', type:'T',
     calories:2200, protein:185, carbs:190, fat:65,
     meals:[
-      {time:'12:00 PM', name:'Break Fast — Protein Oats',
-       desc:'1 cup rolled oats cooked\n1 scoop Kirkland whey stirred in\n1 tbsp Kirkland almond butter\n1/2 banana sliced\nBlack coffee or Zero Ultra Monster',
-       p:45,c:65,f:12},
+      {time:'12:00 PM', name:'Breakfast \u2014 Huel Black RTD',
+       desc:'1 bottle Huel Black Edition Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster',
+       p:35,c:29,f:16,
+       opts:[{name:'Breakfast \u2014 Huel Black RTD',desc:'1 bottle Huel Black Edition Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster',p:35,c:29,f:16},
+             {name:'Breakfast \u2014 Huel RTD',desc:'1 bottle Huel Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster\nLower protein than Black \u2014 expect to run under target today',p:21,c:39,f:18},
+             {name:'Break Fast — Protein Oats',desc:'1 cup rolled oats cooked\n1 scoop Kirkland whey stirred in\n1 tbsp Kirkland almond butter\n1/2 banana sliced\nBlack coffee or Zero Ultra Monster',p:45,c:65,f:12}]},
       {time:'2:30 PM', name:'Pre-Workout — Turkey Rice Bowl',
-       desc:'6oz lean ground turkey (93%)\n1.5 cups white rice\n1/2 cup black beans\nSalsa, lime juice\n16oz water',
-       p:55,c:75,f:10},
+       desc:'7oz lean ground turkey (93%)\n1.5 cups white rice\n1/2 cup black beans\nSalsa, lime juice\n16oz water',
+       p:58,c:75,f:11},
       {time:'POST', name:'Post-Workout Shake',
        desc:'2 scoops Kirkland whey protein\n1 banana\n8oz water\nWithin 30 min of finishing',
        p:48,c:32,f:3},
       {time:'7:00 PM', name:'Final Meal — Ground Beef & Veg',
-       desc:'6oz 93% lean ground beef\n1 cup Kirkland frozen broccoli + cauliflower (steamed)\n1/2 avocado\nSalt, pepper, garlic powder',
-       p:45,c:15,f:28}
+       desc:'7oz 93% lean ground beef\n1 cup Kirkland frozen broccoli + cauliflower (steamed)\n1/2 avocado\nSalt, pepper, garlic powder',
+       p:50,c:15,f:30}
     ]
   },
   {
     day:'03', label:'Day 03 — Upper Mobility', type:'R',
     calories:1800, protein:185, carbs:100, fat:70,
     meals:[
-      {time:'12:00 PM', name:'Break Fast — Egg & Avocado',
-       desc:'3 whole eggs scrambled in 1 tbsp butter\n1/2 avocado sliced\n2 slices turkey bacon\nBlack coffee or Zero Ultra Monster',
-       p:38,c:8,f:30},
+      {time:'12:00 PM', name:'Breakfast \u2014 Huel Black RTD',
+       desc:'1 bottle Huel Black Edition Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster',
+       p:35,c:29,f:16,
+       opts:[{name:'Breakfast \u2014 Huel Black RTD',desc:'1 bottle Huel Black Edition Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster',p:35,c:29,f:16},
+             {name:'Breakfast \u2014 Huel RTD',desc:'1 bottle Huel Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster\nLower protein than Black \u2014 expect to run under target today',p:21,c:39,f:18},
+             {name:'Break Fast — Egg & Avocado',desc:'3 whole eggs scrambled in 1 tbsp butter\n1/2 avocado sliced\n2 slices turkey bacon\nBlack coffee or Zero Ultra Monster',p:38,c:8,f:30}]},
       {time:'3:00 PM', name:'Midday — Cottage Cheese Bowl',
        desc:'1.5 cups Kirkland cottage cheese\n1/4 cup Kirkland walnuts\n1/2 cup frozen blueberries (thawed)\nCinnamon',
-       p:45,c:22,f:18},
+       p:48,c:22,f:18},
       {time:'6:00 PM', name:'Dinner — Chicken & Salad',
-       desc:'7oz Kirkland chicken breast (grilled)\nLarge mixed greens salad with olive oil\n1/2 cup cherry tomatoes\nSalt, pepper, herbs',
-       p:55,c:12,f:18},
+       desc:'8oz Kirkland chicken breast (grilled)\nLarge mixed greens salad with olive oil\n1/2 cup cherry tomatoes\nSalt, pepper, herbs',
+       p:58,c:12,f:19},
       {time:'7:45 PM', name:'Evening Snack — Casein & Almonds',
        desc:'1 scoop casein protein in water\n1/4 cup Kirkland almonds\nHerbal tea',
-       p:30,c:8,f:8}
+       p:32,c:8,f:9}
     ]
   },
   {
     day:'04', label:'Day 04 — Upper Hypertrophy', type:'T',
     calories:2100, protein:185, carbs:175, fat:65,
     meals:[
-      {time:'12:00 PM', name:'Break Fast — Power Eggs',
-       desc:'6 egg whites + 2 whole eggs scrambled in 1 tbsp butter\n1 cup Kirkland Greek yogurt (plain)\n1/2 cup frozen strawberries (thawed)\nBlack coffee or Zero Ultra Monster',
-       p:55,c:25,f:18},
+      {time:'12:00 PM', name:'Breakfast \u2014 Huel Black RTD',
+       desc:'1 bottle Huel Black Edition Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster',
+       p:35,c:29,f:16,
+       opts:[{name:'Breakfast \u2014 Huel Black RTD',desc:'1 bottle Huel Black Edition Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster',p:35,c:29,f:16},
+             {name:'Breakfast \u2014 Huel RTD',desc:'1 bottle Huel Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster\nLower protein than Black \u2014 expect to run under target today',p:21,c:39,f:18},
+             {name:'Break Fast — Power Eggs',desc:'6 egg whites + 2 whole eggs scrambled in 1 tbsp butter\n1 cup Kirkland Greek yogurt (plain)\n1/2 cup frozen strawberries (thawed)\nBlack coffee or Zero Ultra Monster',p:55,c:25,f:18}]},
       {time:'2:30 PM', name:'Pre-Workout — Chicken & Sweet Potato',
-       desc:'6oz Kirkland chicken breast\n1 medium sweet potato (baked)\nHandful Kirkland baby spinach\n16oz water',
-       p:48,c:55,f:5},
+       desc:'7oz Kirkland chicken breast\n1 medium sweet potato (baked)\nHandful Kirkland baby spinach\n16oz water',
+       p:56,c:55,f:6},
       {time:'POST', name:'Post-Workout Shake',
        desc:'2 scoops Kirkland whey protein\n1 apple\n8oz water\nWithin 30 min of finishing',
        p:48,c:30,f:3},
       {time:'7:00 PM', name:'Final Meal — Ground Turkey & Greens',
-       desc:'6oz lean ground turkey\nLarge mixed greens\n1/2 avocado\n1 tbsp olive oil + apple cider vinegar\nCucumber, red onion',
-       p:48,c:10,f:22}
+       desc:'7oz lean ground turkey\nLarge mixed greens\n1/2 avocado\n1 tbsp olive oil + apple cider vinegar\nCucumber, red onion',
+       p:54,c:10,f:24}
     ]
   },
   {
     day:'05', label:'Day 05 — Lower Hypertrophy', type:'T',
     calories:2200, protein:185, carbs:190, fat:65,
     meals:[
-      {time:'12:00 PM', name:'Break Fast — Protein Pancakes',
-       desc:'3 Kirkland eggs + 1 scoop whey + 1/2 banana blended\nCook in 1 tbsp butter\n1/4 cup sugar-free maple syrup\nBlack coffee or Zero Ultra Monster',
-       p:52,c:40,f:15},
+      {time:'12:00 PM', name:'Breakfast \u2014 Huel Black RTD',
+       desc:'1 bottle Huel Black Edition Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster',
+       p:35,c:29,f:16,
+       opts:[{name:'Breakfast \u2014 Huel Black RTD',desc:'1 bottle Huel Black Edition Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster',p:35,c:29,f:16},
+             {name:'Breakfast \u2014 Huel RTD',desc:'1 bottle Huel Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster\nLower protein than Black \u2014 expect to run under target today',p:21,c:39,f:18},
+             {name:'Break Fast — Protein Pancakes',desc:'3 Kirkland eggs + 1 scoop whey + 1/2 banana blended\nCook in 1 tbsp butter\n1/4 cup sugar-free maple syrup\nBlack coffee or Zero Ultra Monster',p:52,c:40,f:15}]},
       {time:'2:30 PM', name:'Pre-Workout — Beef & Rice',
-       desc:'6oz 93% lean ground beef\n1.5 cups white rice\n1/2 cup black beans\nSoy sauce, garlic\n16oz water',
-       p:50,c:72,f:12},
+       desc:'7oz 93% lean ground beef\n1.5 cups white rice\n1/2 cup black beans\nSoy sauce, garlic\n16oz water',
+       p:58,c:72,f:13},
       {time:'POST', name:'Post-Workout Shake',
        desc:'2 scoops Kirkland whey protein\n1 banana\n8oz water\nWithin 30 min',
        p:48,c:32,f:3},
       {time:'7:00 PM', name:'Final Meal — Chicken & Roasted Veg',
-       desc:'6oz Kirkland chicken breast (baked)\n1 cup Kirkland frozen brussels sprouts (roasted)\n1/2 avocado\nOlive oil, lemon, salt, pepper',
-       p:45,c:12,f:22}
+       desc:'7oz Kirkland chicken breast (baked)\n1 cup Kirkland frozen brussels sprouts (roasted)\n1/2 avocado\nOlive oil, lemon, salt, pepper',
+       p:52,c:12,f:24}
     ]
   },
   {
     day:'06', label:'Day 06 — Full Athletic', type:'T',
     calories:2100, protein:185, carbs:170, fat:65,
     meals:[
-      {time:'12:00 PM', name:'Break Fast — Greek Yogurt Bowl',
-       desc:'1.5 cups Kirkland Greek yogurt (plain)\n1 scoop Kirkland whey stirred in\n1/4 cup low sugar granola\n1/2 cup frozen mixed berries (thawed)\nBlack coffee or Zero Ultra Monster',
-       p:58,c:45,f:10},
+      {time:'12:00 PM', name:'Breakfast \u2014 Huel Black RTD',
+       desc:'1 bottle Huel Black Edition Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster',
+       p:35,c:29,f:16,
+       opts:[{name:'Breakfast \u2014 Huel Black RTD',desc:'1 bottle Huel Black Edition Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster',p:35,c:29,f:16},
+             {name:'Breakfast \u2014 Huel RTD',desc:'1 bottle Huel Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster\nLower protein than Black \u2014 expect to run under target today',p:21,c:39,f:18},
+             {name:'Break Fast — Greek Yogurt Bowl',desc:'1.5 cups Kirkland Greek yogurt (plain)\n1 scoop Kirkland whey stirred in\n1/4 cup low sugar granola\n1/2 cup frozen mixed berries (thawed)\nBlack coffee or Zero Ultra Monster',p:58,c:45,f:10}]},
       {time:'2:30 PM', name:'Pre-Workout — Turkey Rice Bowl',
-       desc:'6oz lean ground turkey\n1.5 cups white rice\nKirkland baby spinach\nSalsa, lime\n16oz water',
-       p:50,c:55,f:10},
+       desc:'7oz lean ground turkey\n1.5 cups white rice\nKirkland baby spinach\nSalsa, lime\n16oz water',
+       p:58,c:55,f:11},
       {time:'POST', name:'Post-Workout Shake',
        desc:'2 scoops Kirkland whey protein\n1 banana\n8oz water\nWithin 30 min',
        p:48,c:32,f:3},
       {time:'7:00 PM', name:'Final Meal — Beef Stir Fry',
-       desc:'6oz 93% lean ground beef\nStir fry with bell peppers, Kirkland frozen broccoli, snap peas\n1 tbsp olive oil + soy sauce + garlic\n1/2 cup white rice',
-       p:45,c:35,f:16}
+       desc:'7oz 93% lean ground beef\nStir fry with bell peppers, Kirkland frozen broccoli, snap peas\n1 tbsp olive oil + soy sauce + garlic\n1/2 cup white rice',
+       p:52,c:35,f:18}
     ]
   },
   {
     day:'07', label:'Day 07 — Lower Mobility', type:'R',
     calories:1800, protein:185, carbs:95, fat:72,
     meals:[
-      {time:'12:00 PM', name:'Break Fast — Cottage Cheese & Eggs',
-       desc:'3 whole Kirkland eggs scrambled in 1 tbsp butter\n1/2 cup Kirkland cottage cheese\n1/2 avocado\nBlack coffee or Zero Ultra Monster',
-       p:42,c:5,f:28},
+      {time:'12:00 PM', name:'Breakfast \u2014 Huel Black RTD',
+       desc:'1 bottle Huel Black Edition Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster',
+       p:35,c:29,f:16,
+       opts:[{name:'Breakfast \u2014 Huel Black RTD',desc:'1 bottle Huel Black Edition Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster',p:35,c:29,f:16},
+             {name:'Breakfast \u2014 Huel RTD',desc:'1 bottle Huel Ready-to-Drink (500ml)\nShake well, drink cold\nBlack coffee or Zero Ultra Monster\nLower protein than Black \u2014 expect to run under target today',p:21,c:39,f:18},
+             {name:'Break Fast — Cottage Cheese & Eggs',desc:'3 whole Kirkland eggs scrambled in 1 tbsp butter\n1/2 cup Kirkland cottage cheese\n1/2 avocado\nBlack coffee or Zero Ultra Monster',p:42,c:5,f:28}]},
       {time:'3:00 PM', name:'Midday — Chicken Salad',
-       desc:'6oz Kirkland chicken breast (shredded or diced)\nMixed greens, cucumber, cherry tomatoes\n1 tbsp olive oil + lemon\n1/4 cup Kirkland almonds',
-       p:48,c:10,f:18},
+       desc:'7oz Kirkland chicken breast (shredded or diced)\nMixed greens, cucumber, cherry tomatoes\n1 tbsp olive oil + lemon\n1/4 cup Kirkland almonds',
+       p:54,c:10,f:19},
       {time:'6:00 PM', name:'Dinner — Ground Turkey & Quinoa',
-       desc:'7oz lean ground turkey\n1/2 cup quinoa\n1 cup Kirkland frozen brussels sprouts (roasted)\n1 tbsp olive oil\nSalt, pepper, herbs',
-       p:55,c:28,f:14},
+       desc:'8oz lean ground turkey\n1/2 cup quinoa\n1 cup Kirkland frozen brussels sprouts (roasted)\n1 tbsp olive oil\nSalt, pepper, herbs',
+       p:60,c:28,f:15},
       {time:'7:45 PM', name:'Evening — Casein & Walnuts',
        desc:'1 scoop casein protein in water (slow digesting — good before bed)\n1/4 cup Kirkland walnuts\nHerbal tea',
-       p:28,c:6,f:12}
+       p:32,c:6,f:13}
     ]
   }
 ];
@@ -5315,9 +5407,10 @@ function renderMealPlan(cont){
 
     var hdr=document.createElement('div');
     hdr.className='meal-plan-day-header';
+    var dt=dayTotals(day,i);
     hdr.innerHTML='<div>'
       +'<div class="meal-plan-day-title" style="color:'+typeColor+';">'+day.label+'</div>'
-      +'<div class="meal-plan-day-meta">'+day.calories+' cal &nbsp;·&nbsp; P:'+day.protein+'g C:'+day.carbs+'g F:'+day.fat+'g</div>'
+      +'<div class="meal-plan-day-meta">'+dt.calories+' cal &nbsp;·&nbsp; P:'+dt.p+'g C:'+dt.c+'g F:'+dt.f+'g</div>'
       +'</div>'
       +'<div style="color:var(--hl);font-family:Orbitron,sans-serif;font-size:10px;">'+(isOpen?'&#9660;':'&#9654;')+'</div>';
 
