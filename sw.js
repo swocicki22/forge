@@ -1,9 +1,9 @@
 // ════════════════════════════════
 // FORGE SERVICE WORKER
 // Bump CACHE on every deploy or browsers will keep serving the old build.
-// v11 = app v5.0, modular build (css/ + js/), program layer, schema v3
+// v12 = app v5.0, completion markers on the protocol screen
 // ════════════════════════════════
-const CACHE = 'forge-v11';
+const CACHE = 'forge-v12';
 const ASSETS = [
   './',
   './index.html',
