@@ -275,3 +275,59 @@ function updateWkChip(){
     c.textContent='WK'+wd.week+' / '+(wd.repMin||wd.reps)+'-'+(wd.repMax||wd.reps)+'R';
   }
 }
+
+// ════════════════════════════════
+// COMPLETION STATE
+// A scheduled program records each day it finishes, so a card can show that
+// the session is behind you. A free-form program has no fixed schedule, so it
+// falls back to the log and shows how long ago that day was last trained.
+// ════════════════════════════════
+function agoLabel(d){
+  if(d<=0)return 'TODAY';
+  if(d===1)return 'YESTERDAY';
+  if(d<7)return d+'D AGO';
+  if(d<56)return Math.round(d/7)+'W AGO';
+  return Math.max(1,Math.round(d/30))+'MO AGO';
+}
+function dayCompletion(day){
+  if(!day||day.rest)return null;
+  var p=activeProgram();
+  if(p&&p.mode==='scheduled'){
+    var st=progState(p.id);
+    var t=st.completed&&st.completed[day.id];
+    if(!t)return null;
+    return {done:true,date:t,daysAgo:Math.floor((Date.now()-t)/864e5)};
+  }
+  for(var i=S.log.length-1;i>=0;i--){
+    if(S.log[i].dayId===day.id){
+      var ms=new Date(S.log[i].date).getTime();
+      var d=Math.floor((Date.now()-ms)/864e5);
+      // On a free program "done" means done recently enough to still count as
+      // this week's session — older than that and it is just history.
+      return {done:d<=6,date:ms,daysAgo:d};
+    }
+  }
+  return null;
+}
+// Called when a session is committed.
+function markDayComplete(dayId){
+  var p=activeProgram();
+  if(!p)return;
+  var st=progState(p.id);
+  if(!st.completed)st.completed={};
+  st.completed[dayId]=Date.now();
+  if(!st.startedAt)st.startedAt=Date.now();
+  if(p.mode!=='scheduled')return;
+  var idx=-1,i;
+  for(i=0;i<p.days.length;i++){if(p.days[i].id===dayId){idx=i;break;}}
+  if(idx<0)return;
+  // Advance to the next day that still needs doing, stepping over rest days
+  // and anything already logged.
+  var n=idx+2;
+  while(n<=p.days.length){
+    var d=p.days[n-1];
+    if(!d.rest&&!st.completed[d.id])break;
+    n++;
+  }
+  st.cursor=Math.min(n,p.days.length);
+}

@@ -37,6 +37,12 @@ function renderSel(){
       meta=mc+' ex'+(hasAb?' + AB-X':'');
       if(day.mins)meta+=' \u00b7 '+day.mins+' min';
     }
+    var comp=dayCompletion(day);
+    if(comp&&comp.done)c.className+=' is-complete';
+    var compBadge=comp
+      ? '<div class="done-badge'+(comp.done?' is-done':'')+'">'+
+        (comp.done?'\u2713 ':'')+esc(agoLabel(comp.daysAgo))+'</div>'
+      : '';
     var num=scheduled?('D'+day.day):day.lbl;
     var editBtn=day.rest?'':'<button class="edit-btn" onclick="openEditor(\''+day.id+'\');event.stopPropagation();">EDIT</button>';
 
@@ -44,6 +50,7 @@ function renderSel(){
       '<div class="dnx">'+esc(num)+'</div>'+editBtn+'</div>'+
       '<div class="dcn">'+esc(day.name)+'</div>'+
       '<div class="dcm">'+esc(meta)+'</div>'+
+      compBadge+
       (day.optional?'<div class="opt-badge">OPTIONAL</div>':'')+badge;
 
     (function(id){
@@ -445,6 +452,7 @@ function confirmFin(){
   }
   for(var i=0;i<day.ex.length;i++){var sets=S.sets[day.ex[i].name];if(!sets)continue;for(var j=0;j<sets.length;j++){if(sets[j].done&&!sets[j].warmup){ts++;vol+=(parseFloat(sets[j].weight)||0)*(parseFloat(sets[j].reps)||0);}}}
   S.log.push({date:new Date().toISOString(),dayId:day.id,lbl:day.lbl,name:day.name,dur:Math.floor(elapsed/60)+' min',sets:ts,vol:Math.round(vol),rawSets:rawSets,week:wd.week,phase:wd.label});
+  markDayComplete(day.id);
   saveState();clearActive();releaseWakeLock();
   S.activeDay=null;S.sets={};S.removedSets={};S.start=null;
   closeModal('finmo');if(S.tint)clearInterval(S.tint);skipRest();showToast('SESSION COMMITTED');showScreen('s-home');
