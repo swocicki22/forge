@@ -1,0 +1,51 @@
+/* ── DIET PLAN ── */
+.macro-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;}
+.macro-card{background:var(--card);border:1px solid var(--bl);border-radius:2px;padding:10px 6px;text-align:center;}
+.macro-val{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--hlb);line-height:1;}
+.macro-unit{font-family:'Share Tech Mono',monospace;font-size:6px;color:var(--s2);margin-top:2px;}
+.macro-label{font-family:'Share Tech Mono',monospace;font-size:6px;letter-spacing:.1em;text-transform:uppercase;color:var(--s3);margin-top:3px;}
+.macro-bar-wrap{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:5px;}
+.macro-bar-fill{height:100%;border-radius:2px;}
+.meal-item{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:10px 12px;margin-bottom:4px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.meal-item:active{background:var(--card2);}
+.meal-check{width:20px;height:20px;border-radius:2px;border:1px solid var(--bl);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;transition:all .15s;}
+.meal-check.on{background:var(--gr);border-color:var(--gr);color:var(--bg);}
+.meal-name{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--tx);flex:1;}
+.meal-macros{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--s2);margin-top:1px;}
+.meal-time{font-family:'Orbitron',sans-serif;font-size:7px;color:var(--hl);flex-shrink:0;}
+.cut-goal-bar{background:var(--card);border:1px solid var(--bl);border-radius:2px;padding:12px;margin-bottom:8px;}
+.cut-goal-title{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:.12em;color:var(--hlb);margin-bottom:8px;}
+.cut-progress{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin:6px 0;}
+.cut-progress-fill{height:100%;border-radius:4px;background:var(--hl);transition:width .3s;}
+
+/* ── WEEK MEAL PLAN ── */
+.meal-plan-day{background:var(--card);border:1px solid var(--bl);border-radius:2px;margin-bottom:6px;overflow:hidden;}
+.meal-plan-day-header{padding:10px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;border-bottom:1px solid var(--border);}
+.meal-plan-day-title{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--hlb);}
+.meal-plan-day-meta{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--s2);}
+.meal-plan-day-body{padding:10px 12px;display:none;}
+.meal-plan-day-body.open{display:block;}
+.meal-plan-meal{padding:7px 0;border-bottom:1px solid var(--border);}
+.meal-plan-meal:last-child{border-bottom:none;}
+.meal-plan-meal-time{font-family:'Orbitron',sans-serif;font-size:7px;color:var(--hl);letter-spacing:.1em;margin-bottom:2px;}
+.meal-plan-meal-name{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--tx);margin-bottom:2px;}
+.meal-plan-meal-desc{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--s2);line-height:1.6;}
+.meal-plan-meal-macros{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--am);margin-top:3px;}
+
+/* ── SHOPPING LIST ── */
+.shop-category{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:.14em;color:var(--hlb);margin:12px 0 6px;display:flex;align-items:center;gap:8px;}
+.shop-category::after{content:'';flex:1;height:1px;background:var(--border);}
+.shop-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.shop-item:last-child{border-bottom:none;}
+.shop-check{width:18px;height:18px;border-radius:2px;border:1px solid var(--bl);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;transition:all .15s;}
+.shop-check.on{background:var(--gr);border-color:var(--gr);color:var(--bg);}
+.shop-item-name{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:12px;color:var(--tx);flex:1;}
+.shop-item-qty{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--s2);flex-shrink:0;}
+.shop-item.checked .shop-item-name{text-decoration:line-through;color:var(--s3);}
+
+/* ── DAY SELECTOR ── */
+.day-sel-wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;}
+.day-sel-btn{background:transparent;border:1px solid var(--border);border-radius:2px;padding:7px 4px;font-family:Orbitron,sans-serif;font-size:6px;letter-spacing:.06em;color:var(--s2);cursor:pointer;text-align:center;line-height:1.5;}
+.day-sel-btn.active{background:var(--hld);border-color:var(--hlbr);color:var(--hl);}
+.day-sel-btn.rest{border-color:rgba(255,179,0,.2);color:var(--am);}
+.day-sel-btn.rest.active{background:rgba(255,179,0,.08);border-color:rgba(255,179,0,.4);color:var(--am);}
