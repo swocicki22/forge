@@ -1,9 +1,9 @@
 // ════════════════════════════════
 // FORGE SERVICE WORKER
 // Bump CACHE on every deploy or browsers will keep serving the old build.
-// v12 = app v5.0, completion markers on the protocol screen
+// v13 = app v5.0, Shred Athletic program (blocks + cardioacceleration)
 // ════════════════════════════════
-const CACHE = 'forge-v12';
+const CACHE = 'forge-v13';
 const ASSETS = [
   './',
   './index.html',
