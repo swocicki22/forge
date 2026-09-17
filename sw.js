@@ -1,15 +1,39 @@
 // ════════════════════════════════
 // FORGE SERVICE WORKER
 // Bump CACHE on every deploy or browsers will keep serving the old build.
-// v10 = app v4.5, HUEL options work on generated plans too
+// v11 = app v5.0, modular build (css/ + js/), program layer, schema v3
 // ════════════════════════════════
-const CACHE = 'forge-v10';
+const CACHE = 'forge-v11';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './forge-icon-192.png',
-  './forge-icon-512.png'
+  './forge-icon-512.png',
+  './css/base.css',
+  './css/auth.css',
+  './css/workout.css',
+  './css/analytics.css',
+  './css/health.css',
+  './css/nutrition.css',
+  './js/core.js',
+  './js/storage.js',
+  './js/state.js',
+  './js/library.js',
+  './js/programs.js',
+  './js/hardwood.js',
+  './js/periodization.js',
+  './js/workout.js',
+  './js/history.js',
+  './js/analytics.js',
+  './js/vitals.js',
+  './js/peptides.js',
+  './js/nutrition.js',
+  './js/migrate.js',
+  './js/programs-ui.js',
+  './js/backup.js',
+  './js/splash.js',
+  './js/boot.js'
 ];
 
 self.addEventListener('install', function (e) {
