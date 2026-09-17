@@ -1,7 +1,7 @@
 // ════════════════════════════════
 // USER SYSTEM
 // ════════════════════════════════
-var APP_VERSION='4.5';
+var APP_VERSION='5.0';
 var USERS_KEY='forge_users_v4';
 var currentUserId=null;
 var pinBuffer='';
