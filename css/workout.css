@@ -138,3 +138,12 @@
 .opt-badge{display:inline-block;margin-top:5px;padding:2px 6px;border:1px solid var(--s3);
   border-radius:2px;font-family:'Share Tech Mono',monospace;font-size:6px;
   letter-spacing:.12em;color:var(--s2);}
+
+/* ── COMPLETION ── */
+.done-badge{display:inline-block;margin-top:5px;padding:2px 6px;border-radius:2px;
+  font-family:'Share Tech Mono',monospace;font-size:6px;letter-spacing:.12em;
+  border:1px solid var(--s3);color:var(--s2);}
+.done-badge.is-done{border-color:var(--gr);color:var(--gr);}
+/* a finished session recedes, so the eye lands on what is still to do */
+.dc.is-complete{border-color:rgba(76,175,80,.35);}
+.dc.is-complete .dcn{color:var(--s2);}
