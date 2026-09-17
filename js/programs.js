@@ -219,13 +219,42 @@ function repLabel(ex,wd){
   return r.min===r.max?(''+r.min):(r.min+'-'+r.max);
 }
 
+// Bump this whenever a built-in program definition changes. Built-in programs
+// are persisted into each profile's data, so without a version to compare
+// against, an updated definition would never reach anyone who had already
+// loaded the old one — their stored copy would win forever.
+var BUILTIN_VERSION=2;
+
+// Refresh built-in programs whose stored definition is older than the code's.
+// The user's place in a block (progState) is keyed separately by program id,
+// so it survives the swap. The Forge program is never touched: it holds the
+// user's own days and edits, and those are theirs.
+function syncBuiltinPrograms(){
+  if(!S.programs)return false;
+  var fresh=buildDefaultPrograms(null),changed=false,i;
+  for(i=0;i<fresh.length;i++){
+    var f=fresh[i];
+    if(f.id===FORGE_PID)continue;
+    f.bv=BUILTIN_VERSION;
+    var cur=getProgram(f.id);
+    if(!cur){S.programs.push(f);changed=true;continue;}
+    if((cur.bv||0)<BUILTIN_VERSION){
+      S.programs[S.programs.indexOf(cur)]=f;
+      changed=true;
+    }
+  }
+  return changed;
+}
+
 function buildForgeProgram(days){
   return {id:FORGE_PID,name:'Forge',tag:'FORGE',builtin:true,level:'Custom',
     desc:'Your original rotation — pick any day, any time.',
     mode:'free',peri:'global',cycleLen:7,days:days||buildPresets()};
 }
 function buildDefaultPrograms(existingDays){
-  return [buildForgeProgram(existingDays),buildHardwoodProgram()];
+  var hw=buildHardwoodProgram();
+  hw.bv=BUILTIN_VERSION;
+  return [buildForgeProgram(existingDays),hw];
 }
 function getProgram(pid){
   if(!S.programs)return null;

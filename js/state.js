@@ -35,6 +35,9 @@ function loadUserIntoApp(user){
   S.programs=data.programs||buildDefaultPrograms(data.days||null);
   S.activeProgramId=data.activeProgramId||FORGE_PID;
   S.progState=data.progState||{};
+  // Pick up any built-in program that has been updated since this profile last
+  // stored it. Without this, a stored definition would shadow the code forever.
+  if(syncBuiltinPrograms())showToast('PROGRAM UPDATED');
   var ap=activeProgram();
   if(ap)S.days=ap.days;
 
