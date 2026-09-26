@@ -194,7 +194,10 @@ function startWkt(dayId){
     if(tw!==null)dw=tw;
     // Phase-aware overload bump (same-phase comparison only)
     if(suggestMap[ex.name])dw=suggestMap[ex.name];
-    var arr=[];for(var j=0;j<ex.ds;j++)arr.push({weight:dw,reps:dr,done:false,warmup:false,rpe:0});
+    // Bodyweight logs 0 lb, so it never inflates volume or records. The
+    // suggested load is held back in case you switch to added weight.
+    var bw=!exIsLoaded(ex);
+    var arr=[];for(var j=0;j<ex.ds;j++){var st0={weight:bw?0:dw,reps:dr,done:false,warmup:false,rpe:0};if(bw&&dw>0)st0._w=dw;arr.push(st0);}
     S.sets[ex.name]=arr;
   }
   el('wtitle').textContent='DAY '+day.lbl+' — '+day.name.toUpperCase();
@@ -219,7 +222,7 @@ function buildSetRowHTML(ex,set,j){
     if(isLoaded){
       wcol='<div class="step"><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'" data-d="-5">-</button><input class="sinp" type="number" inputmode="decimal" placeholder="lbs" id="w-'+ek+'-'+j+'" value="'+(set.weight||'')+'" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'"/><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'" data-d="5">+</button></div>';
     }else{
-      wcol='<div class="step" style="opacity:.3;pointer-events:none;"><button class="sbtn">-</button><input class="sinp" value="BW" readonly/><button class="sbtn">+</button></div>';
+      wcol='<div class="step bw-cell" data-act="bwtog" data-ex="'+ea+'"><button class="sbtn" tabindex="-1">-</button><input class="sinp" value="BW" readonly tabindex="-1"/><button class="sbtn" tabindex="-1">+</button></div>';
     }
     return '<div class="sr'+(set.done?' done':'')+'" id="sr-'+ek+'-'+j+'"><div class="sn">'+(j+1)+'</div>'+wcol+'<div class="step"><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="reps" data-idx="'+j+'" data-d="-1">-</button><input class="sinp" type="number" inputmode="numeric" placeholder="'+repLabel+'" id="r-'+ek+'-'+j+'" value="'+(set.reps||'')+'" data-ex="'+ea+'" data-f="reps" data-idx="'+j+'"/><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="reps" data-idx="'+j+'" data-d="1">+</button></div><div style="width:28px;"></div><button class="schk'+(set.done?' done':'')+'" data-act="chk" data-ex="'+ea+'" data-idx="'+j+'">'+(set.done?'&#10003;':'')+'</button></div>';
   }
@@ -228,7 +231,7 @@ function buildSetRowHTML(ex,set,j){
   if(exIsLoaded(ex)){
     h+='<div class="step"><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'" data-d="-5">-</button><input class="sinp" type="number" inputmode="decimal" placeholder="lbs" id="w-'+ek+'-'+j+'" value="'+(set.weight||'')+'" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'"/><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="weight" data-idx="'+j+'" data-d="5">+</button></div>';
   }else{
-    h+='<div class="step" style="opacity:.3;pointer-events:none;"><button class="sbtn">-</button><input class="sinp" value="BW" readonly/><button class="sbtn">+</button></div>';
+    h+='<div class="step bw-cell" data-act="bwtog" data-ex="'+ea+'"><button class="sbtn" tabindex="-1">-</button><input class="sinp" value="BW" readonly tabindex="-1"/><button class="sbtn" tabindex="-1">+</button></div>';
   }
   h+='<div class="step"><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="reps" data-idx="'+j+'" data-d="-1">-</button><input class="sinp" type="number" inputmode="numeric" placeholder="reps" id="r-'+ek+'-'+j+'" value="'+(set.reps||'')+'" data-ex="'+ea+'" data-f="reps" data-idx="'+j+'"/><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="reps" data-idx="'+j+'" data-d="1">+</button></div>';
   h+='<button class="wu-btn'+(set.warmup?' on':'')+'" data-act="wu" data-ex="'+ea+'" data-idx="'+j+'" title="Warm-up">WU</button>';
@@ -257,6 +260,7 @@ function bindActiveDelegation(){
     else if(act==='remex')removeExFromWorkout(ex);
     else if(act==='adds')addS(ex);
     else if(act==='rems')removeS(ex);
+    else if(act==='bwtog')togBW(ex);
   });
   list.addEventListener('input',function(e){
     var t=e.target;
@@ -284,7 +288,7 @@ function renderActive(){
     var trg='<div class="target-reps">'+(_rr.min===_rr.max?_rr.min:_rr.min+'-'+_rr.max)+'</div>';
     var olBadge=suggestSet[ex.name]?'<div class="ex-overload">&#9650; INCREASE</div>':'';
     var subBtn='<button class="info-btn" data-act="sub" data-ex="'+ea+'" title="Substitute" style="border-color:var(--hlbr);color:var(--hl);">&#8652;</button>';
-    blk.innerHTML='<div class="eh"><div style="flex:1;"><div class="en">'+esc(ex.name)+'</div><div class="et">'+esc(ex.type)+'</div></div>'+olBadge+trg+subBtn+notesBtn+ssb+'<button class="rem-ex-btn" data-act="remex" data-ex="'+ea+'">&#10005;</button></div><div class="shr"><div class="sc">#</div><div class="sc">WEIGHT</div><div class="sc">REPS</div><div class="sc">WU</div><div class="sc">&#10003;</div></div>'+sh+'<div style="display:flex;border-top:1px solid var(--border);"><button class="addbtn" style="border-top:none;border-right:1px solid var(--border);" data-act="adds" data-ex="'+ea+'">+ ADD SET</button><button class="addbtn" style="border-top:none;color:var(--danger);" data-act="rems" data-ex="'+ea+'">- REMOVE</button></div>';
+    blk.innerHTML='<div class="eh"><div style="flex:1;"><div class="en">'+esc(ex.name)+'</div><div class="et">'+esc(ex.type)+'</div></div>'+olBadge+trg+subBtn+notesBtn+ssb+'<button class="rem-ex-btn" data-act="remex" data-ex="'+ea+'">&#10005;</button></div><div class="shr"><div class="sc">#</div><div class="sc wt-tog" data-act="bwtog" data-ex="'+ea+'">'+(exIsLoaded(ex)?'LBS':'BW')+' &#8644;</div><div class="sc">REPS</div><div class="sc">WU</div><div class="sc">&#10003;</div></div>'+sh+'<div style="display:flex;border-top:1px solid var(--border);"><button class="addbtn" style="border-top:none;border-right:1px solid var(--border);" data-act="adds" data-ex="'+ea+'">+ ADD SET</button><button class="addbtn" style="border-top:none;color:var(--danger);" data-act="rems" data-ex="'+ea+'">- REMOVE</button></div>';
     list.appendChild(blk);
   }
   if(core.length){
@@ -299,7 +303,7 @@ function renderActive(){
       var coreRepHdr=coreTimed?'SEC':'REPS';
       var coreIsLoaded=exIsLoaded(ex);
       var coreWtHdr=coreIsLoaded?'WEIGHT':'BW';
-      blk.innerHTML='<div class="eh"><div class="en">'+esc(ex.name)+'</div><div class="et" style="color:var(--en);">CORE</div>'+notesBtn+'</div><div class="shr"><div class="sc">#</div><div class="sc">'+coreWtHdr+'</div><div class="sc">'+coreRepHdr+'</div><div class="sc"></div><div class="sc">&#10003;</div></div>'+sh;
+      blk.innerHTML='<div class="eh"><div class="en">'+esc(ex.name)+'</div><div class="et" style="color:var(--en);">CORE</div>'+notesBtn+'</div><div class="shr"><div class="sc">#</div><div class="sc wt-tog" data-act="bwtog" data-ex="'+escAttr(ex.name)+'">'+(coreIsLoaded?'LBS':'BW')+' &#8644;</div><div class="sc">'+coreRepHdr+'</div><div class="sc"></div><div class="sc">&#10003;</div></div>'+sh;
       list.appendChild(blk);
     }
   }
@@ -383,7 +387,25 @@ function exIsLoaded(ex){
   if(!ex)return true;
   if(ex.loaded!==undefined)return !!ex.loaded;
   if(ex.type==='Core')return coreFlags(ex.name).loaded;
+  // Marked as bodyweight equipment and never told otherwise: jumps, plyo
+  // push-ups and the like log as BW, not as a 0 lb lift.
+  if(ex.impl==='bw')return /weighted|medicine ball|med ball|vest|belt/i.test(ex.name||'');
   return true;
+}
+// Switch one exercise between BW and added weight for this session only —
+// weighted pull-ups today, bodyweight next time. The weights typed before
+// switching to BW are kept and come back if you switch back.
+function togBW(exName){
+  var ex=exByName(exName),sets=S.sets[exName];if(!ex||!sets)return;
+  var toBW=exIsLoaded(ex);
+  ex.loaded=!toBW;
+  for(var j=0;j<sets.length;j++){
+    var st=sets[j];
+    if(toBW){if(parseFloat(st.weight)>0)st._w=st.weight;st.weight=0;}
+    else{st.weight=(st._w!=null)?st._w:(ex.dw||'');delete st._w;}
+  }
+  renderActive();saveActive();
+  showToast(toBW?exName.toUpperCase()+' \u2014 BODYWEIGHT':exName.toUpperCase()+' \u2014 ADDED WEIGHT');
 }
 function coreFlags(name){
   var n=name.toLowerCase();
