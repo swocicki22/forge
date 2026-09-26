@@ -260,3 +260,21 @@ select.fi{appearance:none;-webkit-appearance:none;padding-right:28px;background-
 .pk .fr{grid-template-columns:1fr 1fr !important;}
 .pk-ex{margin-top:6px;border-color:var(--hlbr);}
 #pk-hint b{color:var(--am);font-weight:600;}
+
+/* start over / undo skips, under the phase list */
+.ph-foot{grid-column:1/-1;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:6px;}
+.ph-foot-btn{background:none;border:1px solid var(--border);border-radius:2px;color:var(--s2);padding:8px 12px;
+  font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:.12em;cursor:pointer;}
+.ph-foot-btn.armed{border-color:var(--danger);color:var(--danger);}
+/* reps by phase */
+.pr-list{margin-top:8px;background:var(--card);border:1px solid var(--border);border-radius:2px;padding:8px 10px;}
+.pr-list summary{font-family:'Rajdhani',sans-serif;font-size:12px;color:var(--hl);cursor:pointer;}
+.pr-sess{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:.12em;color:var(--s2);text-transform:uppercase;margin-top:9px;}
+.pr-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);}
+.pr-item input{width:16px;height:16px;flex-shrink:0;accent-color:var(--hl);}
+.pr-nm{flex:1;min-width:0;font-family:'Rajdhani',sans-serif;font-size:12px;color:var(--tx);}
+.pr-cur{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--s2);flex-shrink:0;}
+.pr-grid{display:grid;grid-template-columns:62px 1fr 1fr 1fr;gap:5px;align-items:center;margin-top:12px;}
+.pr-grid .fi{min-width:0;padding:7px 8px;margin:0;text-align:center;}
+.pr-hd{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:.12em;color:var(--s2);text-align:center;}
+.pr-ph{font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:.1em;color:var(--hl);}
