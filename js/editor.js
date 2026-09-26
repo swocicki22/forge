@@ -61,7 +61,7 @@ function exSummary(ex){
   if(ex.timed)reps=(ex.secs||f.rmin)+'s';
   var s=f.sets+'x'+reps;
   if(f.emin!==''){s+=' → '+(f.emin===f.emax?f.emin:f.emin+'-'+f.emax);}
-  if(ex.perWeek)s+=' · week-by-week plan';
+  if(ex.perWeek)s+=' · custom plan by phase';
   return s;
 }
 
@@ -109,6 +109,7 @@ function confirmDuplicateToEdit(){
   renderSel();
   showToast('NOW EDITING YOUR COPY');
   if(idx>=0&&p.days[idx]&&!p.days[idx].rest)openEditor(p.days[idx].id);
+  else openProgramEditor(p.id);   // opened from the program strip, not a day
 }
 
 // ── rendering ─────────────────────────────────────────────────
@@ -214,6 +215,7 @@ function fillImplSelect(val){
   }
   s.value=val||'auto';
 }
+var EF_PROG_HELP='Phases in between step evenly. 12&rarr;4 marches reps down as weight climbs; 8&rarr;20 marches them up.';
 function syncProgressionRow(){
   var r=el('ef-prog-row');if(r)r.style.display=(edIsTemplate()&&edIsScheduled())?'block':'none';
 }
@@ -224,6 +226,7 @@ function openAddExercise(isCore){
   el('ef-reps-end').value='';el('ef-reps-end-max').value='';
   el('ef-weight').value='';el('ef-notes').value='';
   fillImplSelect('auto');syncProgressionRow();pkSetup(null);
+  var ph=el('ef-prog-help');if(ph)ph.innerHTML=EF_PROG_HELP;
   el('del-ex-btn').style.display='none';setEfLoaded(!isCore);syncEfLoadedRow();
   el('edit-ex-mo').classList.add('visible');
 }
@@ -235,6 +238,10 @@ function openEditExercise(idx){
   el('ef-reps-end').value=f.emin;el('ef-reps-end-max').value=(f.emax!==''&&f.emax!==f.emin?f.emax:'');
   el('ef-weight').value=ex.dw||'';el('ef-notes').value=ex.notes||'';
   fillImplSelect(ex.impl||'auto');syncProgressionRow();pkSetup(ex.name);
+  var ph=el('ef-prog-help');
+  if(ph)ph.innerHTML=(ex.perWeek&&edIsTemplate())
+    ?'<span style="color:var(--am)">This lift has its own plan for each phase.</span> Changing sets or reps here replaces it with an even step from phase 1 to the last. To change phases one by one, use EDIT REPS BY PHASE in the program editor.'
+    :EF_PROG_HELP;
   el('del-ex-btn').style.display='block';setEfLoaded(exIsLoaded(ex));syncEfLoadedRow();
   el('edit-ex-mo').classList.add('visible');
 }

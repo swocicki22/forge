@@ -88,6 +88,22 @@ function renderPhased(grid,p){
     else state='todo';
     grid.appendChild(buildDayCard(d,{num:d.idx||i+1,state:state,stampDays:stamp}));
   }
+
+  // ── start over ── always reachable, not just once the program is finished.
+  // Clears the checkmarks only; logged sessions and records are untouched.
+  var nDone=0,nSkip=0,k;
+  for(k in (st.completed||{}))nDone++;
+  for(k in (st.skipped||{}))nSkip++;
+  if(nDone||nSkip){
+    var ft=document.createElement('div');ft.className='ph-foot';
+    ft.innerHTML=(nSkip?'<button class="ph-foot-btn" onclick="clearSkips()">UNDO '+nSkip+' SKIP'+(nSkip===1?'':'S')+'</button>':'')+
+      '<button class="ph-foot-btn" id="restart-btn" onclick="confirmRestart()">&#8634; RESTART FROM PHASE 1</button>';
+    grid.appendChild(ft);
+  }
+}
+function clearSkips(){
+  var p=activeProgram();if(!p)return;
+  var st=progState(p.id);st.skipped={};saveState();selPhase=null;renderSel();renderHome();showToast('SKIPS CLEARED');
 }
 function browsePhase(dir){
   var p=activeProgram();if(!p)return;
@@ -99,8 +115,15 @@ function skipNext(id){
 }
 var restartArmed=false;
 function confirmRestart(){
-  if(!restartArmed){restartArmed=true;showToast('TAP AGAIN TO RESTART FROM PHASE 1');setTimeout(function(){restartArmed=false;},3000);return;}
-  restartArmed=false;restartProgram(S.activeProgramId);selPhase=null;renderSel();showToast('RESTARTED');
+  var b=el('restart-btn');
+  if(!restartArmed){
+    restartArmed=true;
+    if(b){b.classList.add('armed');b.textContent='TAP AGAIN \u2014 CLEARS ALL CHECKMARKS';}
+    showToast('TAP AGAIN TO RESTART \u2014 YOUR HISTORY STAYS');
+    setTimeout(function(){restartArmed=false;var bb=el('restart-btn');if(bb){bb.classList.remove('armed');bb.innerHTML='&#8634; RESTART FROM PHASE 1';}},3500);
+    return;
+  }
+  restartArmed=false;restartProgram(S.activeProgramId);selPhase=null;renderSel();renderHome();showToast('BACK TO PHASE 1');
 }
 
 // ════════════════════════════════

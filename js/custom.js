@@ -349,6 +349,71 @@ function deleteProgram(pid){
   return true;
 }
 
+// ── reps by phase, in bulk ────────────────────────────────────
+// What one exercise actually gets in a given phase: the explicit table if it
+// has one, otherwise the start-to-end interpolation.
+function exPhaseRow(ex,ph,phases){
+  var pw=ex.perWeek&&ex.perWeek[ph-1];
+  if(pw)return {sets:pw.sets,min:pw.min,max:pw.max};
+  var r=interpReps(ex,ph,phases);
+  return {sets:interpSets(ex,ph,phases),min:r.min,max:r.max};
+}
+// Every exercise a rep scheme can apply to. Timed holds are left out: their
+// number is seconds, and a rep plan written for lifts would wreck them.
+function phaseRepTargets(p){
+  var out=[];if(!p||!p.sessions)return out;
+  var used={};for(var o=0;o<(p.order||[]).length;o++)used[p.order[o]]=1;
+  for(var s=0;s<p.sessions.length;s++){
+    var ss=p.sessions[s];if(!used[ss.sid])continue;
+    for(var i=0;i<ss.ex.length;i++){
+      var e=ss.ex[i];if(e.timed)continue;
+      out.push({key:ss.sid+':'+i,sid:ss.sid,i:i,ex:e,sess:ss});
+    }
+  }
+  return out;
+}
+// The rep numbers across every phase, as one string. Exercises that share
+// it are on the same track — change the track and they all move together.
+function repSignature(ex,phases){
+  var a=[];for(var ph=1;ph<=phases;ph++){var r=exPhaseRow(ex,ph,phases);a.push(r.min+'-'+r.max);}
+  return a.join('|');
+}
+// Write one per-phase plan onto a set of exercises. rows[k] = {min,max,sets}
+// where sets may be null, meaning "leave this exercise's own sets alone".
+function applyPhaseReps(p,keys,rows){
+  if(!p||!p.custom)return 0;
+  var phases=p.weeks||1,want={},n=0;
+  for(var k=0;k<keys.length;k++)want[keys[k]]=1;
+  var ts=phaseRepTargets(p);
+  for(var t=0;t<ts.length;t++){
+    if(!want[ts[t].key])continue;
+    var ex=ts[t].ex,table=[];
+    for(var ph=1;ph<=phases;ph++){
+      var cur=exPhaseRow(ex,ph,phases),r=rows[ph-1]||rows[rows.length-1];
+      var mn=Math.max(1,parseInt(r.min,10)||cur.min), mx=Math.max(1,parseInt(r.max,10)||mn);
+      if(mx<mn){var sw=mn;mn=mx;mx=sw;}
+      var st=(r.sets!=null&&r.sets!=='')?Math.max(1,parseInt(r.sets,10)||cur.sets):cur.sets;
+      table.push({sets:st,min:mn,max:mx});
+    }
+    // Start and end ranges are kept in step with the table so the exercise
+    // form and the editor summary describe the same plan.
+    var a=table[0],b=table[table.length-1];
+    ex.sets=a.sets;ex.reps=[a.min,a.max];
+    if(b.sets!==a.sets)ex.setsEnd=b.sets;else delete ex.setsEnd;
+    if(b.min!==a.min||b.max!==a.max)ex.repsEnd=[b.min,b.max];else delete ex.repsEnd;
+    // Only keep the table when an even progression can't reproduce it.
+    var even=true;
+    for(var q=1;q<=phases;q++){
+      var ir=interpReps(ex,q,phases);
+      if(ir.min!==table[q-1].min||ir.max!==table[q-1].max||interpSets(ex,q,phases)!==table[q-1].sets){even=false;break;}
+    }
+    if(even)delete ex.perWeek;else ex.perWeek=table;
+    n++;
+  }
+  regenerateCustomDays(p);saveState();
+  return n;
+}
+
 if(typeof module!=='undefined'&&module.exports){
   module.exports={interpReps:interpReps,interpSets:interpSets};
 }

@@ -61,7 +61,8 @@ function buildProgramStrip(){
          '<div class="strip-v">'+(nx?'PHASE '+curPh+' OF '+phs:'COMPLETE')+'</div>'+bar+
          '<div class="strip-s">'+pr.done+' of '+pr.total+' workouts done</div></div>';
     right='<div style="display:flex;gap:5px;flex-shrink:0;">'+
-          (p.custom?'<button class="mini-btn" onclick="openProgramEditor(\''+p.id+'\')">EDIT</button>':'')+
+          (p.custom?'<button class="mini-btn" onclick="openProgramEditor(\''+p.id+'\')">EDIT</button>'
+                   :'<button class="mini-btn" onclick="editBuiltinProgram()">EDIT</button>')+
           '<button class="mini-btn" onclick="openProgramPicker()">SWITCH</button></div>';
   }else if(p&&p.peri==='slot'){
     // A free custom program carries its own reps on every exercise, so the
@@ -168,6 +169,8 @@ function renderProgramEditor(){
   if(sched){
     h+='<div class="fl">Phases</div><input class="fi" id="pe-weeks" type="number" inputmode="numeric" min="1" max="52" value="'+p.weeks+'" onchange="peSetWeeks(this.value)"/>';
     h+='<div class="pe-help">Each phase runs every workout below once, in order. Reps can progress from phase 1 to the last phase.</div>';
+    if((p.order||[]).length)
+      h+='<button class="add-ex-btn" style="margin-top:10px;" onclick="openPhaseReps(\''+p.id+'\')">&#9776; EDIT REPS BY PHASE</button>';
     h+='<div class="pe-sec">WORKOUTS IN EACH PHASE</div>';
     var ord=p.order||[];
     if(!ord.length)h+='<div class="pe-help">Add a workout below and it appears here. Reorder with the arrows.</div>';
@@ -239,6 +242,164 @@ function peDelete(){
   peArmed=null;
   if(hasLiveSession()&&S.activeDay&&S.activeDay.pid===p.id){showToast('FINISH THE CURRENT SESSION FIRST');return;}
   deleteProgram(p.id);closeModal('prog-edit-mo');renderSel();renderHome();showToast('PROGRAM DELETED');
+}
+
+// A built-in can't be edited in place; EDIT offers the same make-it-yours copy
+// that editing one of its days does.
+function editBuiltinProgram(){edPid=null;offerDuplicateToEdit('');}
+
+// ── reps by phase ─────────────────────────────────────────────
+// Change the rep range of a whole group of lifts, phase by phase, in one go.
+// Groups are offered three ways: lifts already on the same track (the usual
+// case — "every heavy lift"), everything in one workout, or everything.
+var prPid=null, prChecked={}, prScope='';
+function prProg(){return getProgram(prPid);}
+function openPhaseReps(pid){
+  prPid=pid;var p=prProg();if(!p)return;
+  var g=prGroups(p);
+  prScope=g.length?g[0].id:'';
+  prSelectScope(prScope,true);
+  closeModal('prog-edit-mo');
+  el('pr-mo').classList.add('visible');
+}
+function closePhaseReps(){
+  closeModal('pr-mo');
+  if(prPid)openProgramEditor(prPid);
+}
+var PR_BLK={power:'Power',heavy:'Heavy',pump:'Pump',core:'Core'};
+function prRangeTxt(r){return r.min===r.max?String(r.min):r.min+'-'+r.max;}
+function prTrackTxt(ex,phases){
+  var a=exPhaseRow(ex,1,phases),b=exPhaseRow(ex,phases,phases);
+  return prRangeTxt(a)===prRangeTxt(b)?prRangeTxt(a)+' every phase':prRangeTxt(a)+' \u2192 '+prRangeTxt(b);
+}
+function prGroups(p){
+  var phases=p.weeks||1,ts=phaseRepTargets(p),out=[],bySig={},sigs=[];
+  for(var i=0;i<ts.length;i++){
+    var sig=repSignature(ts[i].ex,phases);
+    if(!bySig[sig]){bySig[sig]=[];sigs.push(sig);}
+    bySig[sig].push(ts[i]);
+  }
+  sigs.sort(function(a,b){return bySig[b].length-bySig[a].length;});
+  for(var k=0;k<sigs.length;k++){
+    var items=bySig[sigs[k]],blk=items[0].ex.blk||'',type=items[0].ex.type||'',sameB=true,sameT=true,names={},uniq=0;
+    for(var j=0;j<items.length;j++){
+      if((items[j].ex.blk||'')!==blk)sameB=false;
+      if((items[j].ex.type||'')!==type)sameT=false;
+      if(!names[items[j].ex.name]){names[items[j].ex.name]=1;uniq++;}
+    }
+    var nm=(sameB&&PR_BLK[blk])?PR_BLK[blk]+' lifts':(sameT&&type?type+' lifts':'Lifts');
+    out.push({id:'sig:'+k,kind:'track',label:nm+' \u00b7 '+prTrackTxt(items[0].ex,phases)+' ('+items.length+')',
+              keys:items.map(function(t){return t.key;})});
+  }
+  var seen={};
+  for(var o=0;o<(p.order||[]).length;o++){
+    var sid=p.order[o];if(seen[sid])continue;seen[sid]=1;
+    var ss=getCustomSession(p,sid);if(!ss)continue;
+    var ks=[];for(var x=0;x<ts.length;x++)if(ts[x].sid===sid)ks.push(ts[x].key);
+    if(ks.length)out.push({id:'wk:'+sid,kind:'workout',label:ss.name+' ('+ks.length+')',keys:ks});
+  }
+  var lifts=[],all=[];
+  for(var y=0;y<ts.length;y++){all.push(ts[y].key);if(ts[y].ex.type!=='Core')lifts.push(ts[y].key);}
+  if(lifts.length&&lifts.length<all.length)out.push({id:'all:lifts',kind:'all',label:'Every lift, not core work ('+lifts.length+')',keys:lifts});
+  out.push({id:'all:all',kind:'all',label:'Every exercise ('+all.length+')',keys:all});
+  return out;
+}
+function prSelectScope(id,prefill){
+  var p=prProg();if(!p)return;
+  var g=prGroups(p),grp=null;
+  for(var i=0;i<g.length;i++)if(g[i].id===id)grp=g[i];
+  if(!grp)grp=g[0];
+  prScope=grp?grp.id:'';prChecked={};
+  if(grp)for(var k=0;k<grp.keys.length;k++)prChecked[grp.keys[k]]=1;
+  renderPhaseReps(prefill!==false);
+}
+function prCheckedTargets(p){
+  var ts=phaseRepTargets(p),out=[];
+  for(var i=0;i<ts.length;i++)if(prChecked[ts[i].key])out.push(ts[i]);
+  return out;
+}
+function renderPhaseReps(prefill){
+  var p=prProg(),c=el('pr-body');if(!p||!c)return;
+  var phases=p.weeks||1,g=prGroups(p),ts=phaseRepTargets(p),sel=prCheckedTargets(p);
+  // keep whatever was typed unless the scope changed
+  var typed=prefill?null:prReadRows(phases);
+  var h='<div class="fl">Apply to</div><select class="fi" onchange="prSelectScope(this.value)">';
+  var groups=[['track','Lifts on the same progression'],['workout','One workout'],['all','Everything']];
+  for(var q=0;q<groups.length;q++){
+    var opts='';
+    for(var i=0;i<g.length;i++)if(g[i].kind===groups[q][0])
+      opts+='<option value="'+g[i].id+'"'+(g[i].id===prScope?' selected':'')+'>'+esc(g[i].label)+'</option>';
+    if(opts)h+='<optgroup label="'+groups[q][1]+'">'+opts+'</optgroup>';
+  }
+  h+='</select>';
+  // the exact list, adjustable
+  h+='<details class="pr-list"><summary>'+sel.length+' exercise'+(sel.length===1?'':'s')+' selected \u2014 tap to adjust</summary>';
+  var lastSid=null;
+  for(var t=0;t<ts.length;t++){
+    var it=ts[t];
+    if(it.sid!==lastSid){h+='<div class="pr-sess">'+esc(it.sess.name)+'</div>';lastSid=it.sid;}
+    h+='<label class="pr-item"><input type="checkbox"'+(prChecked[it.key]?' checked':'')+
+       ' onchange="prToggle(\''+it.key+'\',this.checked)"/><span class="pr-nm">'+esc(it.ex.name)+'</span>'+
+       '<span class="pr-cur">'+esc(prTrackTxt(it.ex,phases))+'</span></label>';
+  }
+  h+='</details>';
+  // one row per phase
+  h+='<div class="pr-grid"><div class="pr-hd"></div><div class="pr-hd">SETS</div><div class="pr-hd">MIN</div><div class="pr-hd">MAX</div>';
+  for(var ph=1;ph<=phases;ph++){
+    var v;
+    if(typed)v=typed[ph-1];
+    else{
+      v={sets:'',min:'',max:''};
+      if(sel.length){
+        var r0=exPhaseRow(sel[0].ex,ph,phases),same=true;
+        for(var s=1;s<sel.length;s++)if(exPhaseRow(sel[s].ex,ph,phases).sets!==r0.sets){same=false;break;}
+        v={sets:same?r0.sets:'',min:r0.min,max:r0.max};
+      }
+    }
+    h+='<div class="pr-ph">PHASE '+ph+'</div>'+
+       '<input class="fi" id="pr-s-'+ph+'" type="number" inputmode="numeric" placeholder="keep" value="'+v.sets+'"/>'+
+       '<input class="fi" id="pr-a-'+ph+'" type="number" inputmode="numeric" value="'+v.min+'"/>'+
+       '<input class="fi" id="pr-b-'+ph+'" type="number" inputmode="numeric" value="'+v.max+'"/>';
+  }
+  h+='</div>';
+  if(phases>2)h+='<button class="pe-link" onclick="prFillEven()">Fill phases 2\u2013'+(phases-1)+' evenly from phase 1 and phase '+phases+'</button>';
+  h+='<div class="pe-help">Blank sets keep each exercise\u2019s own sets. Timed holds like planks aren\u2019t listed \u2014 their numbers are seconds.</div>';
+  h+='<button class="mb" style="margin-top:12px;"'+(sel.length?'':' disabled')+' onclick="prApply()">APPLY TO '+sel.length+' EXERCISE'+(sel.length===1?'':'S')+'</button>';
+  c.innerHTML=h;
+}
+function prReadRows(phases){
+  var rows=[];
+  for(var ph=1;ph<=phases;ph++){
+    var s=el('pr-s-'+ph),a=el('pr-a-'+ph),b=el('pr-b-'+ph);
+    rows.push({sets:s?s.value:'',min:a?a.value:'',max:b?b.value:''});
+  }
+  return rows;
+}
+function prToggle(key,on){
+  if(on)prChecked[key]=1;else delete prChecked[key];
+  var d=document.querySelector('#pr-body details');var open=d&&d.open;
+  renderPhaseReps(false);
+  if(open){d=document.querySelector('#pr-body details');if(d)d.open=true;}
+}
+function prFillEven(){
+  var p=prProg();if(!p)return;var n=p.weeks||1;if(n<3)return;
+  var lerp=function(id){
+    var a=parseFloat(el(id+1).value),b=parseFloat(el(id+n).value);
+    if(!isFinite(a)||!isFinite(b))return;
+    for(var ph=2;ph<n;ph++)el(id+ph).value=Math.round(a+(b-a)*(ph-1)/(n-1));
+  };
+  lerp('pr-a-');lerp('pr-b-');lerp('pr-s-');
+}
+function prApply(){
+  var p=prProg();if(!p)return;var phases=p.weeks||1,rows=prReadRows(phases);
+  for(var i=0;i<rows.length;i++){
+    if(!(parseInt(rows[i].min,10)>0)){showToast('PHASE '+(i+1)+' NEEDS REPS');return;}
+    if(!(parseInt(rows[i].max,10)>0))rows[i].max=rows[i].min;
+  }
+  var keys=[];for(var k in prChecked)keys.push(k);
+  var n=applyPhaseReps(p,keys,rows);
+  closeModal('pr-mo');openProgramEditor(p.id);renderSel();renderHome();
+  showToast('UPDATED '+n+' EXERCISE'+(n===1?'':'S'));
 }
 
 function chooseProgram(pid){
