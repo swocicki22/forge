@@ -278,3 +278,8 @@ select.fi{appearance:none;-webkit-appearance:none;padding-right:28px;background-
 .pr-grid .fi{min-width:0;padding:7px 8px;margin:0;text-align:center;}
 .pr-hd{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:.12em;color:var(--s2);text-align:center;}
 .pr-ph{font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:.1em;color:var(--hl);}
+
+/* BW / added-weight switch in the set table */
+.sc.wt-tog{color:var(--hl);cursor:pointer;padding:3px 0;}
+.bw-cell{opacity:.45;cursor:pointer;}
+.bw-cell .sbtn,.bw-cell .sinp{pointer-events:none;}
