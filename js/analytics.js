@@ -7,6 +7,7 @@ function renderProg(){
   var c=el('pcontent');c.innerHTML='';
   if(aTab==='history'){if(viewingSessionIdx!==null)renderHistoryDetail(c,viewingSessionIdx);else renderHistoryList(c);return;}
   if(aTab==='bodywt'){renderBodyWt(c);return;}
+  if(aTab==='cardio'){renderCardio(c);return;}
   if(!S.log.length){c.innerHTML='<div class="es"><div class="ei">NO DATA YET</div><div class="esb">Complete sessions to build telemetry.</div></div>';return;}
   if(aTab==='volume')renderVol(c);else if(aTab==='prs')renderPRs(c);else if(aTab==='1rm')render1RM(c);else if(aTab==='heatmap')renderHeatmap(c);else if(aTab==='deload')renderDeload(c);else if(aTab==='timeline')renderTimeline(c);else renderFreq(c);
 }
@@ -41,7 +42,7 @@ function renderPRs(cont){
 }
 function render1RM(cont){
   var orms={};
-  for(var i=0;i<S.log.length;i++){var w=S.log[i];if(!w.rawSets)continue;for(var exName in w.rawSets){var sets=w.rawSets[exName];for(var j=0;j<sets.length;j++){var s=sets[j];if(!s.done||s.warmup)continue;var orm=calcEpley(parseFloat(s.weight)||0,parseFloat(s.reps)||0);if(!orms[exName]||orm>orms[exName].orm)orms[exName]={orm:orm,weight:parseFloat(s.weight)||0,reps:parseFloat(s.reps)||0,date:w.date};}}}
+  for(var i=0;i<S.log.length;i++){var w=S.log[i];if(!w.rawSets)continue;for(var exName in w.rawSets){var sets=w.rawSets[exName];for(var j=0;j<sets.length;j++){var s=sets[j];if(!s.done||s.warmup||s.mins!=null)continue;var orm=calcEpley(parseFloat(s.weight)||0,parseFloat(s.reps)||0);if(!orms[exName]||orm>orms[exName].orm)orms[exName]={orm:orm,weight:parseFloat(s.weight)||0,reps:parseFloat(s.reps)||0,date:w.date};}}}
   var keys=Object.keys(orms);if(!keys.length){cont.innerHTML='<div class="es"><div class="ei">NO 1RM DATA</div><div class="esb">Complete working sets to calculate estimated 1RM.</div></div>';return;}
   var card=document.createElement('div');card.className='cc';card.innerHTML='<div class="ct">ESTIMATED 1RM (EPLEY FORMULA)</div><div style="font-family:\'Share Tech Mono\',monospace;font-size:8px;color:var(--s2);margin-bottom:12px;">e1RM = weight x (1 + reps/30)</div>';
   keys.sort(function(a,b){return orms[b].orm-orms[a].orm;});
@@ -551,4 +552,56 @@ function buildBackSVG(detail, max){
   +'<text x="48" y="246" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7" pointer-events="none">CALF</text>'
   +'<text x="82" y="246" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="5" fill="#040608" opacity=".7" pointer-events="none">CALF</text>'
   +'</svg>';
+}
+
+// ════════════════════════════════
+// CARDIO — minutes, miles and calories from every logged cardio bout
+// ════════════════════════════════
+function cardioEntries(){
+  var out=[];
+  for(var i=0;i<S.log.length;i++){
+    var w=S.log[i];if(!w.rawSets)continue;
+    for(var n in w.rawSets){
+      var ss=w.rawSets[n]||[],m=0,d=0,c=0,any=false;
+      for(var j=0;j<ss.length;j++){var s=ss[j];if(!s||!s.done||s.mins==null)continue;any=true;m+=parseFloat(s.mins)||0;d+=parseFloat(s.dist)||0;c+=parseFloat(s.cal)||0;}
+      if(any)out.push({date:w.date,name:n,mins:m,dist:d,cal:c,logIdx:i});
+    }
+  }
+  out.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  return out;
+}
+function cardioWeekStart(d){var x=new Date(d);x.setHours(0,0,0,0);var wd=(x.getDay()+6)%7;x.setDate(x.getDate()-wd);return x.getTime();}
+function renderCardio(cont){
+  var es=cardioEntries();
+  if(!es.length){cont.innerHTML='<div class="es"><div class="ei">NO CARDIO YET</div><div class="esb">Add a cardio exercise (Cardio in the exercise picker) to a workout and log minutes, miles and calories.</div></div>';return;}
+  var r2=function(x){return Math.round(x*100)/100;};
+  var thisWk=cardioWeekStart(new Date()),wm=0,wd=0,wc=0,wn=0;
+  for(var i=0;i<es.length;i++){if(cardioWeekStart(es[i].date)===thisWk){wm+=es[i].mins;wd+=es[i].dist;wc+=es[i].cal;wn++;}}
+  var top=document.createElement('div');top.className='cc';
+  top.innerHTML='<div class="ct">THIS WEEK</div><div class="cd-stats">'+
+    '<div><div class="cd-v">'+wm+'</div><div class="cd-k">MINUTES</div></div>'+
+    '<div><div class="cd-v">'+r2(wd)+'</div><div class="cd-k">MILES</div></div>'+
+    '<div><div class="cd-v">'+wc+'</div><div class="cd-k">CALORIES</div></div>'+
+    '<div><div class="cd-v">'+wn+'</div><div class="cd-k">SESSIONS</div></div></div>';
+  cont.appendChild(top);
+  // minutes per week, last 8 weeks
+  var weeks=[],DAY=864e5;for(var k=7;k>=0;k--)weeks.push({t:thisWk-k*7*DAY,m:0});
+  for(var i=0;i<es.length;i++){var ws=cardioWeekStart(es[i].date);for(var k=0;k<weeks.length;k++)if(weeks[k].t===ws)weeks[k].m+=es[i].mins;}
+  var mx=1;for(var k=0;k<weeks.length;k++)if(weeks[k].m>mx)mx=weeks[k].m;
+  var bars='';
+  for(var k=0;k<weeks.length;k++){var dd=new Date(weeks[k].t);
+    bars+='<div class="cd-bar"><div class="cd-bv">'+(weeks[k].m||'')+'</div><div class="cd-bt"><div style="height:'+Math.round(weeks[k].m/mx*100)+'%"></div></div><div class="cd-bl">'+(dd.getMonth()+1)+'/'+dd.getDate()+'</div></div>';}
+  var ch=document.createElement('div');ch.className='cc';ch.style.marginTop='8px';
+  ch.innerHTML='<div class="ct">MINUTES PER WEEK — LAST 8 WEEKS</div><div class="cd-bars">'+bars+'</div>';
+  cont.appendChild(ch);
+  // by type
+  var by={},names=[];for(var i=0;i<es.length;i++){var e=es[i];if(!by[e.name]){by[e.name]={n:0,m:0,d:0};names.push(e.name);}by[e.name].n++;by[e.name].m+=e.mins;by[e.name].d+=e.dist;}
+  names.sort(function(a,b){return by[b].m-by[a].m;});
+  var bt='';for(var i=0;i<names.length;i++){var b=by[names[i]];bt+='<div class="cd-row"><div class="cd-n">'+esc(names[i])+'</div><div class="cd-m">'+b.n+'\u00d7 \u00b7 '+b.m+' min'+(b.d?' \u00b7 '+r2(b.d)+' mi':'')+'</div></div>';}
+  var ty=document.createElement('div');ty.className='cc';ty.style.marginTop='8px';ty.innerHTML='<div class="ct">ALL TIME BY TYPE</div>'+bt;cont.appendChild(ty);
+  // recent
+  var rc='';for(var i=0;i<Math.min(12,es.length);i++){var e=es[i],d=new Date(e.date);
+    rc+='<div class="cd-row" onclick="swTab(\'history\',document.querySelectorAll(\'.ptb\')[1]);viewSession('+e.logIdx+')" style="cursor:pointer"><div class="cd-n">'+esc(e.name)+'<div class="cd-d">'+d.toLocaleDateString()+'</div></div>'+
+        '<div class="cd-m">'+e.mins+' min'+(e.dist?' \u00b7 '+r2(e.dist)+' mi':'')+(e.cal?' \u00b7 '+e.cal+' cal':'')+'</div></div>';}
+  var re=document.createElement('div');re.className='cc';re.style.marginTop='8px';re.innerHTML='<div class="ct">RECENT</div>'+rc;cont.appendChild(re);
 }

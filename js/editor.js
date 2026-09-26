@@ -270,6 +270,9 @@ function saveExercise(){
   if(type==='Core'){ex.timed=coreFlags(name).timed;}
   var _cc=(typeof catFind==='function')?catFind(name):null;
   if(_cc&&_cc.s){ex.timed=true;ex.secs=rmin;}
+  // Cardio: from the catalog, or any exercise typed as "Cardio".
+  if((_cc&&_cc.c)||/^cardio$/i.test(type)){ex.cardio=true;ex.type='Cardio';ex.loaded=false;delete ex.timed;}
+  else delete ex.cardio;
 
   if(edIsTemplate()){
     // A week-by-week table (from duplicating a program with a deload week or a
@@ -416,10 +419,20 @@ function pkPicked(v){
     // keeps the sets and reps already set on it.
     var dft=CAT_DEFAULTS[c.t]||CAT_DEFAULTS.Isolation;
     el('ef-sets').value=dft.sets;
-    if(c.s){el('ef-reps').value=c.s;el('ef-reps-max').value='';}
+    if(c.c){el('ef-reps').value=c.min||30;el('ef-reps-max').value='';}
+    else if(c.s){el('ef-reps').value=c.s;el('ef-reps-max').value='';}
     else{el('ef-reps').value=dft.reps[0];el('ef-reps-max').value=(dft.reps[1]!==dft.reps[0]?dft.reps[1]:'');}
   }
   pkHint(c);
+}
+// "Last time: 32 min · 2.1 mi" for a cardio pick, from the log.
+function catCardioLast(name){
+  for(var i=(S.log||[]).length-1;i>=0;i--){
+    var ss=S.log[i].rawSets&&S.log[i].rawSets[name];if(!ss)continue;
+    var m=0,d=0;for(var j=0;j<ss.length;j++){if(ss[j].done){m+=parseFloat(ss[j].mins)||0;d+=parseFloat(ss[j].dist)||0;}}
+    if(m||d)return 'Last time: '+(m?m+' min':'')+(d?(m?' · ':'')+d+' mi':'')+'.';
+  }
+  return null;
 }
 function pkHint(c,custom){
   var h=el('pk-hint');if(!h)return;
@@ -431,6 +444,7 @@ function pkHint(c,custom){
     t='Your record: <b>'+r.weight+' lb × '+(r.reps||'?')+'</b>'+(d?' ('+(d.getMonth()+1)+'/'+d.getDate()+')':'')+
       ' — weights will prefill from your history.';
   }else t='New lift for you — no history yet.';
-  if(c.s)t+=' Timed: reps field is seconds.';
+  if(c.c)t=(catCardioLast(c.n)||'Cardio.')+' Reps field is target minutes; you log minutes, miles and calories.';
+  else if(c.s)t+=' Timed: reps field is seconds.';
   h.innerHTML=t;
 }

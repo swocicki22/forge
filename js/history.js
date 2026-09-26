@@ -60,7 +60,7 @@ function renderHome(){
   for(var i=0;i<recent.length;i++){
     var w=recent[i];var d2=new Date(w.date);var globalIdx=S.log.length-1-i;
     var item=document.createElement('div');item.className='li';
-    item.innerHTML='<div class="ld">'+w.lbl+'</div><div style="width:1px;height:20px;background:var(--bl);flex-shrink:0;"></div><div class="lin"><div class="ln">'+esc(w.name)+'<span style="font-family:\'Orbitron\',sans-serif;font-size:6px;color:var(--am);margin-left:7px">'+(w.ph?'PH'+w.ph+(w.wk?' W'+w.wk:''):'WK'+(w.week||1))+'</span></div><div class="lm">'+d2.toLocaleDateString()+' — '+w.dur+' — '+w.sets+' sets</div></div><div class="lv">'+w.vol.toLocaleString()+'<br><span style="font-size:6px;color:var(--s3)">LBS</span></div>';
+    item.innerHTML='<div class="ld">'+w.lbl+'</div><div style="width:1px;height:20px;background:var(--bl);flex-shrink:0;"></div><div class="lin"><div class="ln">'+esc(w.name)+'<span style="font-family:\'Orbitron\',sans-serif;font-size:6px;color:var(--am);margin-left:7px">'+(w.ph?'PH'+w.ph+(w.wk?' W'+w.wk:''):'WK'+(w.week||1))+'</span></div><div class="lm">'+d2.toLocaleDateString()+' — '+w.dur+' — '+w.sets+' sets</div></div><div class="lv">'+volOrCardio(w)+'</div>';
     (function(idx){item.onclick=function(){viewSession(idx);};})(globalIdx);
     rl.appendChild(item);
   }
@@ -96,7 +96,7 @@ function renderHistoryList(cont){
     var w=sessions[i];var globalIdx=S.log.length-1-i;var d=new Date(w.date);
     var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border);';
     var inner=document.createElement('div');inner.style.cssText='display:flex;align-items:center;gap:9px;flex:1;cursor:pointer;';
-    inner.innerHTML='<div style="font-family:\'Orbitron\',sans-serif;font-size:13px;color:var(--hl);width:24px;text-align:center;flex-shrink:0;">'+w.lbl+'</div><div style="flex:1;"><div style="font-family:\'Rajdhani\',sans-serif;font-weight:600;font-size:12px;">'+esc(w.name)+'</div><div style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:var(--s2);">'+d.toLocaleDateString()+' — '+w.dur+'</div></div><div style="font-family:\'Share Tech Mono\',monospace;font-size:8px;color:var(--hl);text-align:right;">'+w.vol.toLocaleString()+'<br><span style="font-size:6px;color:var(--s3)">LBS</span></div><div style="color:var(--s3);font-size:10px;">&#9658;</div>';
+    inner.innerHTML='<div style="font-family:\'Orbitron\',sans-serif;font-size:13px;color:var(--hl);width:24px;text-align:center;flex-shrink:0;">'+w.lbl+'</div><div style="flex:1;"><div style="font-family:\'Rajdhani\',sans-serif;font-weight:600;font-size:12px;">'+esc(w.name)+'</div><div style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:var(--s2);">'+d.toLocaleDateString()+' — '+w.dur+'</div></div><div style="font-family:\'Share Tech Mono\',monospace;font-size:8px;color:var(--hl);text-align:right;">'+volOrCardio(w)+'</div><div style="color:var(--s3);font-size:10px;">&#9658;</div>';
     (function(idx){inner.onclick=function(){viewingSessionIdx=idx;renderProg();};})(globalIdx);
     var delBtn=document.createElement('button');delBtn.style.cssText='background:none;border:none;color:var(--s3);font-size:14px;cursor:pointer;padding:4px 6px;flex-shrink:0;';delBtn.innerHTML='&#10005;';
     (function(idx){delBtn.onclick=function(e){e.stopPropagation();deleteWorkoutLog(idx);};})(globalIdx);
@@ -158,6 +158,7 @@ function renderHistoryDetail(cont, idx){
   for(var exName in w.rawSets){
     var sets=w.rawSets[exName];if(!sets||!sets.length)continue;
     var doneSets=sets.filter(function(s){return s.done;});if(!doneSets.length&&!editingSessionMode)continue;
+    if(isCardioSets(sets)){cont.appendChild(buildCardioHistBlock(exName,sets,idx));continue;}
     var best1rm=0;
     for(var i=0;i<doneSets.length;i++){
       var orm2=calcEpley(parseFloat(doneSets[i].weight)||0,parseFloat(doneSets[i].reps)||0);
@@ -206,6 +207,48 @@ function renderHistoryDetail(cont, idx){
     }
     cont.appendChild(block);
   }
+}
+
+// ── cardio in history ─────────────────────────────────────────
+// A session with no lifting volume but some cardio shows its minutes instead
+// of "0 LBS".
+function sessionCardioMins(w){
+  var m=0;if(!w||!w.rawSets)return 0;
+  for(var n in w.rawSets){var ss=w.rawSets[n]||[];for(var i=0;i<ss.length;i++)if(ss[i]&&ss[i].done&&ss[i].mins!=null)m+=parseFloat(ss[i].mins)||0;}
+  return m;
+}
+function volOrCardio(w){
+  var cm=(!w.vol)?sessionCardioMins(w):0;
+  if(cm)return cm+'<br><span style="font-size:6px;color:var(--s3)">MIN</span>';
+  return (w.vol||0).toLocaleString()+'<br><span style="font-size:6px;color:var(--s3)">LBS</span>';
+}
+function isCardioSets(sets){for(var i=0;i<(sets||[]).length;i++)if(sets[i]&&sets[i].mins!=null)return true;return false;}
+function buildCardioHistBlock(exName,sets,logIdx){
+  var block=document.createElement('div');block.className='hist-ex-block';
+  var tm=0,td=0;for(var i=0;i<sets.length;i++)if(sets[i].done){tm+=parseFloat(sets[i].mins)||0;td+=parseFloat(sets[i].dist)||0;}
+  var h='<div class="hist-ex-name">'+esc(exName)+'<span class="orm-badge"> &mdash; CARDIO'+(tm?' '+tm+' MIN':'')+(td?' \u00b7 '+Math.round(td*100)/100+' MI':'')+'</span></div>';
+  h+='<div class="hist-set-hdr"><div>#</div><div>MIN</div><div>MILES</div><div>CAL</div><div>'+(editingSessionMode?'DONE':'PACE')+'</div></div>';
+  block.innerHTML=h;
+  for(var i=0;i<sets.length;i++){
+    var s=sets[i],row=document.createElement('div');row.className='hist-set-row';
+    if(editingSessionMode){
+      row.innerHTML='<div>'+(i+1)+'</div>'+
+        ['mins','dist','cal'].map(function(f){return '<div><input class="hist-edit-inp" type="number" data-f="'+f+'" value="'+(s[f]===0||s[f]?s[f]:'')+'"/></div>';}).join('')+
+        '<div><input type="checkbox" style="width:16px;height:16px;accent-color:var(--hl);"'+(s.done?' checked':'')+'/></div>';
+      (function(si){
+        var ins=row.querySelectorAll('input[data-f]');
+        for(var k=0;k<ins.length;k++)ins[k].oninput=function(){var v=this.value;S.log[logIdx].rawSets[exName][si][this.getAttribute('data-f')]=(v===''?'':(parseFloat(v)||0));};
+        row.querySelector('input[type=checkbox]').onchange=function(){S.log[logIdx].rawSets[exName][si].done=this.checked;};
+      })(i);
+    }else{
+      if(!s.done)continue;
+      var m=parseFloat(s.mins)||0,d=parseFloat(s.dist)||0,pace='';
+      if(m&&d){var pm=m/d,mm=Math.floor(pm),ss=Math.round((pm-mm)*60);if(ss===60){mm++;ss=0;}pace=mm+':'+(ss<10?'0':'')+ss+'/mi';}
+      row.innerHTML='<div>'+(i+1)+'</div><div>'+(m||'-')+'</div><div>'+(d||'-')+'</div><div>'+(parseFloat(s.cal)||'-')+'</div><div>'+(pace||'-')+'</div>';
+    }
+    block.appendChild(row);
+  }
+  return block;
 }
 
 // ════════════════════════════════

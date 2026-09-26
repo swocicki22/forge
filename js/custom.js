@@ -147,6 +147,7 @@ function buildCustomSlots(sess,week,weeks,wk){
     if(e.loaded)slot.loaded=true;
     if(e.timed){slot.timed=true;slot.secs=e.secs;slot.repMin=e.secs;slot.repMax=e.secs;}
     if(e.ca)slot.ca=true;
+    if(e.cardio){slot.cardio=true;slot.loaded=false;}
     if(e.alt){slot.alt=e.alt;slot.altImpl=e.altImpl;}
     slot.dr=slot.repMin;
     out.push(slot);
@@ -312,6 +313,7 @@ function slotsToTemplate(firstEx,lastEx){
     if(a.loaded)t.loaded=true;
     if(a.timed){t.timed=true;t.secs=a.secs;}
     if(a.ca)t.ca=true;
+    if(a.cardio)t.cardio=true;
     if(a.alt){t.alt=a.alt;t.altImpl=a.altImpl;}
     out.push(t);
   }
@@ -400,7 +402,7 @@ function phaseRepTargets(p){
   for(var s=0;s<p.sessions.length;s++){
     var ss=p.sessions[s];if(!used[ss.sid])continue;
     for(var i=0;i<ss.ex.length;i++){
-      var e=ss.ex[i];if(e.timed)continue;
+      var e=ss.ex[i];if(e.timed||e.cardio)continue;
       out.push({key:ss.sid+':'+i,sid:ss.sid,i:i,ex:e,sess:ss});
     }
   }

@@ -218,6 +218,12 @@ function startWkt(dayId){
   var suggestions=getOverloadSuggestions();var suggestMap={};for(var i=0;i<suggestions.length;i++)suggestMap[suggestions[i].name]=suggestions[i].suggest;
   for(var i=0;i<day.ex.length;i++){
     var ex=day.ex[i];var dw=ex.dw;
+    if(ex.cardio){
+      // One bout by default. Target minutes come from the program's reps.
+      var tm=(ex.repMin!=null?ex.repMin:(ex.dr||30)),ca=[];
+      for(var cj=0;cj<(ex.ds||1);cj++)ca.push({weight:0,reps:0,mins:tm,dist:'',cal:'',done:false,warmup:false,rpe:0});
+      S.sets[ex.name]=ca;continue;
+    }
     // Slot-level reps win. Only a legacy day with no stored range falls
     // back to the global CYCLE table.
     var _rr0=resolveReps(ex,wd),dr=_rr0.min;
@@ -256,6 +262,15 @@ function exByName(name){var day=S.activeDay;if(!day)return null;for(var i=0;i<da
 
 function buildSetRowHTML(ex,set,j){
   var ek=ekOf(ex.name);var ea=escAttr(ex.name);
+  if(ex.cardio){
+    var num=function(f,id,ph,mode){return '<input class="sinp cr-inp" type="number" inputmode="'+mode+'" placeholder="'+ph+'" id="'+id+'-'+ek+'-'+j+'" value="'+(set[f]===0||set[f]?set[f]:'')+'" data-ex="'+ea+'" data-f="'+f+'" data-idx="'+j+'"/>';};
+    return '<div class="sr cr'+(set.done?' done':'')+'" id="sr-'+ek+'-'+j+'"><div class="sn">'+(j+1)+'</div>'+
+      '<div class="step"><button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="mins" data-idx="'+j+'" data-d="-5">-</button>'+num('mins','m','min','numeric')+
+      '<button class="sbtn" data-act="step" data-ex="'+ea+'" data-f="mins" data-idx="'+j+'" data-d="5">+</button></div>'+
+      '<div class="step">'+num('dist','d','mi','decimal')+'</div>'+
+      '<div class="step">'+num('cal','c','cal','numeric')+'</div>'+
+      '<button class="schk'+(set.done?' done':'')+'" data-act="chk" data-ex="'+ea+'" data-idx="'+j+'">'+(set.done?'&#10003;':'')+'</button></div>';
+  }
   if(ex.type==='Core'){
     var timed=(ex.timed!==undefined)?ex.timed:/plank|hold|l-sit|hollow|dead ?hang/i.test(ex.name);
     var repLabel=timed?'sec':'reps';
@@ -330,10 +345,10 @@ function renderActive(){
     var ssb=ex.ss?'<div class="ssb">'+esc(ex.ss)+'</div>':'';
     var notesBtn=ex.notes?'<button class="info-btn" data-act="notes" data-ek="'+ek+'">i</button>':'';
     var _rr=resolveReps(ex,wd);
-    var trg='<div class="target-reps">'+(_rr.min===_rr.max?_rr.min:_rr.min+'-'+_rr.max)+'</div>';
+    var trg='<div class="target-reps">'+(_rr.min===_rr.max?_rr.min:_rr.min+'-'+_rr.max)+(ex.cardio?' MIN':'')+'</div>';
     var olBadge=suggestSet[ex.name]?'<div class="ex-overload">&#9650; INCREASE</div>':'';
     var subBtn='<button class="info-btn" data-act="sub" data-ex="'+ea+'" title="Substitute" style="border-color:var(--hlbr);color:var(--hl);">&#8652;</button>';
-    blk.innerHTML='<div class="eh"><div style="flex:1;"><div class="en">'+esc(ex.name)+'</div><div class="et">'+esc(ex.type)+'</div></div>'+olBadge+trg+subBtn+notesBtn+ssb+'<button class="rem-ex-btn" data-act="remex" data-ex="'+ea+'">&#10005;</button></div><div class="shr"><div class="sc">#</div><div class="sc wt-tog" data-act="bwtog" data-ex="'+ea+'">'+(exIsLoaded(ex)?'LBS':'BW')+' &#8644;</div><div class="sc">REPS</div><div class="sc">WU</div><div class="sc">&#10003;</div></div>'+sh+'<div style="display:flex;border-top:1px solid var(--border);"><button class="addbtn" style="border-top:none;border-right:1px solid var(--border);" data-act="adds" data-ex="'+ea+'">+ ADD SET</button><button class="addbtn" style="border-top:none;color:var(--danger);" data-act="rems" data-ex="'+ea+'">- REMOVE</button></div>';
+    blk.innerHTML='<div class="eh"><div style="flex:1;"><div class="en">'+esc(ex.name)+'</div><div class="et">'+esc(ex.type)+'</div></div>'+olBadge+trg+subBtn+notesBtn+ssb+'<button class="rem-ex-btn" data-act="remex" data-ex="'+ea+'">&#10005;</button></div>'+(ex.cardio?'<div class="shr cr"><div class="sc">#</div><div class="sc">MINUTES</div><div class="sc">MILES</div><div class="sc">CAL</div><div class="sc">&#10003;</div></div>':'<div class="shr"><div class="sc">#</div><div class="sc wt-tog" data-act="bwtog" data-ex="'+ea+'">'+(exIsLoaded(ex)?'LBS':'BW')+' &#8644;</div><div class="sc">REPS</div><div class="sc">WU</div><div class="sc">&#10003;</div></div>')+sh+'<div style="display:flex;border-top:1px solid var(--border);"><button class="addbtn" style="border-top:none;border-right:1px solid var(--border);" data-act="adds" data-ex="'+ea+'">+ ADD SET</button><button class="addbtn" style="border-top:none;color:var(--danger);" data-act="rems" data-ex="'+ea+'">- REMOVE</button></div>';
     list.appendChild(blk);
   }
   if(core.length){
@@ -422,6 +437,13 @@ function confirmAddExToWorkout(){
     if(_f&&_f.repMin!=null)_slotReps={min:_f.repMin,max:(_f.repMax!=null?_f.repMax:_f.repMin)};
   }
   var _dr=_slotReps?_slotReps.min:(wd.repMin||wd.reps);
+  // Cardio added mid-session: a catalog cardio name, or type "Cardio".
+  var _cat=(typeof catFind==='function')?catFind(name):null;
+  if((_cat&&_cat.c)||/^cardio$/i.test(type)){
+    var cx={name:name,type:'Cardio',cardio:true,loaded:false,ds:1,dr:(_cat&&_cat.min)||30,repMin:(_cat&&_cat.min)||30,repMax:(_cat&&_cat.min)||30,dw:0,ss:'',notes:''};
+    S.activeDay.ex.push(cx);S.sets[name]=[{weight:0,reps:0,mins:cx.repMin,dist:'',cal:'',done:false,warmup:false,rpe:0}];
+    closeModal('add-ex-workout-mo');renderActive();saveActive();showToast('CARDIO ADDED');return;
+  }
   var newEx={name:name,type:type,ds:sets,dr:_dr,dw:weight,ss:'',notes:''};
   if(_slotReps){newEx.repMin=_slotReps.min;newEx.repMax=_slotReps.max;}
   if(type==='Core'){var cf=coreFlags(name);newEx.loaded=cf.loaded;newEx.timed=cf.timed;}
@@ -430,6 +452,7 @@ function confirmAddExToWorkout(){
 }
 function exIsLoaded(ex){
   if(!ex)return true;
+  if(ex.cardio)return false;
   if(ex.loaded!==undefined)return !!ex.loaded;
   if(ex.type==='Core')return coreFlags(ex.name).loaded;
   // Marked as bodyweight equipment and never told otherwise: jumps, plyo
@@ -466,7 +489,7 @@ function updS(exName,idx,field,val){
   if(val===''){S.sets[exName][idx][field]='';saveActiveDebounced();return;}
   var n=parseFloat(val);
   if(!isFinite(n)||n<0)return;
-  var max=field==='weight'?2000:500;
+  var max=field==='weight'?2000:field==='cal'?9999:field==='mins'?1440:500;
   if(n>max)n=max;
   S.sets[exName][idx][field]=n;
   saveActiveDebounced();
@@ -474,7 +497,7 @@ function updS(exName,idx,field,val){
 function doStep(exName,field,idx,delta){
   if(!S.sets[exName]||!S.sets[exName][idx])return;
   var ek=ekOf(exName);
-  var inp=el((field==='weight'?'w-':'r-')+ek+'-'+idx);
+  var inp=el((field==='weight'?'w-':field==='mins'?'m-':'r-')+ek+'-'+idx);
   var cur=parseFloat(S.sets[exName][idx][field])||0;
   var nv=Math.max(0,cur+delta);
   if(field==='weight')nv=Math.round(nv/2.5)*2.5;
@@ -497,7 +520,8 @@ function togS(exName,idx){
   var row=el('sr-'+ek+'-'+idx);
   if(row){if(set.done)row.classList.add('done');else row.classList.remove('done');var btn=row.querySelector('.schk');if(set.done)btn.classList.add('done');else btn.classList.remove('done');btn.innerHTML=set.done?'&#10003;':'';var num=row.querySelector('.sn');if(num)num.style.color=set.done?'var(--hl)':'';}
   updProg();saveActive();
-  if(set.done&&!set.warmup){
+  // A finished cardio bout needs no rest timer or effort rating.
+  if(set.done&&!set.warmup&&set.mins==null){
     lastCheckedExName=exName;
     lastCheckedSetIdx=idx;
     initRPEGrid();
@@ -507,7 +531,9 @@ function togS(exName,idx){
 function addS(exName){
   if(!S.sets[exName])return;
   var sets=S.sets[exName];var last=sets[sets.length-1];
-  sets.push({weight:last?last.weight:'',reps:last?last.reps:'',done:false,warmup:false,rpe:0});
+  var _ex0=exByName(exName);
+  if(_ex0&&_ex0.cardio)sets.push({weight:0,reps:0,mins:last?last.mins:'',dist:'',cal:'',done:false,warmup:false,rpe:0});
+  else sets.push({weight:last?last.weight:'',reps:last?last.reps:'',done:false,warmup:false,rpe:0});
   // Surgical insert — full re-render would drop keyboard focus mid-entry
   var ex=exByName(exName);var j=sets.length-1;var ek=ekOf(exName);
   var prev=el('sr-'+ek+'-'+(j-1));
@@ -564,7 +590,10 @@ function showFinMo(){
   var elapsed=Math.floor((Date.now()-S.start)/1000);var day=S.activeDay;var wd=getWeekData();var ts=0,ds=0,vol=0,warmups=0;
   for(var i=0;i<day.ex.length;i++){var sets=S.sets[day.ex[i].name];if(!sets)continue;for(var j=0;j<sets.length;j++){if(sets[j].warmup){warmups++;continue;}ts++;if(sets[j].done){ds++;vol+=(parseFloat(sets[j].weight)||0)*(parseFloat(sets[j].reps)||0);}}}
   if(S.removedSets){for(var rk in S.removedSets){var rs=S.removedSets[rk];for(var j=0;j<rs.length;j++){if(rs[j].warmup){warmups++;continue;}if(rs[j].done){ts++;ds++;vol+=(parseFloat(rs[j].weight)||0)*(parseFloat(rs[j].reps)||0);}}}}
-  el('finsum').innerHTML='PROTOCOL: '+esc(day.name)+'<br>'+(day.phase?posText(day).toUpperCase().replace('PHASE ','PHASE: '):'WEEK: '+wd.week+' ('+wd.label+')')+'<br>DURATION: '+Math.floor(elapsed/60)+' MIN<br>WORKING SETS: '+ds+' / '+ts+'<br>WARM-UP SETS: '+warmups+'<br>VOLUME: '+vol.toLocaleString()+' LBS';
+  var _cm=0,_cd=0,_cc=0;
+  for(var _cx in S.sets){var _cs=S.sets[_cx]||[];for(var _ci=0;_ci<_cs.length;_ci++){var _c=_cs[_ci];if(_c&&_c.done&&_c.mins!=null){_cm+=parseFloat(_c.mins)||0;_cd+=parseFloat(_c.dist)||0;_cc+=parseFloat(_c.cal)||0;}}}
+  var _cardioTxt=(_cm||_cd)?'<br>CARDIO: '+(_cm?_cm+' MIN':'')+(_cd?' \u00b7 '+Math.round(_cd*100)/100+' MI':'')+(_cc?' \u00b7 '+_cc+' CAL':''):'';
+  el('finsum').innerHTML='PROTOCOL: '+esc(day.name)+'<br>'+(day.phase?posText(day).toUpperCase().replace('PHASE ','PHASE: '):'WEEK: '+wd.week+' ('+wd.label+')')+'<br>DURATION: '+Math.floor(elapsed/60)+' MIN<br>WORKING SETS: '+ds+' / '+ts+'<br>WARM-UP SETS: '+warmups+'<br>VOLUME: '+vol.toLocaleString()+' LBS'+_cardioTxt;
   el('finmo').classList.add('visible');
 }
 function confirmFin(){

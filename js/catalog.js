@@ -10,12 +10,13 @@
 // a brand-new record line with no history behind it.
 //
 // Fields: n name · m muscle group · e equipment · t type · s seconds (timed)
+//         c cardio (logged as minutes / miles / calories) · min default minutes
 //   e: smith | barbell | dumbbell | cable | machine | bw
-//   t: Compound | Isolation | Power | Core | Conditioning
+//   t: Compound | Isolation | Power | Core | Conditioning | Cardio
 // ════════════════════════════════
 
 var CAT_MUSCLES=['Chest','Back','Shoulders','Biceps','Triceps','Quads','Hamstrings',
-                 'Glutes','Calves','Core','Power','Conditioning'];
+                 'Glutes','Calves','Core','Power','Conditioning','Cardio'];
 // Equipment filter. "Free weights" is barbell + dumbbell together.
 var CAT_EQUIP=[['all','All equipment'],['smith','Smith machine'],['free','Free weights'],
                ['cable','Cable'],['machine','Machine'],['bw','Bodyweight']];
@@ -198,14 +199,30 @@ var CATALOG=[
   {n:"Farmer's Carry",m:'Conditioning',e:'dumbbell',t:'Conditioning',s:45},
   {n:'Incline Treadmill Sprint',m:'Conditioning',e:'machine',t:'Conditioning',s:20},
   {n:'Stairmaster Intervals',m:'Conditioning',e:'machine',t:'Conditioning',s:900},
-  {n:'Rowing Machine',m:'Conditioning',e:'machine',t:'Conditioning',s:300},
-  {n:'Assault Bike',m:'Conditioning',e:'machine',t:'Conditioning',s:300}
+
+  // ── Cardio (steady state: minutes, distance, calories)
+  {n:'Incline Treadmill Walk',m:'Cardio',e:'machine',t:'Cardio',c:1,min:30},
+  {n:'Treadmill Walk',m:'Cardio',e:'machine',t:'Cardio',c:1,min:30},
+  {n:'Treadmill Run',m:'Cardio',e:'machine',t:'Cardio',c:1,min:20},
+  {n:'Stairmaster',m:'Cardio',e:'machine',t:'Cardio',c:1,min:20},
+  {n:'Stationary Bike',m:'Cardio',e:'machine',t:'Cardio',c:1,min:30},
+  {n:'Recumbent Bike',m:'Cardio',e:'machine',t:'Cardio',c:1,min:30},
+  {n:'Elliptical',m:'Cardio',e:'machine',t:'Cardio',c:1,min:30},
+  {n:'Arc Trainer',m:'Cardio',e:'machine',t:'Cardio',c:1,min:30},
+  {n:'Rowing Machine',m:'Cardio',e:'machine',t:'Cardio',c:1,min:15},
+  {n:'Assault Bike',m:'Cardio',e:'machine',t:'Cardio',c:1,min:15},
+  {n:'Outdoor Walk',m:'Cardio',e:'bw',t:'Cardio',c:1,min:30},
+  {n:'Outdoor Run',m:'Cardio',e:'bw',t:'Cardio',c:1,min:30},
+  {n:'Hike',m:'Cardio',e:'bw',t:'Cardio',c:1,min:60},
+  {n:'Cycling',m:'Cardio',e:'bw',t:'Cardio',c:1,min:45},
+  {n:'Swimming',m:'Cardio',e:'bw',t:'Cardio',c:1,min:30},
+  {n:'Pickup Basketball',m:'Cardio',e:'bw',t:'Cardio',c:1,min:60}
 ];
 
 // Sensible starting sets/reps for a newly added exercise, by type.
 var CAT_DEFAULTS={Power:{sets:4,reps:[3,3]},Compound:{sets:4,reps:[6,8]},
                   Isolation:{sets:3,reps:[10,12]},Core:{sets:3,reps:[12,15]},
-                  Conditioning:{sets:1,reps:[1,1]}};
+                  Conditioning:{sets:1,reps:[1,1]},Cardio:{sets:1,reps:[30,30]}};
 
 function catFind(name){
   for(var i=0;i<CATALOG.length;i++){if(CATALOG[i].n===name)return CATALOG[i];}
