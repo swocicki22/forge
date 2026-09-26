@@ -19,6 +19,8 @@ function getOverloadSuggestions(){
   // require hitting the TOP of that phase's range in both before
   // suggesting +2.5. Cross-phase weights are never compared.
   var suggestions=[];var wd=getWeekData();var curWeek=wd.week;
+  var _ap=activeProgram();
+  if(_ap&&_ap.peri==='slot')return suggestions;
   var topTarget=wd.repMax||wd.reps;
   var exNames={};
   for(var i=0;i<S.days.length;i++){for(var j=0;j<S.days[i].ex.length;j++){var ex=S.days[i].ex[j];if(ex.type!=='Core')exNames[ex.name]=true;}}
@@ -53,12 +55,23 @@ function getOverloadSuggestions(){
 // becomes ~235 on an OVERLOAD week (.87) but ~175 on ENDURANCE (.65) —
 // no more 4-6 rep loads showing up on 12-15 rep days.
 // ════════════════════════════════
-function bestRecentE1RM(exName,maxSessions){
+// Find this lift's sets in one logged session. Exact name first; otherwise
+// any exercise that is the SAME LIFT by liftKey — so "Smith Bench Press" in a
+// new program finds history logged as "Barbell Bench Press" (which was a Smith
+// machine), while a real barbell bench (impl 'barbell') stays separate.
+function liftSetsIn(entry,exName,impl){
+  var raw=entry&&entry.rawSets;if(!raw)return null;
+  var want=liftKey(exName,impl||null).key, impls=entry.impls||{};
+  if(raw[exName]&&liftKey(exName,impls[exName]||null).key===want)return raw[exName];
+  for(var n in raw){if(liftKey(n,impls[n]||null).key===want)return raw[n];}
+  return null;
+}
+function bestRecentE1RM(exName,maxSessions,impl){
   var found=0,best=0;
   for(var i=S.log.length-1;i>=0&&found<maxSessions;i--){
     var w=S.log[i];
-    if(!w.rawSets||!w.rawSets[exName])continue;
-    var sets=w.rawSets[exName];var has=false;
+    var sets=liftSetsIn(w,exName,impl);if(!sets)continue;
+    var has=false;
     for(var j=0;j<sets.length;j++){
       var s=sets[j];
       if(s.done&&!s.warmup&&s.weight&&s.reps){
@@ -71,7 +84,18 @@ function bestRecentE1RM(exName,maxSessions){
   }
   return best;
 }
-function getTargetWeight(exName,wd){
+function getTargetWeight(exName,wd,slot){
+  // Programs that carry their own reps size the weight to THIS exercise's
+  // target, not to the global periodization week, which means nothing to them.
+  if(slot&&slot.repMin!=null){
+    var e1s=bestRecentE1RM(exName,3,slot.impl);
+    if(!e1s)return null;
+    var w;
+    if(slot.pct!=null)w=e1s*slot.pct/100;               // programmed %1RM (Shred)
+    else w=e1s/(1+(slot.repMax||slot.repMin)/30);        // Epley, solved for the top of the range
+    w=Math.round(w/2.5)*2.5;
+    return w>0?w:null;
+  }
   // Same-phase continuity: if this exercise was logged in the CURRENT
   // phase week within the last 35 days, carry that session's top working
   // weight forward unchanged — your logged numbers come back exactly.
@@ -79,9 +103,8 @@ function getTargetWeight(exName,wd){
     var w=S.log[i];
     if(Date.now()-new Date(w.date).getTime()>35*864e5)break;
     if((w.week||0)!==wd.week)continue;
-    if(!w.rawSets||!w.rawSets[exName])continue;
+    var sets=liftSetsIn(w,exName,null);if(!sets)continue;
     var best=0;
-    var sets=w.rawSets[exName];
     for(var j=0;j<sets.length;j++){
       var s=sets[j];
       if(s.done&&!s.warmup&&s.weight&&(parseFloat(s.weight)||0)>best)best=parseFloat(s.weight)||0;

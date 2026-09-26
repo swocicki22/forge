@@ -269,7 +269,7 @@ function doSubstitute(newName){
       // newEx is a deep copy of the slot being replaced, so it already carries
       // that slot's repMin/repMax when the program defines one.
       var dr=resolveReps(newEx,wd).min;
-      var tw=getTargetWeight(newName,wd);
+      var tw=getTargetWeight(newName,wd,(newEx.repMin!=null?newEx:null));
       var dw=tw!==null?tw:'';
       var nSets=oldEx.ds||oldSets.length||3;
       var arr=[];

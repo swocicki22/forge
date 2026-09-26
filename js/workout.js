@@ -138,7 +138,7 @@ function startWkt(dayId){
     else if(exNameLower.indexOf('shrug')>=0)dr=Math.max(12,dr);
     // Phase-scaled target from your own e1RM history; falls back to the
     // day's prescribed default when there's no history yet
-    var tw=getTargetWeight(ex.name,wd);
+    var tw=getTargetWeight(ex.name,wd,(ex.repMin!=null?ex:null));
     if(tw!==null)dw=tw;
     // Phase-aware overload bump (same-phase comparison only)
     if(suggestMap[ex.name])dw=suggestMap[ex.name];
