@@ -6,41 +6,41 @@
 // version a fresh index.html would run against the PREVIOUS deploy's cached
 // scripts. Versioned URLs make a new page request files no cache holds.
 // To deploy: bump CACHE, then run the same ?v= bump over index.html and sw.js.
-// v15 = session-loss fixes, PR identity fixes, program builder
+// v16 = weight prefill finds history by lift identity and sizes to each exercise's reps
 // ════════════════════════════════
-const CACHE = 'forge-v15';
+const CACHE = 'forge-v16';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './forge-icon-192.png',
   './forge-icon-512.png',
-  './css/base.css?v=15',
-  './css/auth.css?v=15',
-  './css/workout.css?v=15',
-  './css/analytics.css?v=15',
-  './css/health.css?v=15',
-  './css/nutrition.css?v=15',
-  './js/core.js?v=15',
-  './js/storage.js?v=15',
-  './js/state.js?v=15',
-  './js/library.js?v=15',
-  './js/programs.js?v=15',
-  './js/hardwood.js?v=15',
-  './js/custom.js?v=15',
-  './js/periodization.js?v=15',
-  './js/workout.js?v=15',
-  './js/editor.js?v=15',
-  './js/history.js?v=15',
-  './js/analytics.js?v=15',
-  './js/vitals.js?v=15',
-  './js/peptides.js?v=15',
-  './js/nutrition.js?v=15',
-  './js/migrate.js?v=15',
-  './js/programs-ui.js?v=15',
-  './js/backup.js?v=15',
-  './js/splash.js?v=15',
-  './js/boot.js?v=15'
+  './css/base.css?v=16',
+  './css/auth.css?v=16',
+  './css/workout.css?v=16',
+  './css/analytics.css?v=16',
+  './css/health.css?v=16',
+  './css/nutrition.css?v=16',
+  './js/core.js?v=16',
+  './js/storage.js?v=16',
+  './js/state.js?v=16',
+  './js/library.js?v=16',
+  './js/programs.js?v=16',
+  './js/hardwood.js?v=16',
+  './js/custom.js?v=16',
+  './js/periodization.js?v=16',
+  './js/workout.js?v=16',
+  './js/editor.js?v=16',
+  './js/history.js?v=16',
+  './js/analytics.js?v=16',
+  './js/vitals.js?v=16',
+  './js/peptides.js?v=16',
+  './js/nutrition.js?v=16',
+  './js/migrate.js?v=16',
+  './js/programs-ui.js?v=16',
+  './js/backup.js?v=16',
+  './js/splash.js?v=16',
+  './js/boot.js?v=16'
 ];
 
 self.addEventListener('install', function (e) {
