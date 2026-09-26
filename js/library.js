@@ -195,7 +195,16 @@ var pendingSubExName = null;
 function openSubstitute(exName){
   pendingSubExName = exName;
   el('sub-ex-title').textContent='SUBSTITUTE: '+exName.toUpperCase();
-  var subs = SUB_MAP[exName] || [];
+  var subs = (SUB_MAP[exName] || []).slice();
+  // The slot's designated alternate (e.g. the barbell version of a Smith
+  // lift) goes first. This is what "use the barbell if a rack is open" means.
+  var slot=null;
+  if(S.activeDay){for(var si=0;si<S.activeDay.ex.length;si++){if(S.activeDay.ex[si].name===exName){slot=S.activeDay.ex[si];break;}}}
+  var altName=(slot&&slot.alt)?slot.alt:null;
+  if(altName){
+    var ai=subs.indexOf(altName); if(ai>=0)subs.splice(ai,1);
+    subs.unshift(altName);
+  }
   var list = el('sub-ex-list');
   list.innerHTML='';
   if(!subs.length){
@@ -213,7 +222,9 @@ function openSubstitute(exName){
     for(var j=0;j<LIB.length;j++){if(LIB[j].name===subName){tip=LIB[j].tip;break;}}
     var item=document.createElement('div');
     item.className='sub-ex-item';
-    item.innerHTML='<div style="flex:1;"><div class="sub-ex-name">'+subName+'</div><div class="sub-ex-type">'+tip+'</div></div><div style="color:var(--hl);font-family:Orbitron,sans-serif;font-size:8px;">SWAP</div>';
+    var isAlt=(subName===altName);
+    if(isAlt)tip='Designated alternate'+(slot.altImpl?' \u2014 '+(IMPL_LABEL[slot.altImpl]||slot.altImpl).toUpperCase()+', tracked as its own lift':'');
+    item.innerHTML='<div style="flex:1;"><div class="sub-ex-name">'+esc(subName)+(isAlt?' <span class="impl-tag">ALT</span>':'')+'</div><div class="sub-ex-type">'+esc(tip)+'</div></div><div style="color:var(--hl);font-family:Orbitron,sans-serif;font-size:8px;">SWAP</div>';
     (function(name){item.onclick=function(){doSubstitute(name);};})(subName);
     list.appendChild(item);
   }
@@ -236,6 +247,17 @@ function doSubstitute(newName){
       // Build the incoming exercise with its own identity
       var newEx=JSON.parse(JSON.stringify(oldEx));
       newEx.name=newName;
+      // The deep copy carries the OLD exercise's implement. Left alone, a Smith
+      // squat swapped for a leg press would file the leg press PR as a Smith
+      // lift. Only the designated alternate gets a known implement; anything
+      // else falls back to inference. The alternate link is kept pointing the
+      // other way so the swap can be undone.
+      if(oldEx.alt&&newName===oldEx.alt){
+        newEx.impl=oldEx.altImpl||null;
+        newEx.alt=oldEx.name;newEx.altImpl=oldEx.impl||null;
+      }else{
+        delete newEx.impl;delete newEx.alt;delete newEx.altImpl;
+      }
       newEx.notes=libEx?(libEx.tip||''):'';
       if(libEx)newEx.type=libEx.type;
       if(newEx.type==='Core'){var ncf=coreFlags(newName);newEx.loaded=ncf.loaded;newEx.timed=ncf.timed;}

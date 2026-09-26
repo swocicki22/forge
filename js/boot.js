@@ -12,6 +12,20 @@ function showScreen(id){
   if(id==='s-progress')renderProg();
   if(id==='s-library')renderLib();
   if(id==='s-body')renderBody();
+  updateLivePill();
+}
+
+// ── Live session pill ──
+// Shown on every screen except the session itself whenever a session is
+// running, so there is always a way back to it.
+function updateLivePill(t){
+  var pill=el('live-pill');if(!pill)return;
+  var onActive=el('s-active').classList.contains('active');
+  if(!hasLiveSession()||onActive){pill.classList.remove('visible');return;}
+  if(!t){var e=Math.floor((Date.now()-S.start)/1000),s=e%60;t=Math.floor(e/60)+':'+(s<10?'0':'')+s;}
+  pill.innerHTML='<span class="lp-dot"></span><span class="lp-name">'+esc((S.activeDay.name||'SESSION').toUpperCase())+
+                 '</span><span class="lp-time">'+t+'</span><span class="lp-go">RETURN &#9656;</span>';
+  pill.classList.add('visible');
 }
 
 // ════════════════════════════════

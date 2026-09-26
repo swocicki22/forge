@@ -88,7 +88,7 @@ function buildHardwoodSessions(){
       {name:'Smith Bench Press',impl:'smith',type:'Power',dw:160,blk:'heavy',lin:true,
        alt:'Barbell Bench Press',altImpl:'barbell',
        notes:'The main upper lift. Reps fall and weight climbs weekly. Controlled down, drive hard off the chest. '+HW_NOCA},
-      {name:'Wide-Grip Lat Pulldown',impl:'machine',type:'Strength',dw:180,blk:'heavy',lin:true,
+      {name:'Wide-Grip Lat Pulldown',impl:'cable',type:'Strength',dw:180,blk:'heavy',lin:true,
        alt:'Weighted Pull-Up',altImpl:'bw',
        notes:'Pull to the upper chest, full stretch at the top. Swap in weighted pull-ups whenever you can do 8 clean.'},
       {name:'Smith Overhead Press',impl:'smith',type:'Strength',dw:95,blk:'pump',rev:true,
@@ -134,7 +134,7 @@ function buildHardwoodSessions(){
       {name:'Smith Speed Bench',impl:'smith',type:'Power',dw:95,blk:'speed',spd:true,
        alt:'Barbell Speed Bench',altImpl:'barbell',
        notes:'Explosive off the chest, 45 sec rest. Same rule as speed squats — when the bar slows, you are done for the day. '+HW_NOCA},
-      {name:'Explosive Lat Pulldown',impl:'machine',type:'Power',dw:140,blk:'speed',power:true,sets:5,
+      {name:'Explosive Lat Pulldown',impl:'cable',type:'Power',dw:140,blk:'speed',power:true,sets:5,
        notes:'Pull fast, return under control. Speed matters on the pulling side too.'},
       {name:'Incline Dumbbell Press',impl:'dumbbell',type:'Hypertrophy',dw:145,blk:'pump',rev:true,
        notes:'Pump block starts here. '+HW_CA_SHORT},
@@ -178,7 +178,7 @@ function hwCoreBlock(){
     var e=src[i];
     // A core slot carrying dr as seconds (plank, side plank) is timed.
     var timed=/plank/i.test(e.name);
-    out.push({name:e.name,impl:'bw',type:'Core',dw:e.dw||0,
+    out.push({name:e.name,impl:(/cable/i.test(e.name)?'cable':'bw'),type:'Core',dw:e.dw||0,
               ss:'X'+(i+1),blk:'core',
               loaded:!!e.loaded,
               timed:timed,secs:timed?e.dr:null,

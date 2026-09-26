@@ -56,26 +56,8 @@ function renderHome(){
 // ════════════════════════════════
 function viewSession(idx){viewingSessionIdx=idx;aTab='history';var tabs=document.querySelectorAll('.ptb');for(var i=0;i<tabs.length;i++)tabs[i].classList.remove('active');showScreen('s-progress');renderProg();}
 
-function renderHistoryDetail(cont,idx){
-  var w=S.log[idx];if(!w){renderHistoryList(cont);return;}
-  var d=new Date(w.date);
-  var back=document.createElement('button');back.className='hist-back';back.innerHTML='&#9666; ALL SESSIONS';back.onclick=function(){viewingSessionIdx=null;renderProg();};cont.appendChild(back);
-  var header=document.createElement('div');header.className='hist-session-header';
-  header.innerHTML='<div class="hist-day-num">'+w.lbl+'</div><div class="hist-day-name">'+esc(w.name)+'</div><div class="hist-meta">'+d.toLocaleDateString()+' &mdash; '+d.toLocaleTimeString()+'<br>Duration: '+w.dur+'<br>Volume: '+w.vol.toLocaleString()+' lbs<br>Week '+(w.week||1)+' &mdash; '+(w.phase||'')+'</div>';
-  cont.appendChild(header);
-  if(!w.rawSets){var empty=document.createElement('div');empty.className='es';empty.innerHTML='<div class="ei">NO SET DATA</div>';cont.appendChild(empty);return;}
-  for(var exName in w.rawSets){
-    var sets=w.rawSets[exName];if(!sets||!sets.length)continue;
-    var doneSets=sets.filter(function(s){return s.done;});if(!doneSets.length)continue;
-    var best1rm=0;for(var i=0;i<doneSets.length;i++){var orm=calcEpley(parseFloat(doneSets[i].weight)||0,parseFloat(doneSets[i].reps)||0);if(orm>best1rm)best1rm=orm;}
-    var block=document.createElement('div');block.className='hist-ex-block';
-    var hdr='<div class="hist-ex-name">'+esc(exName);if(best1rm>0)hdr+='<span class="orm-badge"> &mdash; e1RM: '+best1rm+'lb</span>';hdr+='</div>';
-    hdr+='<div class="hist-set-hdr"><div>#</div><div>WEIGHT</div><div>REPS</div><div>VOL</div><div>TYPE</div></div>';
-    block.innerHTML=hdr;
-    for(var i=0;i<sets.length;i++){var s=sets[i];if(!s.done)continue;var vol=(parseFloat(s.weight)||0)*(parseFloat(s.reps)||0);var row=document.createElement('div');row.className='hist-set-row'+(s.warmup?' warmup-row':'');row.innerHTML='<div>'+(i+1)+'</div><div>'+(s.weight||0)+'lb</div><div>'+(s.reps||0)+'</div><div>'+vol+'</div><div>'+(s.warmup?'WU':'WK')+'</div>';block.appendChild(row);}
-    cont.appendChild(block);
-  }
-}
+// renderHistoryDetail: an earlier definition stood here, shadowed by the one
+// below since before the modular split. Removed so edits land on live code.
 
 function deleteWorkoutLog(idx){S.pendingDeleteLog=idx;var w=S.log[idx];el('del-log-name').textContent=w.name+' — '+new Date(w.date).toLocaleDateString();el('del-log-mo').classList.add('visible');}
 function confirmDeleteLog(){

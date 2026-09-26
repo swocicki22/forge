@@ -36,7 +36,7 @@ function renderVol(cont){
 function renderPRs(cont){
   var keys=Object.keys(S.prs);if(!keys.length){cont.innerHTML='<div class="es"><div class="ei">NO RECORDS YET</div><div class="esb">Log weights to track PRs.</div></div>';return;}
   var grid=document.createElement('div');grid.className='prg';
-  for(var i=0;i<keys.length;i++){var k=keys[i];var pr=S.prs[k];var d=new Date(pr.date);var c=document.createElement('div');c.className='prc';c.style.position='relative';c.innerHTML='<div class="pre">'+k+'</div><div class="prw">'+pr.weight+'<span style="font-size:8px;color:var(--s3);">LB</span></div>'+(pr.orm?'<div style="font-family:\'Share Tech Mono\',monospace;font-size:8px;color:var(--am);margin-top:2px;">e1RM: '+pr.orm+'lb</div>':'')+'<div class="prd">'+d.toLocaleDateString()+'</div>';grid.appendChild(c);}
+  for(var i=0;i<keys.length;i++){var k=keys[i];var pr=S.prs[k];var d=new Date(pr.date);var c=document.createElement('div');c.className='prc';c.style.position='relative';var _lbl=esc(liftLabel(pr,k)),_tg=implTag(pr.impl||'');c.innerHTML='<div class="pre">'+_lbl+(_tg?' <span class="impl-tag">'+_tg+'</span>':'')+(pr.unverified?' <span class="impl-tag" title="No logged set reaches this load">?</span>':'')+'</div><div class="prw">'+pr.weight+'<span style="font-size:8px;color:var(--s3);">LB</span></div>'+(pr.orm?'<div style="font-family:\'Share Tech Mono\',monospace;font-size:8px;color:var(--am);margin-top:2px;">e1RM: '+pr.orm+'lb</div>':'')+'<div class="prd">'+d.toLocaleDateString()+'</div>';grid.appendChild(c);}
   cont.appendChild(grid);
 }
 function render1RM(cont){

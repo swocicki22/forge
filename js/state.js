@@ -38,6 +38,12 @@ function loadUserIntoApp(user){
   // Pick up any built-in program that has been updated since this profile last
   // stored it. Without this, a stored definition would shadow the code forever.
   if(syncBuiltinPrograms())showToast('PROGRAM UPDATED');
+  // Fold every PR onto one key per lift (see liftKey). Safe to run every load.
+  S.fixes=data.fixes||{};
+  normalizePRs();
+  var _fixed=repairInflatedPRs();
+  var _healed=healPRsFromLog();
+  if(_fixed||_healed)showToast('RECORDS REPAIRED FROM YOUR LOG');
   var ap=activeProgram();
   if(ap)S.days=ap.days;
 
@@ -88,6 +94,13 @@ function saveActive(){
   lsSet('forge_active_'+currentUserId,JSON.stringify({day:S.activeDay,sets:S.sets,removedSets:S.removedSets||{},start:S.start,savedAt:Date.now()}));
 }
 function saveActiveDebounced(){if(_saT)clearTimeout(_saT);_saT=setTimeout(saveActive,400);}
+// Write any pending edit NOW. Typing a weight schedules a save 400ms out, but
+// iOS freezes JavaScript the instant the app is backgrounded, so that timer
+// never fires and the last edit was lost. Every exit path flushes first.
+function flushActive(){
+  if(_saT){clearTimeout(_saT);_saT=null;}
+  saveActive();
+}
 function clearActive(){
   if(_saT){clearTimeout(_saT);_saT=null;}
   if(!currentUserId)return;
@@ -135,8 +148,13 @@ function releaseWakeLock(){
   try{if(_wakeLock){_wakeLock.release().catch(function(){});_wakeLock=null;}}catch(e){}
 }
 document.addEventListener('visibilitychange',function(){
-  if(!document.hidden&&S.start&&currentUserId)requestWakeLock();
+  if(document.hidden){flushActive();return;}
+  if(S.start&&currentUserId)requestWakeLock();
 });
+// pagehide fires when iOS tears the page down; freeze when Chrome suspends it.
+// Either can arrive without a visibilitychange first.
+window.addEventListener('pagehide',flushActive);
+document.addEventListener('freeze',flushActive);
 
 function saveState(){
   if(!currentUserId)return;
@@ -144,7 +162,7 @@ function saveState(){
     suppLog:S.suppLog,waterLog:S.waterLog,bwLog:S.bwLog,peptides:S.peptides,
     pepLog:S.pepLog,weekStart:S.weekStart,lastExport:S.lastExport,
     schema:S.schema||SCHEMA_VERSION,programs:S.programs,
-    activeProgramId:S.activeProgramId,progState:S.progState});
+    activeProgramId:S.activeProgramId,progState:S.progState,fixes:S.fixes||{}});
 }
 
 function el(id){return document.getElementById(id);}

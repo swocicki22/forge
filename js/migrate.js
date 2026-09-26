@@ -91,8 +91,8 @@ function mgPadMap(obj,report,label){
 // rather than a guess, because a wrong implement tag splits an exercise's
 // history into two records that never recombine.
 var IMPL_RULES = [
-  ['bw',       /stretch|pose|cat-cow|plank|bicycle|crunchy frog|scissors|climber|mason twist|oblique|v-up|in & outs|pulse ups|hip rock|glute bridge|sit-up|hanging leg raise|battle rope|rowing machine|reverse lunge|thoracic|wrist circles|band pull-apart|lateral band walk/i],
-  ['dumbbell', /dumbbell|hammer curl|arnold press|farmer|bulgarian split squat/i],
+  ['bw',       /vertical jump|broad jump|jump rope|chest throw|stretch|pose|cat-cow|plank|bicycle|crunchy frog|scissors|climber|mason twist|oblique|v-up|in & outs|pulse ups|hip rock|glute bridge|sit-up|hanging leg raise|battle rope|rowing machine|reverse lunge|thoracic|wrist circles|band pull-apart|lateral band walk/i],
+  ['dumbbell', /dumbbell|hammer curl|arnold press|farmer|bulgarian split squat|box step-up/i],
   ['cable',    /cable|pulldown|pushdown|face pull|pallof|woodchop|rope|rear delt/i],
   ['machine',  /machine|leg press|leg curl|leg extension|pec deck|calf raise|t-bar|assisted/i],
   ['smith',    /barbell|smith|ez bar|skull crusher/i],
@@ -151,10 +151,18 @@ function mgRebuildPRs(log,oldPrs,report){
       for(j=0;j<sets.length;j++){
         st = sets[j] || {};
         if(st.warmup) continue;
+        // The log keeps every set of a session, including ones never checked
+        // off — and those still carry their prefilled target weight. Only a
+        // completed set is a lift. (Missing 'done' is treated as completed,
+        // for very old records that predate the field.)
+        if(st.done === false) continue;
         var w = mgNum(st.weight), r = mgNum(st.reps);
         if(w <= 0 || r <= 0) continue;
         var orm = mgEpley(w,r);
-        if(!best[key] || orm > best[key].orm){
+        // A PR in Forge has always meant the HEAVIEST weight moved, with e1RM
+        // only as the tiebreak. Ranking by e1RM alone let 135x12 displace a
+        // real 160 top set, which quietly lowered seven records.
+        if(!best[key] || w > best[key].weight || (w === best[key].weight && orm > best[key].orm)){
           best[key] = {weight:w, reps:r, orm:orm, date:log[i].date,
                        name:canon, impl:impl};
         }
@@ -179,7 +187,7 @@ function mgRebuildPRs(log,oldPrs,report){
                   ' (no set above '+maxW[c]+' lb was ever logged)');
       continue;                       // drop the implausible record
     }
-    if(!prs[key2] || wasO > prs[key2].orm){
+    if(!prs[key2] || wasW > prs[key2].weight || (wasW === prs[key2].weight && wasO > prs[key2].orm)){
       prs[key2] = {weight:wasW, reps:mgNum(old.reps)||1, orm:wasO,
                    date:old.date, name:c, impl:im,
                    // flagged when no logged set reaches this load — the record

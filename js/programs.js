@@ -200,10 +200,143 @@ function implTag(ex){
   var i=(typeof ex==='string')?ex:ex.impl;
   return i?(IMPL_LABEL[i]!==undefined?IMPL_LABEL[i]:i.toUpperCase()):'';
 }
+// ── Lift identity ─────────────────────────────────────────────
+// ONE function decides whether two logged exercises are the same lift. The
+// migration, PR recording, PR display and the PR normalizer all go through it.
+// Before this, recording wrote plain names while the migration wrote
+// "Name [impl]" — so a heavy set was never compared against the old record
+// and a duplicate PR appeared beside it.
+//
+// Rules:
+//   - an explicit implement on the exercise wins
+//   - otherwise it is inferred, exactly as the migration inferred it
+//   - legacy days named "Barbell X" were done on a Smith machine; they are
+//     filed as "Smith X" so they share a record with the Smith lift of the
+//     same movement, and a real barbell lift keeps its own record
+function liftKey(name,impl){
+  var canon=(typeof mgCanon==='function')?mgCanon(name):name;
+  var im=impl||((typeof mgImplFor==='function')?mgImplFor(canon):'other');
+  if(im==='smith'){
+    if(/^Barbell /.test(canon))canon='Smith '+canon.slice(8);
+    else if(canon==='Romanian Deadlift')canon='Smith Romanian Deadlift';
+    else if(canon==='Incline Barbell Press')canon='Smith Incline Press';
+  }
+  return {key:canon+' ['+im+']',name:canon,impl:im};
+}
 function prKey(ex){
-  var n=(typeof ex==='string')?ex:(ex&&ex.name);
-  var t=(typeof ex==='string')?'':implTag(ex);
-  return t?(n+' ['+(typeof ex==='string'?'':ex.impl)+']'):n;
+  if(typeof ex==='string')return liftKey(ex).key;
+  return liftKey(ex&&ex.name,ex&&ex.impl).key;
+}
+// Record a working set as a PR if it beats the stored one. Heavier weight
+// wins; at equal weight, more reps (higher e1RM) wins. Values are parsed as
+// numbers — a string comparison would rank "95" above "185".
+function recordPR(exName,impl,weight,reps){
+  var w=parseFloat(weight)||0,r=parseFloat(reps)||0;
+  if(w<=0||r<=0)return false;
+  var k=liftKey(exName,impl),orm=calcEpley(w,r),cur=S.prs[k.key];
+  var cw=cur?(parseFloat(cur.weight)||0):0;
+  if(cur&&!(w>cw||(w===cw&&orm>(cur.orm||0))))return false;
+  S.prs[k.key]={weight:w,reps:r,orm:orm,date:new Date().toISOString(),name:k.name,impl:k.impl};
+  return true;
+}
+// Re-key every stored PR through liftKey and merge collisions, keeping the
+// better record. Idempotent, so it runs on every load. It folds together the
+// migration's keys, any plain-name records written before this fix, and the
+// legacy Barbell/Smith naming split.
+function normalizePRs(){
+  if(!S.prs)return 0;
+  var out={},merged=0,k;
+  for(k in S.prs){
+    var pr=S.prs[k];if(!pr)continue;
+    var m=/^(.*) \[([a-z]+)\]$/.exec(k);
+    var name=pr.name||(m?m[1]:k), impl=pr.impl||(m?m[2]:null);
+    var id=liftKey(name,impl);
+    var rec={};for(var f in pr)rec[f]=pr[f];
+    rec.name=id.name;rec.impl=id.impl;
+    rec.weight=parseFloat(rec.weight)||0;
+    var cur=out[id.key];
+    if(cur){
+      merged++;
+      var better=rec.weight>cur.weight||(rec.weight===cur.weight&&(rec.orm||0)>(cur.orm||0));
+      if(!better)continue;
+    }
+    out[id.key]=rec;
+  }
+  S.prs=out;
+  return merged;
+}
+// Raise any stored PR that the session log proves was higher. Profiles that
+// migrated before the ranking fix had seven records lowered; the heavier sets
+// are all still in the log, so this recovers them. It never LOWERS a record —
+// a PR from an edited or deleted session stays as it is.
+function healPRsFromLog(){
+  if(!S.prs)return 0;
+  var best=doneBestByLift(),raised=0;
+  for(var k in best){
+    var cur=S.prs[k],cw=cur?(parseFloat(cur.weight)||0):-1;
+    if(!cur||best[k].weight>cw){S.prs[k]=best[k];raised++;}
+  }
+  return raised;
+}
+function implsOf(day){
+  var m={};if(!day||!day.ex)return m;
+  for(var i=0;i<day.ex.length;i++){if(day.ex[i].impl)m[day.ex[i].name]=day.ex[i].impl;}
+  return m;
+}
+function doneBestByLift(){
+  var best={};
+  // impls: the implement each exercise was actually logged with. Inferring
+  // it from the name is only the fallback for sessions older than this field;
+  // a custom exercise tagged differently from its name would otherwise split
+  // into two records.
+  function scan(raw,date,impls){
+    impls=impls||{};
+    for(var n in raw){
+      var sets=raw[n]||[];
+      for(var j=0;j<sets.length;j++){
+        var st=sets[j]||{};
+        if(st.warmup||st.done===false)continue;
+        var w=parseFloat(st.weight)||0,r=parseFloat(st.reps)||0;
+        if(w<=0||r<=0)continue;
+        var id=liftKey(n,impls[n]||null),orm=calcEpley(w,r),b=best[id.key];
+        if(!b||w>b.weight||(w===b.weight&&orm>b.orm))
+          best[id.key]={weight:w,reps:r,orm:orm,date:date,name:id.name,impl:id.impl};
+      }
+    }
+  }
+  for(var i=0;i<(S.log||[]).length;i++)scan(S.log[i].rawSets||{},S.log[i].date,S.log[i].impls);
+  try{
+    var snap=JSON.parse(localStorage.getItem('forge_active_'+currentUserId)||'null');
+    if(snap&&snap.sets)scan(snap.sets,new Date().toISOString(),implsOf(snap.day));
+  }catch(e){}
+  if(S.sets&&S.activeDay)scan(S.sets,new Date().toISOString(),implsOf(S.activeDay));
+  return best;
+}
+
+// ONE-TIME. The v3 migration counted un-completed sets, so some records
+// claim weights that were never lifted. Correct any record that says it is
+// backed by a set (not flagged unverified) but that no completed set reaches.
+// Gated by a flag because lowering a record is destructive — this must never
+// run again on data it did not produce.
+function repairInflatedPRs(){
+  if(!S.fixes)S.fixes={};
+  if(S.fixes.prInflate)return 0;
+  var best=doneBestByLift(),fixed=0;
+  for(var k in S.prs){
+    var pr=S.prs[k];
+    if(!pr||pr.unverified)continue;
+    var w=parseFloat(pr.weight)||0,b=best[k];
+    if(b&&w<=b.weight)continue;
+    if(b){S.prs[k]=b;} else {delete S.prs[k];}
+    fixed++;
+  }
+  S.fixes.prInflate=Date.now();
+  return fixed;
+}
+function liftLabel(pr,key){
+  if(pr&&pr.name)return pr.name;
+  var m=/^(.*) \[([a-z]+)\]$/.exec(key||'');
+  return m?m[1]:(key||'');
 }
 
 // Resolve the rep target for one slot. Slot-level values always win; the
@@ -223,7 +356,7 @@ function repLabel(ex,wd){
 // are persisted into each profile's data, so without a version to compare
 // against, an updated definition would never reach anyone who had already
 // loaded the old one — their stored copy would win forever.
-var BUILTIN_VERSION=2;
+var BUILTIN_VERSION=3;
 
 // Refresh built-in programs whose stored definition is older than the code's.
 // The user's place in a block (progState) is keyed separately by program id,
@@ -339,8 +472,8 @@ function dayCompletion(day){
   return null;
 }
 // Called when a session is committed.
-function markDayComplete(dayId){
-  var p=activeProgram();
+function markDayComplete(dayId,pid){
+  var p=(pid&&getProgram(pid))||activeProgram();
   if(!p)return;
   var st=progState(p.id);
   if(!st.completed)st.completed={};

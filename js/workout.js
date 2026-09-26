@@ -79,32 +79,6 @@ function renderSel(){
 // ════════════════════════════════
 function getDay(id){for(var i=0;i<S.days.length;i++){if(S.days[i].id===id)return S.days[i];}return null;}
 function getDayIdx(id){for(var i=0;i<S.days.length;i++){if(S.days[i].id===id)return i;}return -1;}
-function openEditor(dayId){editingDayId=dayId;var day=getDay(dayId);el('editor-title').textContent=day.name.toUpperCase();renderEditor();showScreen('s-editor');}
-function renderEditor(){
-  var day=getDay(editingDayId);var cont=el('editor-content');cont.innerHTML='';
-  var rt=document.createElement('div');rt.className='rest-toggle';rt.innerHTML='<div><div class="rtl">REST DAY</div><div class="rts">Mark as recovery — no workout</div></div><div class="toggle-sw'+(day.rest?' on':'')+'" onclick="toggleRest()"></div>';cont.appendChild(rt);
-  var editInfo=document.createElement('button');editInfo.className='add-ex-btn';editInfo.style.marginBottom='6px';editInfo.innerHTML='&#9998; EDIT NAME &amp; CARDIO';editInfo.onclick=function(){openEditDay();};cont.appendChild(editInfo);
-  if(!day.rest){
-    var main=[],core=[];for(var i=0;i<day.ex.length;i++){if(day.ex[i].type==='Core')core.push({ex:day.ex[i],idx:i});else main.push({ex:day.ex[i],idx:i});}
-    var sd1=document.createElement('div');sd1.className='section-div';sd1.textContent='EXERCISES';cont.appendChild(sd1);
-    for(var i=0;i<main.length;i++)cont.appendChild(buildEditorRow(main[i].ex,main[i].idx));
-    var ab=document.createElement('button');ab.className='add-ex-btn';ab.innerHTML='+ ADD EXERCISE';ab.onclick=function(){openAddExercise(false);};cont.appendChild(ab);
-    if(core.length){var sd2=document.createElement('div');sd2.className='section-div';sd2.textContent='CORE WORK';cont.appendChild(sd2);for(var i=0;i<core.length;i++)cont.appendChild(buildEditorRow(core[i].ex,core[i].idx));}
-    var ac=document.createElement('button');ac.className='add-ex-btn';ac.style.borderColor='var(--en)';ac.style.color='var(--en)';ac.innerHTML='+ ADD AB WORKOUT';ac.onclick=function(){openAbDiff();};cont.appendChild(ac);
-  }
-  var resetBtn=document.createElement('button');resetBtn.style.cssText='width:100%;background:transparent;border:1px solid var(--border);color:var(--s2);border-radius:2px;padding:9px;font-family:\'Orbitron\',sans-serif;font-size:7px;letter-spacing:.1em;cursor:pointer;margin-top:16px;';resetBtn.textContent='RESET TO DEFAULT PRESET';resetBtn.onclick=function(){resetDayToPreset();};cont.appendChild(resetBtn);
-}
-function buildEditorRow(ex,idx){
-  var row=document.createElement('div');row.className='edit-ex-item';
-  var ssLabel=ex.ss?'<span style="font-family:\'Orbitron\',sans-serif;font-size:6px;color:var(--hl);margin-left:4px;">'+esc(ex.ss)+'</span>':'';
-  row.innerHTML='<div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;"><button class="move-btn" onclick="moveEx('+idx+',-1)">&#9650;</button><button class="move-btn" onclick="moveEx('+idx+',1)">&#9660;</button></div><div style="flex:1;min-width:0;"><div class="edit-ex-name">'+esc(ex.name)+ssLabel+'</div><div class="edit-ex-meta">'+esc(ex.type)+' — '+ex.ds+'x'+ex.dr+(ex.dw?' — '+ex.dw+'lb':'')+'</div></div><button class="edit-btn" onclick="openEditExercise('+idx+')">EDIT</button>';
-  return row;
-}
-function moveEx(idx,dir){var day=getDay(editingDayId);var ni=idx+dir;if(ni<0||ni>=day.ex.length)return;var tmp=day.ex[idx];day.ex[idx]=day.ex[ni];day.ex[ni]=tmp;saveState();renderEditor();}
-function toggleRest(){var day=getDay(editingDayId);day.rest=!day.rest;saveState();renderEditor();}
-function openEditDay(){var day=getDay(editingDayId);el('ed-name').value=day.name;el('ed-tag').value=day.tag;el('ed-cardio').value=day.cardio||'';el('edit-day-mo').classList.add('visible');}
-function saveDayEdit(){var day=getDay(editingDayId);var name=el('ed-name').value.trim();if(!name){showToast('NAME REQUIRED');return;}day.name=name;day.tag=el('ed-tag').value.trim()||name.toUpperCase();day.cardio=el('ed-cardio').value.trim()||null;el('editor-title').textContent=day.name.toUpperCase();saveState();closeModal('edit-day-mo');renderEditor();showToast('UPDATED');}
-function deleteDay(){var idx=getDayIdx(editingDayId);if(idx===-1)return;S.days.splice(idx,1);for(var i=0;i<S.days.length;i++)S.days[i].lbl=(i+1<10?'0'+(i+1):''+(i+1));saveState();closeModal('edit-day-mo');showScreen('s-workout');showToast('DELETED');}
 var efLoaded=false;
 function toggleEfLoaded(){efLoaded=!efLoaded;var sw=el('ef-loaded-sw');if(sw){if(efLoaded)sw.classList.add('on');else sw.classList.remove('on');}}
 function syncEfLoadedRow(){
@@ -117,21 +91,38 @@ function syncEfLoadedRow(){
   row.style.display='flex';
 }
 function setEfLoaded(v){efLoaded=!!v;var sw=el('ef-loaded-sw');if(sw){if(efLoaded)sw.classList.add('on');else sw.classList.remove('on');}}
-function openAddExercise(isCore){editingExIdx=null;el('edit-ex-title').textContent='ADD EXERCISE';el('ef-name').value='';el('ef-type').value=isCore?'Core':'';el('ef-ss').value='';el('ef-sets').value='3';el('ef-reps').value='10';el('ef-weight').value='';el('ef-notes').value='';el('del-ex-btn').style.display='none';setEfLoaded(!isCore);syncEfLoadedRow();el('edit-ex-mo').classList.add('visible');}
-function openEditExercise(idx){var day=getDay(editingDayId);var ex=day.ex[idx];editingExIdx=idx;el('edit-ex-title').textContent='EDIT: '+ex.name;el('ef-name').value=ex.name;el('ef-type').value=ex.type;el('ef-ss').value=ex.ss||'';el('ef-sets').value=ex.ds;el('ef-reps').value=ex.dr;el('ef-weight').value=ex.dw||'';el('ef-notes').value=ex.notes||'';el('del-ex-btn').style.display='block';setEfLoaded(exIsLoaded(ex));syncEfLoadedRow();el('edit-ex-mo').classList.add('visible');}
-function saveExercise(){var name=el('ef-name').value.trim();if(!name){showToast('NAME REQUIRED');return;}var type=el('ef-type').value.trim()||'Custom';var ex={name:name,type:type,ss:el('ef-ss').value.trim(),ds:parseInt(el('ef-sets').value)||3,dr:parseInt(el('ef-reps').value)||10,dw:parseFloat(el('ef-weight').value)||0,notes:el('ef-notes').value.trim()};ex.loaded=efLoaded;if(type==='Core'){ex.timed=coreFlags(name).timed;}var day=getDay(editingDayId);if(editingExIdx!==null){day.ex[editingExIdx]=ex;showToast('UPDATED');}else{day.ex.push(ex);showToast('ADDED');}saveState();closeModal('edit-ex-mo');renderEditor();}
-function deleteExercise(){if(editingExIdx===null)return;var day=getDay(editingDayId);day.ex.splice(editingExIdx,1);saveState();closeModal('edit-ex-mo');renderEditor();showToast('REMOVED');}
-function openAddDay(){el('nd-name').value='';el('nd-tag').value='';el('nd-cardio').value='';el('add-day-mo').classList.add('visible');}
-function saveNewDay(){var name=el('nd-name').value.trim();if(!name){showToast('NAME REQUIRED');return;}var num=S.days.length+1;var lbl=num<10?'0'+num:''+num;S.days.push({id:'c_'+Date.now(),lbl:lbl,name:name,tag:el('nd-tag').value.trim()||name.toUpperCase(),rest:false,cardio:el('nd-cardio').value.trim()||null,ex:[]});saveState();closeModal('add-day-mo');renderSel();showToast('CREATED');}
-function resetDayToPreset(){var idx=getDayIdx(editingDayId);var presets=buildPresets();if(idx>=0&&idx<presets.length){var oid=S.days[idx].id;S.days[idx]=presets[idx];S.days[idx].id=oid;saveState();renderEditor();showToast('RESET');}else showToast('NO PRESET FOR THIS DAY');}
 
 // ════════════════════════════════
 // ACTIVE WORKOUT
 // ════════════════════════════════
 function getLastLog(id){for(var i=S.log.length-1;i>=0;i--){if(S.log[i].dayId===id)return S.log[i];}return null;}
+// A running session is never restarted by tapping a day card. Before this
+// guard, leaving the session and tapping its day to get back reset every set
+// AND overwrote the saved snapshot with the empty one — total, unrecoverable
+// loss. Now any tap while a session is live routes straight back to it.
+function hasLiveSession(){return !!(S.activeDay&&S.start);}
+function returnToActive(){
+  if(!hasLiveSession())return;
+  renderActive();showScreen('s-active');
+}
+// Leave the session screen without ending anything. The session keeps
+// running, keeps saving, and the live pill leads back to it.
+function minimizeWkt(){
+  if(!hasLiveSession())return;
+  flushActive();
+  showScreen('s-home');
+}
 function startWkt(dayId){
+  if(hasLiveSession()){
+    returnToActive();
+    if(S.activeDay.id!==dayId)showToast('FINISH OR ABORT THE CURRENT SESSION FIRST');
+    return;
+  }
   var day=getDay(dayId);var wd=getWeekData();
-  S.activeDay=JSON.parse(JSON.stringify(day));S.activeDay.id=day.id;S.sets={};S.removedSets={};S.start=Date.now();
+  S.activeDay=JSON.parse(JSON.stringify(day));S.activeDay.id=day.id;
+  // Remember which program this session belongs to, so switching programs
+  // mid-session cannot credit the completion to the wrong one.
+  S.activeDay.pid=S.activeProgramId;S.sets={};S.removedSets={};S.start=Date.now();
   var suggestions=getOverloadSuggestions();var suggestMap={};for(var i=0;i<suggestions.length;i++)suggestMap[suggestions[i].name]=suggestions[i].suggest;
   for(var i=0;i<day.ex.length;i++){
     var ex=day.ex[i];var dw=ex.dw;
@@ -352,6 +343,7 @@ function showNotes(ek){var day=S.activeDay;var ex=null;for(var i=0;i<day.ex.leng
 function updProg(){var day=S.activeDay;var tot=0,dn=0;for(var i=0;i<day.ex.length;i++){var sets=S.sets[day.ex[i].name];if(!sets)continue;for(var j=0;j<sets.length;j++){if(!sets[j].warmup)tot++;if(sets[j].done&&!sets[j].warmup)dn++;}}el('pfill').style.width=(tot?Math.round(dn/tot*100):0)+'%';}
 function updS(exName,idx,field,val){
   if(!S.sets[exName]||!S.sets[exName][idx])return;
+  S.sets[exName][idx].edited=true;
   if(val===''){S.sets[exName][idx][field]='';saveActiveDebounced();return;}
   var n=parseFloat(val);
   if(!isFinite(n)||n<0)return;
@@ -382,7 +374,7 @@ function togS(exName,idx){
   if(wi&&wi.value)set.weight=parseFloat(wi.value)||set.weight;if(ri&&ri.value)set.reps=parseFloat(ri.value)||set.reps;
   set.done=!set.done;
   if(set.done)vibe(15);
-  if(set.done&&set.weight&&!set.warmup){var orm=calcEpley(parseFloat(set.weight)||0,parseFloat(set.reps)||0);if(!S.prs[exName]||set.weight>S.prs[exName].weight)S.prs[exName]={weight:set.weight,date:new Date().toISOString(),orm:orm};}
+  if(set.done&&set.weight&&!set.warmup){var _impl=null;if(S.activeDay){for(var _i=0;_i<S.activeDay.ex.length;_i++){if(S.activeDay.ex[_i].name===exName){_impl=S.activeDay.ex[_i].impl||null;break;}}}recordPR(exName,_impl,set.weight,set.reps);}
   var row=el('sr-'+ek+'-'+idx);
   if(row){if(set.done)row.classList.add('done');else row.classList.remove('done');var btn=row.querySelector('.schk');if(set.done)btn.classList.add('done');else btn.classList.remove('done');btn.innerHTML=set.done?'&#10003;':'';var num=row.querySelector('.sn');if(num)num.style.color=set.done?'var(--hl)':'';}
   updProg();saveActive();
@@ -415,15 +407,31 @@ function removeS(exName){
   else renderActive();
   updProg();saveActive();
 }
-function startTmr(){if(S.tint)clearInterval(S.tint);S.tint=setInterval(function(){var e=Math.floor((Date.now()-S.start)/1000);var s=e%60;el('wclock').textContent=Math.floor(e/60)+':'+(s<10?'0':'')+s;},1000);}
-function endWkt(){
-  var hasDone=false;
+function startTmr(){if(S.tint)clearInterval(S.tint);S.tint=setInterval(function(){if(!S.start)return;var e=Math.floor((Date.now()-S.start)/1000);var s=e%60;var t=Math.floor(e/60)+':'+(s<10?'0':'')+s;el('wclock').textContent=t;updateLivePill(t);},1000);}
+// Abort always confirms once a session holds anything worth keeping. It used
+// to confirm only when a set was ticked done, so typed-but-unticked weights
+// were discarded without a prompt — and the button sat where a back arrow
+// normally goes. Only a session opened seconds ago with nothing entered skips
+// the prompt, so an accidental start is still one tap to undo.
+function sessionHasData(){
   for(var k in S.sets){
-    var ss=S.sets[k];
-    for(var j=0;j<ss.length;j++){if(ss[j].done){hasDone=true;break;}}
-    if(hasDone)break;
+    var ss=S.sets[k]||[];
+    for(var j=0;j<ss.length;j++){if(ss[j]&&(ss[j].done||ss[j].edited))return true;}
   }
-  if(hasDone){el('abort-mo').classList.add('visible');return;}
+  return false;
+}
+function endWkt(){
+  var done=0;
+  for(var k in S.sets){var ss=S.sets[k]||[];for(var j=0;j<ss.length;j++){if(ss[j]&&ss[j].done)done++;}}
+  var age=S.start?(Date.now()-S.start):0;
+  if(done||sessionHasData()||age>60000){
+    var mins=Math.floor(age/60000);
+    el('abort-msg').textContent=done
+      ? 'You have '+done+' completed set'+(done===1?'':'s')+' in this session. Aborting discards them — they will NOT be committed to your log.'
+      : 'This session has been running '+mins+' min. Aborting discards everything entered so far.';
+    el('abort-mo').classList.add('visible');
+    return;
+  }
   doAbortWkt();
 }
 function doAbortWkt(){
@@ -441,7 +449,7 @@ function showFinMo(){
   el('finmo').classList.add('visible');
 }
 function confirmFin(){
-  var elapsed=Math.floor((Date.now()-S.start)/1000);var day=S.activeDay;var wd=getWeekData();var ts=0,vol=0;var rawSets=JSON.parse(JSON.stringify(S.sets));
+  var elapsed=Math.floor((Date.now()-S.start)/1000);var day=S.activeDay;var wd=getWeekData();var ts=0,vol=0;var rawSets=JSON.parse(JSON.stringify(S.sets));for(var _rk in rawSets){var _rs=rawSets[_rk]||[];for(var _ri=0;_ri<_rs.length;_ri++){if(_rs[_ri])delete _rs[_ri].edited;}}
   // Exercises removed mid-session with "save sets to log" commit their completed work
   if(S.removedSets){
     for(var rk in S.removedSets){
@@ -451,8 +459,9 @@ function confirmFin(){
     }
   }
   for(var i=0;i<day.ex.length;i++){var sets=S.sets[day.ex[i].name];if(!sets)continue;for(var j=0;j<sets.length;j++){if(sets[j].done&&!sets[j].warmup){ts++;vol+=(parseFloat(sets[j].weight)||0)*(parseFloat(sets[j].reps)||0);}}}
-  S.log.push({date:new Date().toISOString(),dayId:day.id,lbl:day.lbl,name:day.name,dur:Math.floor(elapsed/60)+' min',sets:ts,vol:Math.round(vol),rawSets:rawSets,week:wd.week,phase:wd.label});
-  markDayComplete(day.id);
+  var _impls={};for(var _ii=0;_ii<day.ex.length;_ii++){if(day.ex[_ii].impl)_impls[day.ex[_ii].name]=day.ex[_ii].impl;}
+  S.log.push({impls:_impls,pid:day.pid||S.activeProgramId,date:new Date().toISOString(),dayId:day.id,lbl:day.lbl,name:day.name,dur:Math.floor(elapsed/60)+' min',sets:ts,vol:Math.round(vol),rawSets:rawSets,week:wd.week,phase:wd.label});
+  markDayComplete(day.id,day.pid);
   saveState();clearActive();releaseWakeLock();
   S.activeDay=null;S.sets={};S.removedSets={};S.start=null;
   closeModal('finmo');if(S.tint)clearInterval(S.tint);skipRest();showToast('SESSION COMMITTED');showScreen('s-home');
@@ -690,13 +699,7 @@ function updateAbDiffUI(){
 }
 
 function confirmAddAb(){
-  var day=getDay(editingDayId);
-  var preset=AB_PRESETS[abDiffSelected];
-  // Remove existing core exercises first
-  day.ex=day.ex.filter(function(ex){return ex.type!=='Core';});
-  // Add new ones
-  for(var i=0;i<preset.length;i++){day.ex.push(JSON.parse(JSON.stringify(preset[i])));}
-  saveState();
+  applyAbPreset(AB_PRESETS[abDiffSelected]);
   closeModal('ab-diff-mo');
   renderEditor();
   showToast('AB WORKOUT ADDED — '+abDiffSelected.toUpperCase());
