@@ -465,6 +465,24 @@ function phaseDays(p,ph){
   return out;
 }
 // Progress counts required workouts only; an optional one done is a bonus.
+// Weeks inside a phase. Built-ins and older programs have one.
+function weeksPerPhase(p){return (p&&p.rounds>1)?p.rounds:1;}
+// The unit the Train screen pages through: a week when phases span several
+// weeks, otherwise the phase itself.
+function unitOf(p,d){var R=weeksPerPhase(p);return R>1?(phaseOf(d)-1)*R+(d.wk||1):phaseOf(d);}
+function unitCount(p){return phaseCount(p)*weeksPerPhase(p);}
+function unitDays(p,u){
+  var out=[];if(!p)return out;
+  for(var i=0;i<p.days.length;i++){var d=p.days[i];if(!d.rest&&unitOf(p,d)===u)out.push(d);}
+  return out;
+}
+// "Phase 2 · Week 3 · #4" — the week only appears when a phase has several.
+function posLabel(d,sep){
+  sep=sep||' \u00b7 ';
+  if(!d)return '';
+  var multi=d.wks>1;
+  return 'PHASE '+phaseOf(d)+(multi?sep+'WEEK '+d.wk:'')+sep+'#'+(multi?d.wkIdx:(d.idx||d.day));
+}
 function programProgress(p){
   var st=progState(p.id),req=0,done=0;
   for(var i=0;i<p.days.length;i++){
@@ -507,7 +525,7 @@ function updateWkChip(){
   if(!c)return;
   if(p&&p.mode==='scheduled'){
     var d=(S.activeDay&&S.activeDay.idx)?S.activeDay:nextWorkout(p);
-    c.textContent=d?('PHASE '+phaseOf(d)+' \u00b7 #'+(d.idx||d.day)):'COMPLETE';
+    c.textContent=d?posLabel(d):'COMPLETE';
   }else{
     var wd=getWeekData();
     c.textContent='WK'+wd.week+' / '+(wd.repMin||wd.reps)+'-'+(wd.repMax||wd.reps)+'R';

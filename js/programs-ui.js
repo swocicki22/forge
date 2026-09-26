@@ -46,7 +46,7 @@ function buildProgramStrip(){
     'border-radius:2px;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:9px;';
   var left,right;
   if(p&&p.mode==='scheduled'){
-    var nx=nextWorkout(p),pr=programProgress(p),phs=phaseCount(p),st=progState(p.id);
+    var nx=nextWorkout(p),pr=programProgress(p),phs=phaseCount(p),st=progState(p.id),RR=weeksPerPhase(p);
     var curPh=nx?phaseOf(nx):phs;
     // one segment per phase, filled by the share of its workouts done
     var bar='<div class="ph-bar">';
@@ -58,7 +58,7 @@ function buildProgramStrip(){
     }
     bar+='</div>';
     left='<div style="flex:1;min-width:0;"><div class="strip-k">'+esc(p.name)+'</div>'+
-         '<div class="strip-v">'+(nx?'PHASE '+curPh+' OF '+phs:'COMPLETE')+'</div>'+bar+
+         '<div class="strip-v">'+(nx?'PHASE '+curPh+' OF '+phs+(RR>1?' \u00b7 WEEK '+nx.wk+' OF '+RR:''):'COMPLETE')+'</div>'+bar+
          '<div class="strip-s">'+pr.done+' of '+pr.total+' workouts done</div></div>';
     right='<div style="display:flex;gap:5px;flex-shrink:0;">'+
           (p.custom?'<button class="mini-btn" onclick="openProgramEditor(\''+p.id+'\')">EDIT</button>'
@@ -104,7 +104,7 @@ function renderProgramPicker(){
     var tr=0;
     for(var j=0;j<p.days.length;j++){if(!p.days[j].rest)tr++;}
     var meta=(p.mode==='scheduled')
-      ? (p.weeks+' phase'+(p.weeks===1?'':'s')+' &middot; '+(p.perWeek||0)+' workouts each')
+      ? (p.weeks+' phase'+(p.weeks===1?'':'s')+(weeksPerPhase(p)>1?' of '+weeksPerPhase(p)+' weeks':'')+' &middot; '+(p.perWeek||0)+' workouts '+(weeksPerPhase(p)>1?'a week':'each'))
       : (tr+' days &middot; pick any, any time');
     var badge=on?'<div class="pp-badge on">ACTIVE</div>'
                 :'<div class="pp-badge">'+esc(p.custom?'CUSTOM':(p.level||''))+'</div>';
@@ -168,9 +168,13 @@ function renderProgramEditor(){
   var h='<div class="fl">Program name</div><input class="fi" id="pe-name" value="'+escAttr(p.name)+'" onchange="peSetName(this.value)"/>';
   if(sched){
     h+='<div class="fl">Phases</div><input class="fi" id="pe-weeks" type="number" inputmode="numeric" min="1" max="52" value="'+p.weeks+'" onchange="peSetWeeks(this.value)"/>';
-    h+='<div class="pe-help">Each phase runs every workout below once, in order. Reps can progress from phase 1 to the last phase.</div>';
+    var R=weeksPerPhase(p);
+    h+='<div class="fl">Weeks per phase</div><input class="fi" id="pe-rounds" type="number" inputmode="numeric" min="1" max="12" value="'+R+'" onchange="peSetRounds(this.value)"/>';
+    h+='<div class="pe-help">'+(R>1
+      ? 'Each phase is its own '+R+'-week block: the workouts below run once a week, and reps can change week by week (the same wave every phase). '+p.weeks+' phase'+(p.weeks===1?'':'s')+' \u00d7 '+R+' weeks = '+(p.weeks*R)+' weeks.'
+      : 'Each phase runs every workout below once, in order. Reps can progress from phase 1 to the last phase.')+'</div>';
     if((p.order||[]).length)
-      h+='<button class="add-ex-btn" style="margin-top:10px;" onclick="openPhaseReps(\''+p.id+'\')">&#9776; EDIT REPS BY PHASE</button>';
+      h+='<button class="add-ex-btn" style="margin-top:10px;" onclick="openPhaseReps(\''+p.id+'\')">&#9776; EDIT REPS BY '+(R>1?'WEEK':'PHASE')+'</button>';
     h+='<div class="pe-sec">WORKOUTS IN EACH PHASE</div>';
     var ord=p.order||[];
     if(!ord.length)h+='<div class="pe-help">Add a workout below and it appears here. Reorder with the arrows.</div>';
@@ -210,6 +214,7 @@ function renderProgramEditor(){
   c.innerHTML=h;
 }
 function peSetName(v){var p=peProg();v=(v||'').trim();if(!p||!v)return;p.name=v;p.tag=v.toUpperCase().slice(0,12);saveState();}
+function peSetRounds(v){var p=peProg();if(!p)return;setCustomRounds(p,v);renderProgramEditor();renderSel();renderHome();}
 function peSetWeeks(v){var p=peProg();if(!p)return;setCustomWeeks(p,v);renderProgramEditor();}
 function peSetOrder(i,sid){var p=peProg();if(!p)return;setOrderSlot(p,i,sid);renderProgramEditor();}
 function peMove(i,dir){var p=peProg();if(!p)return;moveOrderSlot(p,i,dir);renderProgramEditor();}
@@ -269,13 +274,14 @@ function closePhaseReps(){
 var PR_BLK={power:'Power',heavy:'Heavy',pump:'Pump',core:'Core'};
 function prRangeTxt(r){return r.min===r.max?String(r.min):r.min+'-'+r.max;}
 function prTrackTxt(ex,phases){
-  var a=exPhaseRow(ex,1,phases),b=exPhaseRow(ex,phases,phases);
+  var p=prProg(),n=repRowCount(p);
+  var a=exRepRow(p,ex,1),b=exRepRow(p,ex,n);
   return prRangeTxt(a)===prRangeTxt(b)?prRangeTxt(a)+' every phase':prRangeTxt(a)+' \u2192 '+prRangeTxt(b);
 }
 function prGroups(p){
   var phases=p.weeks||1,ts=phaseRepTargets(p),out=[],bySig={},sigs=[];
   for(var i=0;i<ts.length;i++){
-    var sig=repSignature(ts[i].ex,phases);
+    var sig=repSig(p,ts[i].ex);
     if(!bySig[sig]){bySig[sig]=[];sigs.push(sig);}
     bySig[sig].push(ts[i]);
   }
@@ -321,8 +327,10 @@ function prCheckedTargets(p){
 function renderPhaseReps(prefill){
   var p=prProg(),c=el('pr-body');if(!p||!c)return;
   var phases=p.weeks||1,g=prGroups(p),ts=phaseRepTargets(p),sel=prCheckedTargets(p);
+  var nRows=repRowCount(p),wk=(repMode(p)==='week');
+  el('pr-title').textContent=wk?'REPS BY WEEK':'REPS BY PHASE';
   // keep whatever was typed unless the scope changed
-  var typed=prefill?null:prReadRows(phases);
+  var typed=prefill?null:prReadRows(nRows);
   var h='<div class="fl">Apply to</div><select class="fi" onchange="prSelectScope(this.value)">';
   var groups=[['track','Lifts on the same progression'],['workout','One workout'],['all','Everything']];
   for(var q=0;q<groups.length;q++){
@@ -345,25 +353,26 @@ function renderPhaseReps(prefill){
   h+='</details>';
   // one row per phase
   h+='<div class="pr-grid"><div class="pr-hd"></div><div class="pr-hd">SETS</div><div class="pr-hd">MIN</div><div class="pr-hd">MAX</div>';
-  for(var ph=1;ph<=phases;ph++){
+  for(var ph=1;ph<=nRows;ph++){
     var v;
     if(typed)v=typed[ph-1];
     else{
       v={sets:'',min:'',max:''};
       if(sel.length){
-        var r0=exPhaseRow(sel[0].ex,ph,phases),same=true;
-        for(var s=1;s<sel.length;s++)if(exPhaseRow(sel[s].ex,ph,phases).sets!==r0.sets){same=false;break;}
+        var r0=exRepRow(p,sel[0].ex,ph),same=true;
+        for(var s=1;s<sel.length;s++)if(exRepRow(p,sel[s].ex,ph).sets!==r0.sets){same=false;break;}
         v={sets:same?r0.sets:'',min:r0.min,max:r0.max};
       }
     }
-    h+='<div class="pr-ph">PHASE '+ph+'</div>'+
+    h+='<div class="pr-ph">'+(wk?'WEEK ':'PHASE ')+ph+'</div>'+
        '<input class="fi" id="pr-s-'+ph+'" type="number" inputmode="numeric" placeholder="keep" value="'+v.sets+'"/>'+
        '<input class="fi" id="pr-a-'+ph+'" type="number" inputmode="numeric" value="'+v.min+'"/>'+
        '<input class="fi" id="pr-b-'+ph+'" type="number" inputmode="numeric" value="'+v.max+'"/>';
   }
   h+='</div>';
-  if(phases>2)h+='<button class="pe-link" onclick="prFillEven()">Fill phases 2\u2013'+(phases-1)+' evenly from phase 1 and phase '+phases+'</button>';
-  h+='<div class="pe-help">Blank sets keep each exercise\u2019s own sets. Timed holds like planks aren\u2019t listed \u2014 their numbers are seconds.</div>';
+  var U=wk?'week':'phase';
+  if(nRows>2)h+='<button class="pe-link" onclick="prFillEven()">Fill '+U+'s 2\u2013'+(nRows-1)+' evenly from '+U+' 1 and '+U+' '+nRows+'</button>';
+  h+='<div class="pe-help">'+(wk?'Every phase runs this same '+nRows+'-week wave. ':'')+'Blank sets keep each exercise\u2019s own sets. Timed holds like planks aren\u2019t listed \u2014 their numbers are seconds.</div>';
   h+='<button class="mb" style="margin-top:12px;"'+(sel.length?'':' disabled')+' onclick="prApply()">APPLY TO '+sel.length+' EXERCISE'+(sel.length===1?'':'S')+'</button>';
   c.innerHTML=h;
 }
@@ -382,7 +391,7 @@ function prToggle(key,on){
   if(open){d=document.querySelector('#pr-body details');if(d)d.open=true;}
 }
 function prFillEven(){
-  var p=prProg();if(!p)return;var n=p.weeks||1;if(n<3)return;
+  var p=prProg();if(!p)return;var n=repRowCount(p);if(n<3)return;
   var lerp=function(id){
     var a=parseFloat(el(id+1).value),b=parseFloat(el(id+n).value);
     if(!isFinite(a)||!isFinite(b))return;
@@ -391,9 +400,9 @@ function prFillEven(){
   lerp('pr-a-');lerp('pr-b-');lerp('pr-s-');
 }
 function prApply(){
-  var p=prProg();if(!p)return;var phases=p.weeks||1,rows=prReadRows(phases);
+  var p=prProg();if(!p)return;var rows=prReadRows(repRowCount(p));
   for(var i=0;i<rows.length;i++){
-    if(!(parseInt(rows[i].min,10)>0)){showToast('PHASE '+(i+1)+' NEEDS REPS');return;}
+    if(!(parseInt(rows[i].min,10)>0)){showToast((repMode(p)==='week'?'WEEK ':'PHASE ')+(i+1)+' NEEDS REPS');return;}
     if(!(parseInt(rows[i].max,10)>0))rows[i].max=rows[i].min;
   }
   var keys=[];for(var k in prChecked)keys.push(k);

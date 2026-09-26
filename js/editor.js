@@ -61,7 +61,9 @@ function exSummary(ex){
   if(ex.timed)reps=(ex.secs||f.rmin)+'s';
   var s=f.sets+'x'+reps;
   if(f.emin!==''){s+=' → '+(f.emin===f.emax?f.emin:f.emin+'-'+f.emax);}
-  if(ex.perWeek)s+=' · custom plan by phase';
+  if(ex.wave){var w0=ex.wave[0],wn=ex.wave[ex.wave.length-1];
+    s=f.sets+'x'+(w0.min===w0.max?w0.min:w0.min+'-'+w0.max)+' → '+(wn.min===wn.max?wn.min:wn.min+'-'+wn.max)+' by week';}
+  else if(ex.perWeek)s+=' · custom plan by phase';
   return s;
 }
 
@@ -239,7 +241,8 @@ function openEditExercise(idx){
   el('ef-weight').value=ex.dw||'';el('ef-notes').value=ex.notes||'';
   fillImplSelect(ex.impl||'auto');syncProgressionRow();pkSetup(ex.name);
   var ph=el('ef-prog-help');
-  if(ph)ph.innerHTML=(ex.perWeek&&edIsTemplate())
+  if(ph&&ex.wave&&edIsTemplate())ph.innerHTML='<span style="color:var(--am)">This lift follows a weekly rep wave.</span> Changing sets or reps here removes it. To change the weeks, use EDIT REPS BY WEEK in the program editor.';
+  else if(ph)ph.innerHTML=(ex.perWeek&&edIsTemplate())
     ?'<span style="color:var(--am)">This lift has its own plan for each phase.</span> Changing sets or reps here replaces it with an even step from phase 1 to the last. To change phases one by one, use EDIT REPS BY PHASE in the program editor.'
     :EF_PROG_HELP;
   el('del-ex-btn').style.display='block';setEfLoaded(exIsLoaded(ex));syncEfLoadedRow();
@@ -278,6 +281,10 @@ function saveExercise(){
       var changed=(sets!==of.sets||rmin!==of.rmin||rmax!==of.rmax||
                    (isFinite(endTyped)?endTyped:'')!==(of.emin===''?'':of.emin));
       if(changed)delete ex.perWeek;
+    }
+    if(old&&old.wave){
+      var ow=exFields(old);
+      if(sets!==ow.sets||rmin!==ow.rmin||rmax!==ow.rmax)delete ex.wave;
     }
     ex.sets=sets;ex.reps=[rmin,rmax];
     delete ex.ds;delete ex.dr;delete ex.repMin;delete ex.repMax;

@@ -26,7 +26,8 @@ function buildDayCard(day,opts){
   c.className='dc'+(day.rest?' rest-day':'')+
     (state==='done'?' is-complete':'')+(state==='next'?' day-next':'')+
     (state==='skipped'?' is-skipped':'')+((comp&&comp.done)?' is-complete':'');
-  var meta=day.rest?'Recovery':(mc+' ex'+(hasAb?' + AB':'')+(day.mins?' · '+day.mins+' min':''));
+  var meta=(day.rest||!day.ex.length)?'Recovery \u00b7 tap to mark done':(mc+' ex'+(hasAb?' + AB':'')+(day.mins?' · '+day.mins+' min':''));
+  if(!state&&!day.rest&&!day.ex.length)meta='0 ex';
   var badge='';
   if(state==='done')badge='<div class="done-badge is-done">✓ '+esc(agoLabel(opts.stampDays))+'</div>';
   else if(state==='next')badge='<div class="next-badge">UP NEXT</div>';
@@ -44,8 +45,10 @@ function buildDayCard(day,opts){
 
 function renderPhased(grid,p){
   var st=progState(p.id), next=nextWorkout(p), phases=phaseCount(p);
-  var cur=next?phaseOf(next):phases;
-  if(selPhase==null||selPhase<1||selPhase>phases)selPhase=cur;
+  // selPhase pages through phases — or through weeks when a phase has several.
+  var R=weeksPerPhase(p), units=unitCount(p);
+  var cur=next?unitOf(p,next):units;
+  if(selPhase==null||selPhase<1||selPhase>units)selPhase=cur;
 
   // ── up next ──
   var hero=document.createElement('div');hero.className='upnext';
@@ -53,11 +56,19 @@ function renderPhased(grid,p){
     hero.innerHTML='<div class="un-lbl"><span class="lp-dot"></span> IN PROGRESS</div>'+
       '<div class="un-name">'+esc(S.activeDay.name)+'</div>'+
       '<button class="un-go" onclick="returnToActive()">RETURN TO WORKOUT &#9656;</button>';
+  }else if(next&&!next.ex.length){
+    // A workout with no exercises is a rest day (Active Rest). There is nothing
+    // to log, so it is ticked off rather than started as an empty session.
+    hero.innerHTML='<div class="un-lbl">UP NEXT</div>'+
+      '<div class="un-name">'+esc(next.name)+'</div>'+
+      '<div class="un-meta">'+esc(posText(next))+' · recovery, nothing to log</div>'+
+      '<div class="un-acts"><button class="un-go" onclick="markRestDone(\''+next.id+'\')">MARK DONE &#10003;</button>'+
+      '<button class="un-skip" onclick="skipNext(\''+next.id+'\')">SKIP</button></div>';
   }else if(next){
     var mc=0;for(var j=0;j<next.ex.length;j++)if(next.ex[j].type!=='Core')mc++;
     hero.innerHTML='<div class="un-lbl">UP NEXT</div>'+
       '<div class="un-name">'+esc(next.name)+'</div>'+
-      '<div class="un-meta">Phase '+phaseOf(next)+' · Workout '+(next.idx||next.day)+' · '+
+      '<div class="un-meta">'+esc(posText(next))+' · '+
         mc+' exercises'+(next.mins?' · '+next.mins+' min':'')+'</div>'+
       '<div class="un-acts"><button class="un-go" onclick="startWkt(\''+next.id+'\')">START &#9656;</button>'+
       '<button class="un-skip" onclick="skipNext(\''+next.id+'\')">SKIP</button></div>';
@@ -70,13 +81,21 @@ function renderPhased(grid,p){
   grid.appendChild(hero);
 
   // ── phase header with browse arrows ──
-  var days=phaseDays(p,selPhase),doneN=0,reqN=0;
+  var days=unitDays(p,selPhase),doneN=0,reqN=0;
   for(var i=0;i<days.length;i++){if(!days[i].optional){reqN++;if(isDone(st,days[i]))doneN++;}}
   var hdr=document.createElement('div');hdr.className='ph-hdr';
+  var title,sub;
+  if(R>1){
+    var sPh=Math.ceil(selPhase/R),sWk=(selPhase-1)%R+1;
+    title='PHASE '+sPh+' \u00b7 WEEK '+sWk+'<span class="ph-of"> OF '+R+'</span>';
+    sub=(selPhase===cur&&next?'CURRENT · ':'')+'WEEK '+selPhase+' OF '+units+' · '+doneN+' of '+reqN+' done';
+  }else{
+    title='PHASE '+selPhase+'<span class="ph-of"> OF '+phases+'</span>';
+    sub=(selPhase===cur&&next?'CURRENT · ':'')+doneN+' of '+reqN+' done';
+  }
   hdr.innerHTML='<button class="ph-arrow"'+(selPhase<=1?' disabled':'')+' onclick="browsePhase(-1)">&#9664;</button>'+
-    '<div class="ph-title"><div>PHASE '+selPhase+'<span class="ph-of"> OF '+phases+'</span></div>'+
-    '<div class="ph-sub">'+(selPhase===cur&&next?'CURRENT · ':'')+doneN+' of '+reqN+' done</div></div>'+
-    '<button class="ph-arrow"'+(selPhase>=phases?' disabled':'')+' onclick="browsePhase(1)">&#9654;</button>';
+    '<div class="ph-title"><div>'+title+'</div><div class="ph-sub">'+sub+'</div></div>'+
+    '<button class="ph-arrow"'+(selPhase>=units?' disabled':'')+' onclick="browsePhase(1)">&#9654;</button>';
   grid.appendChild(hdr);
 
   // ── the phase's workouts ──
@@ -86,7 +105,7 @@ function renderPhased(grid,p){
     else if(st.skipped&&st.skipped[d.id])state='skipped';
     else if(next&&d.id===next.id)state='next';
     else state='todo';
-    grid.appendChild(buildDayCard(d,{num:d.idx||i+1,state:state,stampDays:stamp}));
+    grid.appendChild(buildDayCard(d,{num:(d.wks>1?d.wkIdx:d.idx)||i+1,state:state,stampDays:stamp}));
   }
 
   // ── start over ── always reachable, not just once the program is finished.
@@ -105,9 +124,21 @@ function clearSkips(){
   var p=activeProgram();if(!p)return;
   var st=progState(p.id);st.skipped={};saveState();selPhase=null;renderSel();renderHome();showToast('SKIPS CLEARED');
 }
+// "Phase 2 · Week 3 · Workout 4", or "Phase 2 · Workout 4" with one week per phase.
+function posText(d){
+  if(!d)return '';
+  return 'Phase '+phaseOf(d)+(d.wks>1?' · Week '+d.wk+' · Workout '+d.wkIdx:' · Workout '+(d.idx||d.day));
+}
+function markRestDone(id){
+  var d=getDay(id);if(!d)return;
+  markDayComplete(id,S.activeProgramId);selPhase=null;renderSel();renderHome();
+  showActionToast((d.name||'REST').toUpperCase()+' DONE','UNDO',function(){
+    var st=progState(S.activeProgramId);if(st.completed)delete st.completed[id];saveState();selPhase=null;renderSel();renderHome();
+  },5000);
+}
 function browsePhase(dir){
   var p=activeProgram();if(!p)return;
-  selPhase=Math.max(1,Math.min(phaseCount(p),(selPhase||1)+dir));renderSel();
+  selPhase=Math.max(1,Math.min(unitCount(p),(selPhase||1)+dir));renderSel();
 }
 function skipNext(id){
   var d=getDay(id);skipWorkout(id);selPhase=null;renderSel();
@@ -171,6 +202,15 @@ function startWkt(dayId){
     return;
   }
   var day=getDay(dayId);var wd=getWeekData();
+  // An empty workout in a phased program is a rest day: tick it off instead
+  // of opening a session with nothing in it. (Home banner, home list and the
+  // day cards all come through here.)
+  var _ap=activeProgram();
+  if(day&&!day.ex.length&&_ap&&_ap.mode==='scheduled'){
+    var _st=progState(_ap.id);
+    if(_st.completed&&_st.completed[dayId]){showToast('ALREADY DONE');return;}
+    markRestDone(dayId);return;
+  }
   S.activeDay=JSON.parse(JSON.stringify(day));S.activeDay.id=day.id;
   // Remember which program this session belongs to, so switching programs
   // mid-session cannot credit the completion to the wrong one.
@@ -180,10 +220,15 @@ function startWkt(dayId){
     var ex=day.ex[i];var dw=ex.dw;
     // Slot-level reps win. Only a legacy day with no stored range falls
     // back to the global CYCLE table.
-    var dr=resolveReps(ex,wd).min;
-    // Rep floors for specific muscle groups and exercise types
+    var _rr0=resolveReps(ex,wd),dr=_rr0.min;
+    // Rep floors for specific muscle groups. These only fill in for the
+    // original Forge days, which have no reps of their own. A program that
+    // prescribes reps for the phase gets exactly those — the floors used to
+    // hold calves at 15 (and lateral raises, face pulls and shrugs at 12-15)
+    // in every phase, overriding the plan.
     var exNameLower=ex.name.toLowerCase();
-    if(ex.type==='Core')dr=ex.dr;
+    if(ex.type==='Core')dr=(ex.repMin!=null?ex.repMin:ex.dr);
+    else if(_rr0.slot){}
     else if(exNameLower.indexOf('calf')>=0||exNameLower.indexOf('calf raise')>=0)dr=Math.max(15,dr);
     else if(exNameLower.indexOf('lateral raise')>=0)dr=Math.max(12,dr);
     else if(exNameLower.indexOf('face pull')>=0||exNameLower.indexOf('rear delt')>=0)dr=Math.max(15,dr);
@@ -519,7 +564,7 @@ function showFinMo(){
   var elapsed=Math.floor((Date.now()-S.start)/1000);var day=S.activeDay;var wd=getWeekData();var ts=0,ds=0,vol=0,warmups=0;
   for(var i=0;i<day.ex.length;i++){var sets=S.sets[day.ex[i].name];if(!sets)continue;for(var j=0;j<sets.length;j++){if(sets[j].warmup){warmups++;continue;}ts++;if(sets[j].done){ds++;vol+=(parseFloat(sets[j].weight)||0)*(parseFloat(sets[j].reps)||0);}}}
   if(S.removedSets){for(var rk in S.removedSets){var rs=S.removedSets[rk];for(var j=0;j<rs.length;j++){if(rs[j].warmup){warmups++;continue;}if(rs[j].done){ts++;ds++;vol+=(parseFloat(rs[j].weight)||0)*(parseFloat(rs[j].reps)||0);}}}}
-  el('finsum').innerHTML='PROTOCOL: '+esc(day.name)+'<br>'+(day.phase?'PHASE: '+day.phase+' \u00b7 WORKOUT '+day.idx:'WEEK: '+wd.week+' ('+wd.label+')')+'<br>DURATION: '+Math.floor(elapsed/60)+' MIN<br>WORKING SETS: '+ds+' / '+ts+'<br>WARM-UP SETS: '+warmups+'<br>VOLUME: '+vol.toLocaleString()+' LBS';
+  el('finsum').innerHTML='PROTOCOL: '+esc(day.name)+'<br>'+(day.phase?posText(day).toUpperCase().replace('PHASE ','PHASE: '):'WEEK: '+wd.week+' ('+wd.label+')')+'<br>DURATION: '+Math.floor(elapsed/60)+' MIN<br>WORKING SETS: '+ds+' / '+ts+'<br>WARM-UP SETS: '+warmups+'<br>VOLUME: '+vol.toLocaleString()+' LBS';
   el('finmo').classList.add('visible');
 }
 function confirmFin(){
@@ -534,7 +579,7 @@ function confirmFin(){
   }
   for(var i=0;i<day.ex.length;i++){var sets=S.sets[day.ex[i].name];if(!sets)continue;for(var j=0;j<sets.length;j++){if(sets[j].done&&!sets[j].warmup){ts++;vol+=(parseFloat(sets[j].weight)||0)*(parseFloat(sets[j].reps)||0);}}}
   var _impls={};for(var _ii=0;_ii<day.ex.length;_ii++){if(day.ex[_ii].impl)_impls[day.ex[_ii].name]=day.ex[_ii].impl;}
-  S.log.push({impls:_impls,pid:day.pid||S.activeProgramId,ph:day.phase||null,phIdx:day.idx||null,date:new Date().toISOString(),dayId:day.id,lbl:day.lbl,name:day.name,dur:Math.floor(elapsed/60)+' min',sets:ts,vol:Math.round(vol),rawSets:rawSets,week:wd.week,phase:wd.label});
+  S.log.push({impls:_impls,pid:day.pid||S.activeProgramId,ph:day.phase||null,phIdx:day.idx||null,wk:(day.wks>1?day.wk:null),date:new Date().toISOString(),dayId:day.id,lbl:day.lbl,name:day.name,dur:Math.floor(elapsed/60)+' min',sets:ts,vol:Math.round(vol),rawSets:rawSets,week:wd.week,phase:wd.label});
   markDayComplete(day.id,day.pid);
   selPhase=null;
   saveState();clearActive();releaseWakeLock();

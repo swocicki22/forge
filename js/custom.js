@@ -80,14 +80,21 @@ function _regen(p){
 
   migrateCycleToOrder(p);
   var order=(p.order||[]).filter(function(sid){return !!byId[sid];});
-  var phases=p.weeks||1, days=[], n=0;
+  // A phase can last several weeks: the week's workouts repeat `rounds`
+  // times inside it, all at that phase's reps. Ids number workouts within the
+  // phase straight through, so with one week per phase they are unchanged.
+  var phases=p.weeks||1, R=Math.max(1,p.rounds||1), days=[], n=0;
   for(var ph=1;ph<=phases;ph++){
-    for(var k=0;k<order.length;k++){
-      var sess=byId[order[k]];n++;
-      days.push({id:'cp'+ph+'_'+(k+1),lbl:(n<10?'0':'')+n,day:n,week:ph,phase:ph,idx:k+1,
-                 sid:sess.sid,name:sess.name,tag:sess.tag||sess.name.toUpperCase(),rest:false,
-                 optional:!!sess.optional,mins:sess.mins||null,cardio:sess.cardio||null,
-                 ex:buildCustomSlots(sess,ph,phases)});
+    for(var r=1;r<=R;r++){
+      for(var k=0;k<order.length;k++){
+        var sess=byId[order[k]];n++;
+        var pos=(r-1)*order.length+k+1;
+        days.push({id:'cp'+ph+'_'+pos,lbl:(n<10?'0':'')+n,day:n,week:ph,phase:ph,idx:pos,
+                   wk:r,wks:R,wkIdx:k+1,
+                   sid:sess.sid,name:sess.name,tag:sess.tag||sess.name.toUpperCase(),rest:false,
+                   optional:!!sess.optional,mins:sess.mins||null,cardio:sess.cardio||null,
+                   ex:buildCustomSlots(sess,ph,phases,r)});
+      }
     }
   }
   p.days=days;
@@ -119,7 +126,7 @@ function migrateCycleToOrder(p){
   delete p.cycle;delete p.cycleLen;
 }
 
-function buildCustomSlots(sess,week,weeks){
+function buildCustomSlots(sess,week,weeks,wk){
   var out=[];
   for(var j=0;j<(sess.ex||[]).length;j++){
     var e=sess.ex[j];
@@ -129,6 +136,10 @@ function buildCustomSlots(sess,week,weeks){
     // one, so the copy is identical to the original rather than smoothed.
     var pw=e.perWeek&&e.perWeek[week-1];
     if(pw){r={min:pw.min,max:pw.max};sets=pw.sets;}
+    // A weekly wave (reps change week to week inside each phase, and every
+    // phase runs the same wave) wins over everything above.
+    var wv=wk&&e.wave&&e.wave[wk-1];
+    if(wv){r={min:wv.min,max:wv.max};sets=wv.sets;}
     var slot={name:e.name,type:e.type||'Custom',impl:e.impl||'other',
               ds:sets,dw:e.dw||0,ss:e.ss||'',
               notes:e.notes||'',repMin:r.min,repMax:r.max,
@@ -183,7 +194,7 @@ function duplicateProgram(pid,newName,copyProgress){
     builtin:false,custom:true,level:'Custom',
     desc:src.desc||'',notes:src.notes||'',
     mode:src.mode,peri:'slot',
-    weeks:weeks,perWeek:src.perWeek||0,
+    weeks:weeks,perWeek:src.perWeek||0,rounds:src.rounds||1,
     order:null,sessions:[],days:[]
   };
 
@@ -200,12 +211,29 @@ function duplicateProgram(pid,newName,copyProgress){
     return p;
   }
 
+  // A custom program already stores templates: copy them exactly (weekly
+  // waves, per-phase tables and all) rather than reverse-engineering days.
+  if(src.custom&&src.sessions){
+    var map={};
+    for(var ci=0;ci<src.sessions.length;ci++){
+      var cs=JSON.parse(JSON.stringify(src.sessions[ci]));
+      var nsid=newSid()+ci;map[cs.sid]=nsid;cs.sid=nsid;p.sessions.push(cs);
+    }
+    p.order=(src.order||[]).map(function(x){return map[x];}).filter(function(x){return !!x;});
+    p.perWeek=p.order.length;
+    regenerateCustomDays(p);
+    S.programs.push(p);
+    if(copyProgress)copyProgramProgress(src,p);
+    saveState();
+    return p;
+  }
   // Scheduled: phase 1's workouts, in order, are the order. Pair each with
   // its final-phase counterpart to recover the progression.
   var order=[],sidMap={};
   for(var c=0;c<src.days.length;c++){
     var day=src.days[c];
     if((day.phase||day.week)!==1)continue;
+    if(day.wk&&day.wk!==1)continue;          // later weeks of phase 1 repeat the first
     if(day.rest||!day.sid)continue;
     if(!sidMap[day.sid]){
       var last=findDayForSession(src,day.sid,weeks);
@@ -333,6 +361,12 @@ function setCustomWeeks(p,weeks){
   regenerateCustomDays(p);
   saveState();
 }
+function setCustomRounds(p,n){
+  if(!p||!p.custom)return;
+  p.rounds=Math.max(1,Math.min(12,parseInt(n,10)||1));
+  regenerateCustomDays(p);
+  saveState();
+}
 function deleteProgram(pid){
   var p=getProgram(pid);
   if(!p||p.builtin)return false;          // built-ins are not deletable
@@ -378,6 +412,23 @@ function repSignature(ex,phases){
   var a=[];for(var ph=1;ph<=phases;ph++){var r=exPhaseRow(ex,ph,phases);a.push(r.min+'-'+r.max);}
   return a.join('|');
 }
+// When a phase spans several weeks, the rep table is one row per WEEK of the
+// phase (the weekly wave). Otherwise it is one row per phase.
+function repMode(p){return (p&&p.rounds>1)?'week':'phase';}
+function repRowCount(p){return repMode(p)==='week'?p.rounds:(p.weeks||1);}
+function exRepRow(p,ex,i){
+  if(repMode(p)==='week'){
+    var wv=ex.wave&&ex.wave[i-1];
+    if(wv)return {sets:wv.sets,min:wv.min,max:wv.max};
+    return exPhaseRow(ex,1,p.weeks||1);
+  }
+  return exPhaseRow(ex,i,p.weeks||1);
+}
+function repSig(p,ex){
+  var n=repRowCount(p),a=[];
+  for(var i=1;i<=n;i++){var r=exRepRow(p,ex,i);a.push(r.min+'-'+r.max);}
+  return a.join('|');
+}
 // Write one per-phase plan onto a set of exercises. rows[k] = {min,max,sets}
 // where sets may be null, meaning "leave this exercise's own sets alone".
 function applyPhaseReps(p,keys,rows){
@@ -385,6 +436,26 @@ function applyPhaseReps(p,keys,rows){
   var phases=p.weeks||1,want={},n=0;
   for(var k=0;k<keys.length;k++)want[keys[k]]=1;
   var ts=phaseRepTargets(p);
+  if(repMode(p)==='week'){
+    for(var t2=0;t2<ts.length;t2++){
+      if(!want[ts[t2].key])continue;
+      var ex2=ts[t2].ex,wave=[];
+      for(var w=1;w<=p.rounds;w++){
+        var cur2=exRepRow(p,ex2,w),r2=rows[w-1]||rows[rows.length-1];
+        var a2=Math.max(1,parseInt(r2.min,10)||cur2.min), b2=Math.max(1,parseInt(r2.max,10)||a2);
+        if(b2<a2){var sw2=a2;a2=b2;b2=sw2;}
+        var s2=(r2.sets!=null&&r2.sets!=='')?Math.max(1,parseInt(r2.sets,10)||cur2.sets):cur2.sets;
+        wave.push({sets:s2,min:a2,max:b2});
+      }
+      // The wave replaces any phase-to-phase progression on this lift; the
+      // start fields mirror week 1 so the exercise form reads correctly.
+      ex2.wave=wave;ex2.sets=wave[0].sets;ex2.reps=[wave[0].min,wave[0].max];
+      delete ex2.perWeek;delete ex2.repsEnd;delete ex2.setsEnd;
+      n++;
+    }
+    regenerateCustomDays(p);saveState();
+    return n;
+  }
   for(var t=0;t<ts.length;t++){
     if(!want[ts[t].key])continue;
     var ex=ts[t].ex,table=[];
@@ -408,6 +479,7 @@ function applyPhaseReps(p,keys,rows){
       if(ir.min!==table[q-1].min||ir.max!==table[q-1].max||interpSets(ex,q,phases)!==table[q-1].sets){even=false;break;}
     }
     if(even)delete ex.perWeek;else ex.perWeek=table;
+    delete ex.wave;
     n++;
   }
   regenerateCustomDays(p);saveState();

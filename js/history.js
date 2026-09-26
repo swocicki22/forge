@@ -39,9 +39,9 @@ function renderHome(){
     el('week-banner-wrap').innerHTML='<div class="week-banner" onclick="'+(_hnext?'startWkt(\''+_hnext.id+'\')':'showScreen(\'s-workout\')')+'" style="cursor:pointer">'+
       '<div><div class="hb-k">'+(_hnext?'Up next':'Program')+'</div><div class="week-num">'+esc(_hnext?_hnext.name.toUpperCase():'COMPLETE')+'</div></div>'+
       '<div style="text-align:right"><div class="hb-k">'+esc(_hp.name)+'</div>'+
-      '<div class="week-reps">'+(_hnext?'PHASE '+phaseOf(_hnext)+' \u00b7 #'+(_hnext.idx||_hnext.day):'ALL DONE')+'</div>'+
+      '<div class="week-reps">'+(_hnext?posLabel(_hnext):'ALL DONE')+'</div>'+
       '<div class="week-phase">'+_pr.done+' / '+_pr.total+' DONE</div></div></div>';
-    _hlist=phaseDays(_hp,_hnext?phaseOf(_hnext):phaseCount(_hp));
+    _hlist=unitDays(_hp,_hnext?unitOf(_hp,_hnext):unitCount(_hp));
   }
   for(var i=0;i<_hlist.length;i++){
     var day=_hlist[i];var mc=0;for(var j=0;j<day.ex.length;j++){if(day.ex[j].type!=='Core')mc++;}
@@ -49,7 +49,7 @@ function renderHome(){
     var _hs='';
     if(_hst){if(_hst.completed&&_hst.completed[day.id])_hs=' is-complete';else if(_hst.skipped&&_hst.skipped[day.id])_hs=' is-skipped';else if(_hnext&&_hnext.id===day.id)_hs=' is-next';}
     var c=document.createElement('div');c.className='pc'+(day.rest?' rest-day':'')+_hs;
-    c.innerHTML='<div class="pd">'+(_hst?(_hs===' is-complete'?'\u2713':(day.idx||day.lbl)):day.lbl)+'</div><div class="pdv"></div><div class="pi"><div class="pn">'+esc(day.name)+'</div><div class="pm">'+esc(day.tag)+(day.rest?' — REST DAY':' — '+mc+' EX'+(hasAb?' + AB-X':''))+'</div></div><div class="pa">&#9658;</div>';
+    c.innerHTML='<div class="pd">'+(_hst?(_hs===' is-complete'?'\u2713':((day.wks>1?day.wkIdx:day.idx)||day.lbl)):day.lbl)+'</div><div class="pdv"></div><div class="pi"><div class="pn">'+esc(day.name)+'</div><div class="pm">'+esc(day.tag)+(day.rest?' — REST DAY':' — '+mc+' EX'+(hasAb?' + AB-X':''))+'</div></div><div class="pa">&#9658;</div>';
     (function(id){c.onclick=function(){var d=getDay(id);if(d&&!d.rest)startWkt(id);else showToast('REST DAY');};})(day.id);
     hl.appendChild(c);
   }
@@ -60,7 +60,7 @@ function renderHome(){
   for(var i=0;i<recent.length;i++){
     var w=recent[i];var d2=new Date(w.date);var globalIdx=S.log.length-1-i;
     var item=document.createElement('div');item.className='li';
-    item.innerHTML='<div class="ld">'+w.lbl+'</div><div style="width:1px;height:20px;background:var(--bl);flex-shrink:0;"></div><div class="lin"><div class="ln">'+esc(w.name)+'<span style="font-family:\'Orbitron\',sans-serif;font-size:6px;color:var(--am);margin-left:7px">'+(w.ph?'PH'+w.ph:'WK'+(w.week||1))+'</span></div><div class="lm">'+d2.toLocaleDateString()+' — '+w.dur+' — '+w.sets+' sets</div></div><div class="lv">'+w.vol.toLocaleString()+'<br><span style="font-size:6px;color:var(--s3)">LBS</span></div>';
+    item.innerHTML='<div class="ld">'+w.lbl+'</div><div style="width:1px;height:20px;background:var(--bl);flex-shrink:0;"></div><div class="lin"><div class="ln">'+esc(w.name)+'<span style="font-family:\'Orbitron\',sans-serif;font-size:6px;color:var(--am);margin-left:7px">'+(w.ph?'PH'+w.ph+(w.wk?' W'+w.wk:''):'WK'+(w.week||1))+'</span></div><div class="lm">'+d2.toLocaleDateString()+' — '+w.dur+' — '+w.sets+' sets</div></div><div class="lv">'+w.vol.toLocaleString()+'<br><span style="font-size:6px;color:var(--s3)">LBS</span></div>';
     (function(idx){item.onclick=function(){viewSession(idx);};})(globalIdx);
     rl.appendChild(item);
   }
