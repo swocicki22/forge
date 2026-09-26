@@ -46,17 +46,21 @@ function buildProgramStrip(){
     'border-radius:2px;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:9px;';
   var left,right;
   if(p&&p.mode==='scheduled'){
-    var n=currentCycleDay(p),d=p.days[n-1];
-    var done=0,st=progState(p.id);
-    for(var k in (st.completed||{}))done++;
-    left='<div><div style="font-family:\'Share Tech Mono\',monospace;font-size:7px;'+
-         'letter-spacing:.12em;color:var(--s2);text-transform:uppercase;">'+esc(p.name)+
-         ' &middot; week '+d.week+' of '+p.weeks+'</div>'+
-         '<div style="font-family:\'Orbitron\',sans-serif;font-size:11px;color:var(--am);margin-top:2px;">'+
-         'DAY '+n+' — '+esc(d.rest?'REST':d.name.toUpperCase())+'</div>'+
-         '<div style="font-family:\'Rajdhani\',sans-serif;font-size:9px;color:var(--s2);margin-top:1px;">'+
-         done+' of '+p.days.filter(function(x){return !x.rest;}).length+' sessions logged</div></div>';
-    right='<div style="display:flex;gap:5px;">'+
+    var nx=nextWorkout(p),pr=programProgress(p),phs=phaseCount(p),st=progState(p.id);
+    var curPh=nx?phaseOf(nx):phs;
+    // one segment per phase, filled by the share of its workouts done
+    var bar='<div class="ph-bar">';
+    for(var q=1;q<=phs;q++){
+      var dd=phaseDays(p,q),rq=0,dn=0;
+      for(var z=0;z<dd.length;z++){if(!dd[z].optional){rq++;if(isDone(st,dd[z]))dn++;}}
+      var pct=rq?Math.round(dn/rq*100):0;
+      bar+='<div class="ph-seg'+(q===curPh&&nx?' cur':'')+'"><div style="width:'+pct+'%"></div></div>';
+    }
+    bar+='</div>';
+    left='<div style="flex:1;min-width:0;"><div class="strip-k">'+esc(p.name)+'</div>'+
+         '<div class="strip-v">'+(nx?'PHASE '+curPh+' OF '+phs:'COMPLETE')+'</div>'+bar+
+         '<div class="strip-s">'+pr.done+' of '+pr.total+' workouts done</div></div>';
+    right='<div style="display:flex;gap:5px;flex-shrink:0;">'+
           (p.custom?'<button class="mini-btn" onclick="openProgramEditor(\''+p.id+'\')">EDIT</button>':'')+
           '<button class="mini-btn" onclick="openProgramPicker()">SWITCH</button></div>';
   }else if(p&&p.peri==='slot'){
@@ -99,7 +103,7 @@ function renderProgramPicker(){
     var tr=0;
     for(var j=0;j<p.days.length;j++){if(!p.days[j].rest)tr++;}
     var meta=(p.mode==='scheduled')
-      ? (p.weeks+' weeks &middot; '+(p.perWeek||0)+'x/week &middot; '+tr+' sessions')
+      ? (p.weeks+' phase'+(p.weeks===1?'':'s')+' &middot; '+(p.perWeek||0)+' workouts each')
       : (tr+' days &middot; pick any, any time');
     var badge=on?'<div class="pp-badge on">ACTIVE</div>'
                 :'<div class="pp-badge">'+esc(p.custom?'CUSTOM':(p.level||''))+'</div>';
@@ -140,7 +144,7 @@ function setNpMode(m){
   el('np-mode-free').classList.toggle('on',m==='free');
   el('np-weeks-row').style.display=(m==='scheduled')?'block':'none';
   el('np-mode-help').textContent=(m==='scheduled')
-    ? 'A fixed weekly pattern that repeats for a set number of weeks, with reps that can progress week to week. Like Shred Athletic.'
+    ? 'A sequence of workouts repeated across phases. Finish one and the next is up. Reps can progress from phase to phase. Like Shred Athletic.'
     : 'A set of days you pick from freely, any time. Like your original Forge days.';
 }
 function createNewProgram(){
@@ -162,32 +166,40 @@ function renderProgramEditor(){
   var sched=(p.mode==='scheduled');
   var h='<div class="fl">Program name</div><input class="fi" id="pe-name" value="'+escAttr(p.name)+'" onchange="peSetName(this.value)"/>';
   if(sched){
-    h+='<div class="fl">Length (weeks)</div><input class="fi" id="pe-weeks" type="number" inputmode="numeric" min="1" max="52" value="'+p.weeks+'" onchange="peSetWeeks(this.value)"/>';
-    h+='<div class="pe-sec">WEEKLY PATTERN</div><div class="pe-help">What happens on each day of the week. The pattern repeats every week.</div>';
-    for(var d=0;d<p.cycle.length;d++){
-      var cur=p.cycle[d];
-      var opts='<option value="">Rest</option>';
+    h+='<div class="fl">Phases</div><input class="fi" id="pe-weeks" type="number" inputmode="numeric" min="1" max="52" value="'+p.weeks+'" onchange="peSetWeeks(this.value)"/>';
+    h+='<div class="pe-help">Each phase runs every workout below once, in order. Reps can progress from phase 1 to the last phase.</div>';
+    h+='<div class="pe-sec">WORKOUTS IN EACH PHASE</div>';
+    var ord=p.order||[];
+    if(!ord.length)h+='<div class="pe-help">Add a workout below and it appears here. Reorder with the arrows.</div>';
+    for(var d=0;d<ord.length;d++){
+      var opts='';
       for(var k=0;k<p.sessions.length;k++){
         var ss=p.sessions[k];
-        opts+='<option value="'+ss.sid+'"'+(cur===ss.sid?' selected':'')+'>'+esc(ss.name)+'</option>';
+        opts+='<option value="'+ss.sid+'"'+(ord[d]===ss.sid?' selected':'')+'>'+esc(ss.name)+'</option>';
       }
-      h+='<div class="pe-day"><div class="pe-dlbl">DAY '+(d+1)+'</div><select class="fi pe-sel" onchange="peSetCycle('+d+',this.value)">'+opts+'</select></div>';
+      h+='<div class="pe-day"><div class="pe-dlbl">#'+(d+1)+'</div>'+
+         '<select class="fi pe-sel" onchange="peSetOrder('+d+',this.value)">'+opts+'</select>'+
+         '<button class="pe-mv" onclick="peMove('+d+',-1)"'+(d===0?' disabled':'')+'>&#9650;</button>'+
+         '<button class="pe-mv" onclick="peMove('+d+',1)"'+(d===ord.length-1?' disabled':'')+'>&#9660;</button>'+
+         '<button class="pe-x" onclick="peRemoveOrder('+d+')">&#10005;</button></div>';
     }
+    if(p.sessions.length&&ord.length)
+      h+='<button class="pe-link" onclick="peAddOrder()">+ Repeat a workout in the phase</button>';
   }
-  h+='<div class="pe-sec">'+(sched?'SESSIONS':'DAYS')+'</div>';
+  h+='<div class="pe-sec">'+(sched?'WORKOUTS':'DAYS')+'</div>';
   if(!p.sessions.length){
-    h+='<div class="pe-help">'+(sched?'No sessions yet. Add one, fill it with exercises, then place it in the weekly pattern.':'No days yet. Add one and fill it with exercises.')+'</div>';
+    h+='<div class="pe-help">'+(sched?'No workouts yet. Name one below and add it \u2014 then tap EXERCISES to fill it.':'No days yet. Add one and fill it with exercises.')+'</div>';
   }
   for(var i=0;i<p.sessions.length;i++){
     var s=p.sessions[i],uses=0;
-    if(sched)for(var q=0;q<p.cycle.length;q++)if(p.cycle[q]===s.sid)uses++;
-    var info=s.ex.length+' ex'+(sched?(uses?' · '+uses+'x/week':' · not scheduled'):'');
+    if(sched)for(var q=0;q<(p.order||[]).length;q++)if(p.order[q]===s.sid)uses++;
+    var info=s.ex.length+' ex'+(sched?(uses?(uses>1?' · '+uses+'× per phase':''):' · not in the phase'):'');
     h+='<div class="pe-sess"><div style="flex:1;min-width:0;"><div class="pe-sname">'+esc(s.name)+'</div>'+
        '<div class="pe-sinfo'+(sched&&!uses?' warn':'')+'">'+info+'</div></div>'+
        '<button class="edit-btn" onclick="openSessionEditor(\''+p.id+'\',\''+s.sid+'\')">EXERCISES</button>'+
        '<button class="pe-x" onclick="peDeleteSession(\''+s.sid+'\')">&#10005;</button></div>';
   }
-  h+='<div class="pe-add"><input class="fi" id="pe-new" placeholder="'+(sched?'New session name, e.g. Lower A':'New day name')+'"/>'+
+  h+='<div class="pe-add"><input class="fi" id="pe-new" placeholder="'+(sched?'New workout name, e.g. Lower A':'New day name')+'"/>'+
      '<button class="mini-btn" onclick="peAddSession()">ADD</button></div>';
   var active=(p.id===S.activeProgramId);
   h+='<button class="mb" style="margin-top:14px;" onclick="peUse()">'+(active?'DONE':'USE THIS PROGRAM')+'</button>';
@@ -196,7 +208,10 @@ function renderProgramEditor(){
 }
 function peSetName(v){var p=peProg();v=(v||'').trim();if(!p||!v)return;p.name=v;p.tag=v.toUpperCase().slice(0,12);saveState();}
 function peSetWeeks(v){var p=peProg();if(!p)return;setCustomWeeks(p,v);renderProgramEditor();}
-function peSetCycle(d,sid){var p=peProg();if(!p)return;setCycleSlot(p,d,sid||null);renderProgramEditor();}
+function peSetOrder(i,sid){var p=peProg();if(!p)return;setOrderSlot(p,i,sid);renderProgramEditor();}
+function peMove(i,dir){var p=peProg();if(!p)return;moveOrderSlot(p,i,dir);renderProgramEditor();}
+function peRemoveOrder(i){var p=peProg();if(!p)return;removeOrderSlot(p,i);renderProgramEditor();}
+function peAddOrder(){var p=peProg();if(!p||!p.sessions.length)return;addOrderSlot(p,p.sessions[0].sid);renderProgramEditor();}
 function peAddSession(){
   var p=peProg(),inp=el('pe-new');if(!p)return;
   var name=(inp.value||'').trim();if(!name){showToast('NAME REQUIRED');return;}

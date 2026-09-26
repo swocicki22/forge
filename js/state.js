@@ -38,8 +38,13 @@ function loadUserIntoApp(user){
   // Pick up any built-in program that has been updated since this profile last
   // stored it. Without this, a stored definition would shadow the code forever.
   if(syncBuiltinPrograms())showToast('PROGRAM UPDATED');
+  // Custom programs store templates; their day lists are derived. Rebuild them
+  // on load so a program saved by an older version (a 7-day cycle with rest
+  // slots) is converted to phases before anything reads its days.
+  for(var _ci=0;_ci<S.programs.length;_ci++){if(S.programs[_ci].custom)regenerateCustomDays(S.programs[_ci]);}
   // Fold every PR onto one key per lift (see liftKey). Safe to run every load.
   S.fixes=data.fixes||{};
+  fixImplementsV16();
   normalizePRs();
   var _fixed=repairInflatedPRs();
   var _healed=healPRsFromLog();

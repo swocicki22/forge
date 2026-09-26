@@ -74,7 +74,7 @@ function openEditor(dayId){
   renderEditor();showScreen('s-editor');
 }
 // Edit a session template directly, from the program editor. Works even for
-// a session not yet placed in the weekly pattern, which has no day at all.
+// a workout not yet placed in the phase order, which has no day at all.
 function openSessionEditor(pid,sid){
   edPid=pid;edSid=sid;editingDayId=null;
   var t=edTarget();if(!t)return;
@@ -118,14 +118,14 @@ function renderEditor(){
   var tpl=edIsTemplate(), sched=edIsScheduled();
 
   if(tpl&&sched){
-    // In a scheduled program, when a session runs is set by the weekly
-    // pattern, not by a rest flag on the session itself.
+    // In a phased program, where a workout runs is set by the phase order,
+    // not by a rest flag on the workout itself.
     var info=document.createElement('div');info.className='ed-note';
     var used=0,p=edProgram();
-    for(var c=0;c<(p.cycle||[]).length;c++)if(p.cycle[c]===t.sid)used++;
+    for(var c=0;c<(p.order||[]).length;c++)if(p.order[c]===t.sid)used++;
     info.innerHTML=used
-      ? 'Runs '+used+'× a week for '+p.weeks+' weeks. Changes here apply to every one of those days.'
-      : '<span style="color:var(--am)">Not in the weekly pattern yet.</span> Place it from the program editor.';
+      ? 'Runs in every one of '+p.weeks+' phases'+(used>1?' ('+used+'\u00d7 each)':'')+'. Changes here apply to all of them.'
+      : '<span style="color:var(--am)">Not in the phase yet.</span> Add it from the program editor.';
     cont.appendChild(info);
   }else{
     var rt=document.createElement('div');rt.className='rest-toggle';
@@ -223,7 +223,7 @@ function openAddExercise(isCore){
   el('ef-sets').value='3';el('ef-reps').value='10';el('ef-reps-max').value='';
   el('ef-reps-end').value='';el('ef-reps-end-max').value='';
   el('ef-weight').value='';el('ef-notes').value='';
-  fillImplSelect('auto');syncProgressionRow();
+  fillImplSelect('auto');syncProgressionRow();pkSetup(null);
   el('del-ex-btn').style.display='none';setEfLoaded(!isCore);syncEfLoadedRow();
   el('edit-ex-mo').classList.add('visible');
 }
@@ -234,7 +234,7 @@ function openEditExercise(idx){
   el('ef-sets').value=f.sets;el('ef-reps').value=f.rmin;el('ef-reps-max').value=(f.rmax!==f.rmin?f.rmax:'');
   el('ef-reps-end').value=f.emin;el('ef-reps-end-max').value=(f.emax!==''&&f.emax!==f.emin?f.emax:'');
   el('ef-weight').value=ex.dw||'';el('ef-notes').value=ex.notes||'';
-  fillImplSelect(ex.impl||'auto');syncProgressionRow();
+  fillImplSelect(ex.impl||'auto');syncProgressionRow();pkSetup(ex.name);
   el('del-ex-btn').style.display='block';setEfLoaded(exIsLoaded(ex));syncEfLoadedRow();
   el('edit-ex-mo').classList.add('visible');
 }
@@ -258,6 +258,8 @@ function saveExercise(){
   ex.dw=parseFloat(el('ef-weight').value)||0;ex.notes=el('ef-notes').value.trim();
   ex.impl=impl;ex.loaded=efLoaded;
   if(type==='Core'){ex.timed=coreFlags(name).timed;}
+  var _cc=(typeof catFind==='function')?catFind(name):null;
+  if(_cc&&_cc.s){ex.timed=true;ex.secs=rmin;}
 
   if(edIsTemplate()){
     // A week-by-week table (from duplicating a program with a deload week or a
@@ -333,4 +335,88 @@ function resetDayToPreset(){
   var idx=getDayIdx(editingDayId);var presets=buildPresets();
   if(idx>=0&&idx<presets.length){var oid=S.days[idx].id;S.days[idx]=presets[idx];S.days[idx].id=oid;saveState();renderEditor();showToast('RESET');}
   else showToast('NO PRESET FOR THIS DAY');
+}
+
+// ════════════════════════════════
+// EXERCISE PICKER
+// Muscle group → equipment → exercise, from CATALOG. Picking fills the form;
+// the name stays editable, and "Custom exercise…" leaves it free-typed.
+// ════════════════════════════════
+var pkMuscle='all',pkEquip='all';
+function pkSetup(currentName){
+  var ms=el('pk-muscle'),es=el('pk-equip');if(!ms||!es)return;
+  if(!ms.options.length){
+    var o=document.createElement('option');o.value='all';o.textContent='All muscle groups';ms.appendChild(o);
+    for(var i=0;i<CAT_MUSCLES.length;i++){o=document.createElement('option');o.value=CAT_MUSCLES[i];o.textContent=CAT_MUSCLES[i];ms.appendChild(o);}
+    for(var j=0;j<CAT_EQUIP.length;j++){o=document.createElement('option');o.value=CAT_EQUIP[j][0];o.textContent=CAT_EQUIP[j][1];es.appendChild(o);}
+  }
+  // Editing a catalog exercise opens on its own muscle group and equipment.
+  var c=currentName?catFind(currentName):null;
+  pkMuscle=c?c.m:(pkMuscle||'all');
+  pkEquip=c?(c.e==='barbell'||c.e==='dumbbell'?'free':c.e):(pkEquip||'all');
+  ms.value=pkMuscle;es.value=pkEquip;
+  pkRender(currentName);
+}
+function pkRender(selected){
+  var sel=el('pk-ex');if(!sel)return;
+  sel.innerHTML='';
+  var list=catFilter(pkMuscle,pkEquip);
+  var mine=[],rest=[];
+  for(var i=0;i<list.length;i++)(catRecord(list[i])?mine:rest).push(list[i]);
+  var head=document.createElement('option');head.value='';
+  head.textContent=list.length?('— Pick an exercise ('+list.length+') —'):'— Nothing matches —';
+  sel.appendChild(head);
+  function add(group,label){
+    if(!group.length)return;
+    var g=document.createElement('optgroup');g.label=label;
+    for(var k=0;k<group.length;k++){
+      var o=document.createElement('option');o.value=group[k].n;
+      // Equipment is only worth repeating when the filter doesn't already say it.
+      var eq=(pkEquip==='all'||pkEquip==='free')?' · '+CAT_EQUIP_LABEL[group[k].e]:'';
+      var mu=(pkMuscle==='all')?' · '+group[k].m:'';
+      o.textContent=group[k].n+eq+mu;
+      g.appendChild(o);
+    }
+    sel.appendChild(g);
+  }
+  add(mine,'Your lifts');
+  add(rest,mine.length?'More exercises':'Exercises');
+  var cu=document.createElement('option');cu.value='__custom';cu.textContent='✎ Custom exercise…';sel.appendChild(cu);
+  sel.value=(selected&&catFind(selected)&&list.indexOf(catFind(selected))>=0)?selected:'';
+  pkHint(sel.value?catFind(sel.value):null);
+}
+function pkMuscleChanged(v){pkMuscle=v;pkRender(el('ef-name').value);}
+function pkEquipChanged(v){pkEquip=v;pkRender(el('ef-name').value);}
+function pkPicked(v){
+  if(v==='__custom'){
+    el('ef-name').value='';el('ef-name').focus();pkHint(null,true);return;
+  }
+  var c=catFind(v);if(!c)return;
+  el('ef-name').value=c.n;
+  el('ef-type').value=(c.t==='Compound'?'Strength':c.t);
+  fillImplSelect(c.e);
+  // Bodyweight moves log no load unless the name says otherwise.
+  setEfLoaded(c.e!=='bw'||/weighted/i.test(c.n));syncEfLoadedRow();
+  if(editingExIdx===null){
+    // A new exercise gets a sensible starting prescription; an edited one
+    // keeps the sets and reps already set on it.
+    var dft=CAT_DEFAULTS[c.t]||CAT_DEFAULTS.Isolation;
+    el('ef-sets').value=dft.sets;
+    if(c.s){el('ef-reps').value=c.s;el('ef-reps-max').value='';}
+    else{el('ef-reps').value=dft.reps[0];el('ef-reps-max').value=(dft.reps[1]!==dft.reps[0]?dft.reps[1]:'');}
+  }
+  pkHint(c);
+}
+function pkHint(c,custom){
+  var h=el('pk-hint');if(!h)return;
+  if(custom){h.innerHTML='Type any name below. A name the app hasn’t seen starts its own history.';return;}
+  if(!c){h.textContent='';return;}
+  var r=catRecord(c),t='';
+  if(r){
+    var d=r.date?new Date(r.date):null;
+    t='Your record: <b>'+r.weight+' lb × '+(r.reps||'?')+'</b>'+(d?' ('+(d.getMonth()+1)+'/'+d.getDate()+')':'')+
+      ' — weights will prefill from your history.';
+  }else t='New lift for you — no history yet.';
+  if(c.s)t+=' Timed: reps field is seconds.';
+  h.innerHTML=t;
 }

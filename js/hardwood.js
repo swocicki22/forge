@@ -11,7 +11,7 @@
 //   this program exists to build.
 //
 //   DUAL PERIODIZATION — two rep tracks running at once. The heavy block
-//   marches DOWN (10-12 reps in week 1 to 3-4 in week 6) as load climbs. The
+//   marches DOWN (10-12 reps in phase 1 to 3-4 in phase 6) as load climbs. The
 //   pump block marches UP (8-10 to 20-25) as load falls. Strength and
 //   metabolic work progress in opposite directions inside the same session.
 //
@@ -22,7 +22,7 @@
 //   3. PUMP   — accessories with cardioacceleration. Reverse linear.
 //   4. CORE   — the AB-X circuit, high rep, cheap to recover from.
 //
-// Weekly cycle: Lower A · Upper A · Rest · Lower B · Upper B · Athletic · Rest
+// Each phase: Lower A · Upper A · Lower B · Upper B · Athletic (optional)
 //
 // Every slot stores its own repMin/repMax for its own week. Nothing here is
 // derived from a global week value at render time.
@@ -64,7 +64,7 @@ function buildHardwoodSessions(){
        notes:'Horizontal power. Land soft, absorb through the hips, fully reset between reps.'},
       {name:'Smith Back Squat',impl:'smith',type:'Power',dw:235,blk:'heavy',lin:true,
        alt:'Barbell Back Squat',altImpl:'barbell',
-       notes:'The main lift. Reps fall and weight climbs every week. Break parallel. If a rack is open, use the barbell and log it as the BB variant — the two track as separate lifts on purpose. '+HW_NOCA},
+       notes:'The main lift. Reps fall and weight climbs every phase. Break parallel. If a rack is open, use the barbell and log it as the BB variant — the two track as separate lifts on purpose. '+HW_NOCA},
       {name:'Smith Romanian Deadlift',impl:'smith',type:'Strength',dw:155,blk:'heavy',lin:true,
        alt:'Barbell Romanian Deadlift',altImpl:'barbell',
        notes:'Hips back, soft knees, feel the hamstring stretch. Stop the set when your lower back rounds — that is the end of your range, not a rep to fight for.'},
@@ -87,7 +87,7 @@ function buildHardwoodSessions(){
        notes:'Dip with the legs, drive overhead. The closest thing to a clean and jerk available to you here.'},
       {name:'Smith Bench Press',impl:'smith',type:'Power',dw:160,blk:'heavy',lin:true,
        alt:'Barbell Bench Press',altImpl:'barbell',
-       notes:'The main upper lift. Reps fall and weight climbs weekly. Controlled down, drive hard off the chest. '+HW_NOCA},
+       notes:'The main upper lift. Reps fall and weight climbs every phase. Controlled down, drive hard off the chest. '+HW_NOCA},
       {name:'Wide-Grip Lat Pulldown',impl:'cable',type:'Strength',dw:180,blk:'heavy',lin:true,
        alt:'Weighted Pull-Up',altImpl:'bw',
        notes:'Pull to the upper chest, full stretch at the top. Swap in weighted pull-ups whenever you can do 8 clean.'},
@@ -100,7 +100,7 @@ function buildHardwoodSessions(){
        notes:'30-45 degree bench, full stretch at the bottom. '+HW_CA_SHORT},
       {name:'Dumbbell Lateral Raise',impl:'dumbbell',type:'Isolation',dw:15,blk:'pump',rev:true,
        notes:'Light, strict, no swinging. '+HW_CA_SHORT},
-      {name:'EZ Bar Curl',impl:'smith',type:'Isolation',dw:140,blk:'pump',rev:true,
+      {name:'EZ Bar Curl',impl:'cable',type:'Isolation',dw:140,blk:'pump',rev:true,
        notes:'Elbows pinned to your sides. '+HW_CA_SHORT}
     ]},
 
@@ -144,7 +144,7 @@ function buildHardwoodSessions(){
        notes:'Rear delts and rotator cuff. Light and strict — this keeps your shoulders healthy under all the pressing. '+HW_CA_SHORT},
       {name:'Incline Dumbbell Curl',impl:'dumbbell',type:'Isolation',dw:35,blk:'pump',rev:true,
        notes:'Full stretch at the bottom — the incline is the point. '+HW_CA_SHORT},
-      {name:'Skull Crusher',impl:'smith',type:'Isolation',dw:125,blk:'pump',rev:true,
+      {name:'Skull Crusher',impl:'cable',type:'Isolation',dw:125,blk:'pump',rev:true,
        notes:'Elbows fixed, lower to the forehead. '+HW_CA_SHORT}
     ]},
 
@@ -195,15 +195,16 @@ function hwCoreBlock(){
 function buildHardwoodSchedule(sessions){
   var byId={},i;
   for(i=0;i<sessions.length;i++)byId[sessions[i].sid]=sessions[i];
-  var sched=[];
+  var sched=[],n=0,k=0,lastWeek=0;
   for(var d=0;d<HW_WEEKS*7;d++){
-    var week=Math.floor(d/7)+1, sid=HW_CYCLE[d%7], n=d+1;
-    var lbl=n<10?'0'+n:''+n;
-    if(!sid){
-      sched.push({id:'hw_d'+n,lbl:lbl,day:n,week:week,sid:null,name:'Rest Day',
-                  tag:'REST',rest:true,cardio:null,ex:[]});
-      continue;
-    }
+    var week=Math.floor(d/7)+1, sid=HW_CYCLE[d%7];
+    // Rest days are not part of the sequence. Ids stay tied to the old
+    // calendar position ('hw_d'+day) so completions recorded before phases
+    // existed still land on the same workout.
+    if(!sid)continue;
+    if(week!==lastWeek){lastWeek=week;k=0;}
+    n++;k++;
+    var cal=d+1, lbl=n<10?'0'+n:''+n;
     var s=byId[sid];
     var src=s.ex.slice();
     if(!s.optional)src=src.concat(hwCoreBlock());   // AB-X on every lifting day
@@ -236,7 +237,7 @@ function buildHardwoodSchedule(sessions){
       slot.dr=slot.repMin;
       slots.push(slot);
     }
-    sched.push({id:'hw_d'+n,lbl:lbl,day:n,week:week,sid:sid,name:s.name,tag:s.tag,
+    sched.push({id:'hw_d'+cal,lbl:lbl,day:n,week:week,phase:week,idx:k,sid:sid,name:s.name,tag:s.tag,
                 rest:false,mins:s.mins,focus:s.focus,optional:!!s.optional,
                 cardio:s.cardio||null,ex:slots});
   }
@@ -247,8 +248,8 @@ function buildHardwoodProgram(){
   var sessions=buildHardwoodSessions();
   return {
     id:HW_PID,name:'Shred Athletic',tag:'SHRED',builtin:true,level:'Athletic',
-    desc:'Six weeks of explosive work and cardioacceleration, built for a cut. Power first and fresh, heavy work marching reps down, pump work marching them up, and cardio filling the rest periods where it cannot cost you any jump height.',
-    mode:'scheduled',peri:'slot',weeks:HW_WEEKS,cycleLen:7,perWeek:4,
+    desc:'Six phases of explosive work and cardioacceleration, built for a cut. Power first and fresh, heavy work marching reps down, pump work marching them up, and cardio filling the rest periods where it cannot cost you any jump height.',
+    mode:'scheduled',peri:'slot',weeks:HW_WEEKS,perWeek:5,
     notes:'Cardioacceleration runs on the pump and core blocks only. Never between power, speed or heavy sets — cardio there costs you force output, which is the whole thing you are training. In a deficit, cut sets before you cut weight.',
     sessions:sessions,days:buildHardwoodSchedule(sessions)
   };

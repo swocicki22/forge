@@ -1,77 +1,106 @@
 // ════════════════════════════════
 // WORKOUT SELECT
 // ════════════════════════════════
+var selPhase=null;   // phase being browsed on the protocol screen; null = the current one
 function renderSel(){
   var grid=el('dgrid');grid.innerHTML='';
   grid.appendChild(buildProgramStrip());
-
   var p=activeProgram();
-  var scheduled=p&&p.mode==='scheduled';
-  var cursor=scheduled?currentCycleDay(p):null;
+  if(p&&p.mode==='scheduled'){renderPhased(grid,p);return;}
 
-  // A scheduled program shows a window around where you are rather than all
-  // 42 days at once: the last completed day, the one that is up, and the rest
-  // of that week.
-  var list=S.days,from=0,to=list.length;
-  if(scheduled){
-    from=Math.max(0,cursor-2);
-    to=Math.min(list.length,from+8);
+  for(var i=0;i<S.days.length;i++)grid.appendChild(buildDayCard(S.days[i],{}));
+  if(S.days.length<10){
+    var addBtn=document.createElement('div');addBtn.className='dc-add';
+    addBtn.innerHTML='<div class="dc-add-plus">+</div><div class="dc-add-lbl">NEW DAY</div>';
+    addBtn.onclick=function(){openAddDay();};grid.appendChild(addBtn);
   }
+}
 
-  for(var i=from;i<to;i++){
-    var day=list[i];
-    var mc=0,hasAb=false;
-    for(var j=0;j<day.ex.length;j++){
-      if(day.ex[j].type==='Core')hasAb=true; else mc++;
-    }
-    var isNow=scheduled&&(i===cursor-1);
-    var isPast=scheduled&&(i<cursor-1);
-    var c=document.createElement('div');
-    c.className='dc'+(day.rest?' rest-day':'')+(isNow?' day-now':'')+(isPast?' day-past':'');
+// One card. opts: {num, state:'done'|'next'|'skipped'|'todo', stamp}
+function buildDayCard(day,opts){
+  var mc=0,hasAb=false;
+  for(var j=0;j<day.ex.length;j++){if(day.ex[j].type==='Core')hasAb=true;else mc++;}
+  var c=document.createElement('div');
+  var state=opts.state||null;
+  var comp=state?null:dayCompletion(day);          // free programs: "trained 3d ago"
+  c.className='dc'+(day.rest?' rest-day':'')+
+    (state==='done'?' is-complete':'')+(state==='next'?' day-next':'')+
+    (state==='skipped'?' is-skipped':'')+((comp&&comp.done)?' is-complete':'');
+  var meta=day.rest?'Recovery':(mc+' ex'+(hasAb?' + AB':'')+(day.mins?' · '+day.mins+' min':''));
+  var badge='';
+  if(state==='done')badge='<div class="done-badge is-done">✓ '+esc(agoLabel(opts.stampDays))+'</div>';
+  else if(state==='next')badge='<div class="next-badge">UP NEXT</div>';
+  else if(state==='skipped')badge='<div class="done-badge">SKIPPED</div>';
+  else if(comp)badge='<div class="done-badge'+(comp.done?' is-done':'')+'">'+(comp.done?'✓ ':'')+esc(agoLabel(comp.daysAgo))+'</div>';
+  var editBtn=day.rest?'':'<button class="edit-btn" onclick="openEditor(\''+day.id+'\');event.stopPropagation();">EDIT</button>';
+  c.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;">'+
+    '<div class="dnx">'+esc(opts.num!=null?String(opts.num):day.lbl)+'</div>'+editBtn+'</div>'+
+    '<div class="dcn">'+esc(day.name)+'</div><div class="dcm">'+esc(meta)+'</div>'+
+    '<div class="dc-badges">'+badge+(day.optional?'<div class="opt-badge">OPTIONAL</div>':'')+
+    (day.rest?'<div class="rest-badge">REST DAY</div>':'<div class="dtag">'+esc(day.tag)+'</div>')+'</div>';
+  (function(id){c.onclick=function(){var d=getDay(id);if(d&&!d.rest)startWkt(id);else showToast('REST DAY');};})(day.id);
+  return c;
+}
 
-    var badge=day.rest?'<div class="rest-badge">REST DAY</div>'
-                      :'<div class="dtag">'+esc(day.tag)+'</div>';
-    var meta;
-    if(day.rest)meta='Recovery';
-    else{
-      meta=mc+' ex'+(hasAb?' + AB-X':'');
-      if(day.mins)meta+=' \u00b7 '+day.mins+' min';
-    }
-    var comp=dayCompletion(day);
-    if(comp&&comp.done)c.className+=' is-complete';
-    var compBadge=comp
-      ? '<div class="done-badge'+(comp.done?' is-done':'')+'">'+
-        (comp.done?'\u2713 ':'')+esc(agoLabel(comp.daysAgo))+'</div>'
-      : '';
-    var num=scheduled?('D'+day.day):day.lbl;
-    var editBtn=day.rest?'':'<button class="edit-btn" onclick="openEditor(\''+day.id+'\');event.stopPropagation();">EDIT</button>';
+function renderPhased(grid,p){
+  var st=progState(p.id), next=nextWorkout(p), phases=phaseCount(p);
+  var cur=next?phaseOf(next):phases;
+  if(selPhase==null||selPhase<1||selPhase>phases)selPhase=cur;
 
-    c.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;">'+
-      '<div class="dnx">'+esc(num)+'</div>'+editBtn+'</div>'+
-      '<div class="dcn">'+esc(day.name)+'</div>'+
-      '<div class="dcm">'+esc(meta)+'</div>'+
-      compBadge+
-      (day.optional?'<div class="opt-badge">OPTIONAL</div>':'')+badge;
-
-    (function(id){
-      c.onclick=function(){
-        var d=getDay(id);
-        if(d&&!d.rest)startWkt(id);
-        else showToast('REST DAY');
-      };
-    })(day.id);
-    grid.appendChild(c);
+  // ── up next ──
+  var hero=document.createElement('div');hero.className='upnext';
+  if(hasLiveSession()){
+    hero.innerHTML='<div class="un-lbl"><span class="lp-dot"></span> IN PROGRESS</div>'+
+      '<div class="un-name">'+esc(S.activeDay.name)+'</div>'+
+      '<button class="un-go" onclick="returnToActive()">RETURN TO WORKOUT &#9656;</button>';
+  }else if(next){
+    var mc=0;for(var j=0;j<next.ex.length;j++)if(next.ex[j].type!=='Core')mc++;
+    hero.innerHTML='<div class="un-lbl">UP NEXT</div>'+
+      '<div class="un-name">'+esc(next.name)+'</div>'+
+      '<div class="un-meta">Phase '+phaseOf(next)+' · Workout '+(next.idx||next.day)+' · '+
+        mc+' exercises'+(next.mins?' · '+next.mins+' min':'')+'</div>'+
+      '<div class="un-acts"><button class="un-go" onclick="startWkt(\''+next.id+'\')">START &#9656;</button>'+
+      '<button class="un-skip" onclick="skipNext(\''+next.id+'\')">SKIP</button></div>';
+  }else{
+    hero.innerHTML='<div class="un-lbl">PROGRAM COMPLETE</div>'+
+      '<div class="un-name">'+esc(p.name)+'</div>'+
+      '<div class="un-meta">Every workout in every phase is done.</div>'+
+      '<div class="un-acts"><button class="un-go" onclick="confirmRestart()">START AGAIN</button></div>';
   }
+  grid.appendChild(hero);
 
-  // Custom days only make sense on a free-form program; a scheduled block has
-  // a fixed shape and appending to it would break the day numbering.
-  if(!scheduled&&S.days.length<10){
-    var addBtn=document.createElement('div');
-    addBtn.style.cssText='background:transparent;border:1px dashed var(--bl);border-radius:2px;padding:14px 11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:110px;';
-    addBtn.innerHTML='<div style="font-size:18px;color:var(--s3);font-family:\'Orbitron\',sans-serif;">+</div><div style="font-family:\'Orbitron\',sans-serif;font-size:6px;letter-spacing:.12em;color:var(--s2);">NEW DAY</div>';
-    addBtn.onclick=function(){openAddDay();};
-    grid.appendChild(addBtn);
+  // ── phase header with browse arrows ──
+  var days=phaseDays(p,selPhase),doneN=0,reqN=0;
+  for(var i=0;i<days.length;i++){if(!days[i].optional){reqN++;if(isDone(st,days[i]))doneN++;}}
+  var hdr=document.createElement('div');hdr.className='ph-hdr';
+  hdr.innerHTML='<button class="ph-arrow"'+(selPhase<=1?' disabled':'')+' onclick="browsePhase(-1)">&#9664;</button>'+
+    '<div class="ph-title"><div>PHASE '+selPhase+'<span class="ph-of"> OF '+phases+'</span></div>'+
+    '<div class="ph-sub">'+(selPhase===cur&&next?'CURRENT · ':'')+doneN+' of '+reqN+' done</div></div>'+
+    '<button class="ph-arrow"'+(selPhase>=phases?' disabled':'')+' onclick="browsePhase(1)">&#9654;</button>';
+  grid.appendChild(hdr);
+
+  // ── the phase's workouts ──
+  for(var i=0;i<days.length;i++){
+    var d=days[i],state,stamp=null;
+    if(st.completed&&st.completed[d.id]){state='done';stamp=Math.floor((Date.now()-st.completed[d.id])/864e5);}
+    else if(st.skipped&&st.skipped[d.id])state='skipped';
+    else if(next&&d.id===next.id)state='next';
+    else state='todo';
+    grid.appendChild(buildDayCard(d,{num:d.idx||i+1,state:state,stampDays:stamp}));
   }
+}
+function browsePhase(dir){
+  var p=activeProgram();if(!p)return;
+  selPhase=Math.max(1,Math.min(phaseCount(p),(selPhase||1)+dir));renderSel();
+}
+function skipNext(id){
+  var d=getDay(id);skipWorkout(id);selPhase=null;renderSel();
+  showActionToast('SKIPPED '+(d?d.name.toUpperCase():''),'UNDO',function(){unskipWorkout(id);selPhase=null;renderSel();},5000);
+}
+var restartArmed=false;
+function confirmRestart(){
+  if(!restartArmed){restartArmed=true;showToast('TAP AGAIN TO RESTART FROM PHASE 1');setTimeout(function(){restartArmed=false;},3000);return;}
+  restartArmed=false;restartProgram(S.activeProgramId);selPhase=null;renderSel();showToast('RESTARTED');
 }
 
 // ════════════════════════════════
@@ -445,7 +474,7 @@ function showFinMo(){
   var elapsed=Math.floor((Date.now()-S.start)/1000);var day=S.activeDay;var wd=getWeekData();var ts=0,ds=0,vol=0,warmups=0;
   for(var i=0;i<day.ex.length;i++){var sets=S.sets[day.ex[i].name];if(!sets)continue;for(var j=0;j<sets.length;j++){if(sets[j].warmup){warmups++;continue;}ts++;if(sets[j].done){ds++;vol+=(parseFloat(sets[j].weight)||0)*(parseFloat(sets[j].reps)||0);}}}
   if(S.removedSets){for(var rk in S.removedSets){var rs=S.removedSets[rk];for(var j=0;j<rs.length;j++){if(rs[j].warmup){warmups++;continue;}if(rs[j].done){ts++;ds++;vol+=(parseFloat(rs[j].weight)||0)*(parseFloat(rs[j].reps)||0);}}}}
-  el('finsum').innerHTML='PROTOCOL: '+esc(day.name)+'<br>WEEK: '+wd.week+' ('+wd.label+')<br>DURATION: '+Math.floor(elapsed/60)+' MIN<br>WORKING SETS: '+ds+' / '+ts+'<br>WARM-UP SETS: '+warmups+'<br>VOLUME: '+vol.toLocaleString()+' LBS';
+  el('finsum').innerHTML='PROTOCOL: '+esc(day.name)+'<br>'+(day.phase?'PHASE: '+day.phase+' \u00b7 WORKOUT '+day.idx:'WEEK: '+wd.week+' ('+wd.label+')')+'<br>DURATION: '+Math.floor(elapsed/60)+' MIN<br>WORKING SETS: '+ds+' / '+ts+'<br>WARM-UP SETS: '+warmups+'<br>VOLUME: '+vol.toLocaleString()+' LBS';
   el('finmo').classList.add('visible');
 }
 function confirmFin(){
@@ -460,8 +489,9 @@ function confirmFin(){
   }
   for(var i=0;i<day.ex.length;i++){var sets=S.sets[day.ex[i].name];if(!sets)continue;for(var j=0;j<sets.length;j++){if(sets[j].done&&!sets[j].warmup){ts++;vol+=(parseFloat(sets[j].weight)||0)*(parseFloat(sets[j].reps)||0);}}}
   var _impls={};for(var _ii=0;_ii<day.ex.length;_ii++){if(day.ex[_ii].impl)_impls[day.ex[_ii].name]=day.ex[_ii].impl;}
-  S.log.push({impls:_impls,pid:day.pid||S.activeProgramId,date:new Date().toISOString(),dayId:day.id,lbl:day.lbl,name:day.name,dur:Math.floor(elapsed/60)+' min',sets:ts,vol:Math.round(vol),rawSets:rawSets,week:wd.week,phase:wd.label});
+  S.log.push({impls:_impls,pid:day.pid||S.activeProgramId,ph:day.phase||null,phIdx:day.idx||null,date:new Date().toISOString(),dayId:day.id,lbl:day.lbl,name:day.name,dur:Math.floor(elapsed/60)+' min',sets:ts,vol:Math.round(vol),rawSets:rawSets,week:wd.week,phase:wd.label});
   markDayComplete(day.id,day.pid);
+  selPhase=null;
   saveState();clearActive();releaseWakeLock();
   S.activeDay=null;S.sets={};S.removedSets={};S.start=null;
   closeModal('finmo');if(S.tint)clearInterval(S.tint);skipRest();showToast('SESSION COMMITTED');showScreen('s-home');

@@ -313,6 +313,45 @@ function doneBestByLift(){
   return best;
 }
 
+// ONE-TIME. Equipment corrections confirmed by the user: EZ Bar Curl and
+// Skull Crusher were done on a cable (they had been filed as Smith lifts), and
+// Upright Row with a free EZ bar or barbell (it had no known equipment).
+// Moves each record, and any logged session that recorded the old equipment,
+// so history and records stay attached to the lift. Runs before the PR
+// normalizer so the two lines never exist side by side.
+var IMPL_FIXES_V16=[['EZ Bar Curl','smith','cable'],['Skull Crusher','smith','cable'],['Upright Row','other','barbell']];
+function fixImplementsV16(){
+  if(!S.fixes)S.fixes={};
+  if(S.fixes.implV16)return 0;
+  var moved=0,k,i,f;
+  for(i=0;i<IMPL_FIXES_V16.length;i++){
+    f=IMPL_FIXES_V16[i];
+    var from=f[0]+' ['+f[1]+']', to=f[0]+' ['+f[2]+']';
+    var pr=S.prs&&S.prs[from];
+    if(pr){
+      var cur=S.prs[to];
+      pr.impl=f[2];
+      if(!cur||(parseFloat(pr.weight)||0)>(parseFloat(cur.weight)||0))S.prs[to]=pr;
+      delete S.prs[from];moved++;
+    }
+    for(var j=0;j<(S.log||[]).length;j++){
+      var im=S.log[j].impls;
+      if(im&&im[f[0]]===f[1]){im[f[0]]=f[2];moved++;}
+    }
+    // Program slots that name the lift with the old equipment follow it.
+    for(var q=0;q<(S.programs||[]).length;q++){
+      var P=S.programs[q];
+      var lists=[P.days||[]];if(P.sessions)lists.push(P.sessions);
+      for(var L=0;L<lists.length;L++)for(var d=0;d<lists[L].length;d++){
+        var ex=lists[L][d].ex||[];
+        for(var e=0;e<ex.length;e++){if(ex[e].name===f[0]&&ex[e].impl===f[1])ex[e].impl=f[2];}
+      }
+    }
+  }
+  S.fixes.implV16=Date.now();
+  return moved;
+}
+
 // ONE-TIME. The v3 migration counted un-completed sets, so some records
 // claim weights that were never lifted. Correct any record that says it is
 // backed by a set (not flagged unverified) but that no completed set reaches.
@@ -356,7 +395,7 @@ function repLabel(ex,wd){
 // are persisted into each profile's data, so without a version to compare
 // against, an updated definition would never reach anyone who had already
 // loaded the old one — their stored copy would win forever.
-var BUILTIN_VERSION=3;
+var BUILTIN_VERSION=4;
 
 // Refresh built-in programs whose stored definition is older than the code's.
 // The user's place in a block (progState) is keyed separately by program id,
@@ -399,27 +438,64 @@ function activeProgram(){
 }
 function progState(pid){
   if(!S.progState)S.progState={};
-  if(!S.progState[pid])S.progState[pid]={startedAt:null,cursor:1,completed:{}};
+  if(!S.progState[pid])S.progState[pid]={startedAt:null,completed:{},skipped:{}};
   return S.progState[pid];
 }
-// Which day of a scheduled program is up next.
-function currentCycleDay(p){
+// ── Phase progress ────────────────────────────────────────────
+// "Up next" is not stored. It is the first workout in the sequence that is
+// neither completed nor skipped, so it can never drift out of step with what
+// has actually been done. Optional workouts never become "up next" — they
+// sit in their phase to be done or ignored.
+function isDone(st,d){return !!((st.completed&&st.completed[d.id])||(st.skipped&&st.skipped[d.id]));}
+function nextWorkout(p){
   if(!p||p.mode!=='scheduled')return null;
-  var st=progState(p.id),c=st.cursor||1;
-  return c<1?1:(c>p.days.length?p.days.length:c);
-}
-function advanceCycle(p){
-  if(!p||p.mode!=='scheduled')return;
   var st=progState(p.id);
-  st.cursor=(st.cursor||1)+1;
-  if(st.cursor>p.days.length)st.cursor=p.days.length;
-  saveState();
+  for(var i=0;i<p.days.length;i++){
+    var d=p.days[i];
+    if(d.rest||d.optional)continue;
+    if(!isDone(st,d))return d;
+  }
+  return null;                                  // whole program finished
+}
+function phaseCount(p){return (p&&p.weeks)||1;}
+function phaseOf(d){return (d&&(d.phase||d.week))||1;}
+function phaseDays(p,ph){
+  var out=[];if(!p)return out;
+  for(var i=0;i<p.days.length;i++){if(!p.days[i].rest&&phaseOf(p.days[i])===ph)out.push(p.days[i]);}
+  return out;
+}
+// Progress counts required workouts only; an optional one done is a bonus.
+function programProgress(p){
+  var st=progState(p.id),req=0,done=0;
+  for(var i=0;i<p.days.length;i++){
+    var d=p.days[i];if(d.rest||d.optional)continue;
+    req++;if(isDone(st,d))done++;
+  }
+  return {done:done,total:req};
+}
+function skipWorkout(dayId,pid){
+  var p=(pid&&getProgram(pid))||activeProgram();if(!p)return;
+  var st=progState(p.id);if(!st.skipped)st.skipped={};
+  st.skipped[dayId]=Date.now();saveState();
+}
+function unskipWorkout(dayId,pid){
+  var p=(pid&&getProgram(pid))||activeProgram();if(!p)return;
+  var st=progState(p.id);if(st.skipped)delete st.skipped[dayId];saveState();
+}
+function restartProgram(pid){
+  var st=progState(pid);st.completed={};st.skipped={};st.startedAt=Date.now();delete st.cursor;saveState();
+}
+// Kept for callers that want a 1-based position.
+function currentCycleDay(p){
+  var n=nextWorkout(p);if(!n)return p&&p.days.length?p.days.length:null;
+  return p.days.indexOf(n)+1;
 }
 function setActiveProgram(pid){
   var p=getProgram(pid);
   if(!p)return false;
   S.activeProgramId=pid;
   S.days=p.days;
+  if(typeof selPhase!=='undefined')selPhase=null;
   var st=progState(pid);
   if(!st.startedAt)st.startedAt=Date.now();
   saveState();
@@ -430,8 +506,8 @@ function updateWkChip(){
   var p=activeProgram(),c=el('wk-chip');
   if(!c)return;
   if(p&&p.mode==='scheduled'){
-    var d=S.activeDay&&S.activeDay.day?S.activeDay:p.days[currentCycleDay(p)-1];
-    c.textContent='D'+d.day+' / WK'+d.week+' OF '+p.weeks;
+    var d=(S.activeDay&&S.activeDay.idx)?S.activeDay:nextWorkout(p);
+    c.textContent=d?('PHASE '+phaseOf(d)+' \u00b7 #'+(d.idx||d.day)):'COMPLETE';
   }else{
     var wd=getWeekData();
     c.textContent='WK'+wd.week+' / '+(wd.repMin||wd.reps)+'-'+(wd.repMax||wd.reps)+'R';
@@ -478,18 +554,7 @@ function markDayComplete(dayId,pid){
   var st=progState(p.id);
   if(!st.completed)st.completed={};
   st.completed[dayId]=Date.now();
+  if(st.skipped)delete st.skipped[dayId];       // doing a skipped workout counts
   if(!st.startedAt)st.startedAt=Date.now();
-  if(p.mode!=='scheduled')return;
-  var idx=-1,i;
-  for(i=0;i<p.days.length;i++){if(p.days[i].id===dayId){idx=i;break;}}
-  if(idx<0)return;
-  // Advance to the next day that still needs doing, stepping over rest days
-  // and anything already logged.
-  var n=idx+2;
-  while(n<=p.days.length){
-    var d=p.days[n-1];
-    if(!d.rest&&!st.completed[d.id])break;
-    n++;
-  }
-  st.cursor=Math.min(n,p.days.length);
+  // Nothing to advance: nextWorkout() reads straight from what is done.
 }

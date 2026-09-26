@@ -30,8 +30,8 @@ var BACKUP_KEY_PREFIX = 'forge_v2backup_';
 // than looking like a regression against these numbers.
 var LEGACY_SMITH = [
   'Barbell Bench Press','Barbell Back Squat','Barbell Overhead Press',
-  'Romanian Deadlift','EZ Bar Curl','Hip Thrust Smith Machine',
-  'Hack Squat Smith Machine','Skull Crusher','Incline Barbell Press'
+  'Romanian Deadlift','Hip Thrust Smith Machine',
+  'Hack Squat Smith Machine','Incline Barbell Press'
 ];
 
 // Exercises renamed at some point, leaving an orphaned PR behind.
@@ -93,9 +93,10 @@ function mgPadMap(obj,report,label){
 var IMPL_RULES = [
   ['bw',       /vertical jump|broad jump|jump rope|chest throw|stretch|pose|cat-cow|plank|bicycle|crunchy frog|scissors|climber|mason twist|oblique|v-up|in & outs|pulse ups|hip rock|glute bridge|sit-up|hanging leg raise|battle rope|rowing machine|reverse lunge|thoracic|wrist circles|band pull-apart|lateral band walk/i],
   ['dumbbell', /dumbbell|hammer curl|arnold press|farmer|bulgarian split squat|box step-up/i],
-  ['cable',    /cable|pulldown|pushdown|face pull|pallof|woodchop|rope|rear delt/i],
+  ['cable',    /cable|pulldown|pushdown|face pull|pallof|woodchop|rope|rear delt|^ez bar curl$|^skull crusher$/i],
+  ['barbell',  /^upright row$/i],
   ['machine',  /machine|leg press|leg curl|leg extension|pec deck|calf raise|t-bar|assisted/i],
-  ['smith',    /barbell|smith|ez bar|skull crusher/i],
+  ['smith',    /barbell|smith/i],
   ['bw',       /pull-up|chin-up|push-up|dip|decline sit-up|russian twist/i]
 ];
 function mgImplFor(name,maxWeight){

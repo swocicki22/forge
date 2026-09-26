@@ -30,11 +30,26 @@ function renderHome(){
   var alerts=getOverloadSuggestions();var alertDiv=el('overload-alerts');alertDiv.innerHTML='';
   if(alerts.length>0){var alertCard=document.createElement('div');alertCard.className='overload-alert';var txt='OVERLOAD READY: ';for(var i=0;i<alerts.length;i++){txt+=alerts[i].name+' ('+alerts[i].current+'lb → '+alerts[i].suggest+'lb)';if(i<alerts.length-1)txt+=', ';}alertCard.innerHTML='<div class="overload-icon">&#9650;</div><div class="overload-text">'+esc(txt)+'</div>';alertDiv.appendChild(alertCard);}
   var hl=el('hlist');hl.innerHTML='';
-  for(var i=0;i<S.days.length;i++){
-    var day=S.days[i];var mc=0;for(var j=0;j<day.ex.length;j++){if(day.ex[j].type!=='Core')mc++;}
+  // Phased programs: the banner says what is up next and the list shows only
+  // the current phase, with done/next marked — not all 30 workouts.
+  var _hp=activeProgram(),_hnext=null,_hst=null,_hlist=S.days;
+  if(_hp&&_hp.mode==='scheduled'){
+    _hnext=nextWorkout(_hp);_hst=progState(_hp.id);
+    var _pr=programProgress(_hp);
+    el('week-banner-wrap').innerHTML='<div class="week-banner" onclick="'+(_hnext?'startWkt(\''+_hnext.id+'\')':'showScreen(\'s-workout\')')+'" style="cursor:pointer">'+
+      '<div><div class="hb-k">'+(_hnext?'Up next':'Program')+'</div><div class="week-num">'+esc(_hnext?_hnext.name.toUpperCase():'COMPLETE')+'</div></div>'+
+      '<div style="text-align:right"><div class="hb-k">'+esc(_hp.name)+'</div>'+
+      '<div class="week-reps">'+(_hnext?'PHASE '+phaseOf(_hnext)+' \u00b7 #'+(_hnext.idx||_hnext.day):'ALL DONE')+'</div>'+
+      '<div class="week-phase">'+_pr.done+' / '+_pr.total+' DONE</div></div></div>';
+    _hlist=phaseDays(_hp,_hnext?phaseOf(_hnext):phaseCount(_hp));
+  }
+  for(var i=0;i<_hlist.length;i++){
+    var day=_hlist[i];var mc=0;for(var j=0;j<day.ex.length;j++){if(day.ex[j].type!=='Core')mc++;}
     var hasAb=false;for(var j=0;j<day.ex.length;j++){if(day.ex[j].type==='Core'){hasAb=true;break;}}
-    var c=document.createElement('div');c.className='pc'+(day.rest?' rest-day':'');
-    c.innerHTML='<div class="pd">'+day.lbl+'</div><div class="pdv"></div><div class="pi"><div class="pn">'+esc(day.name)+'</div><div class="pm">'+esc(day.tag)+(day.rest?' — REST DAY':' — '+mc+' EX'+(hasAb?' + AB-X':''))+'</div></div><div class="pa">&#9658;</div>';
+    var _hs='';
+    if(_hst){if(_hst.completed&&_hst.completed[day.id])_hs=' is-complete';else if(_hst.skipped&&_hst.skipped[day.id])_hs=' is-skipped';else if(_hnext&&_hnext.id===day.id)_hs=' is-next';}
+    var c=document.createElement('div');c.className='pc'+(day.rest?' rest-day':'')+_hs;
+    c.innerHTML='<div class="pd">'+(_hst?(_hs===' is-complete'?'\u2713':(day.idx||day.lbl)):day.lbl)+'</div><div class="pdv"></div><div class="pi"><div class="pn">'+esc(day.name)+'</div><div class="pm">'+esc(day.tag)+(day.rest?' — REST DAY':' — '+mc+' EX'+(hasAb?' + AB-X':''))+'</div></div><div class="pa">&#9658;</div>';
     (function(id){c.onclick=function(){var d=getDay(id);if(d&&!d.rest)startWkt(id);else showToast('REST DAY');};})(day.id);
     hl.appendChild(c);
   }
@@ -45,7 +60,7 @@ function renderHome(){
   for(var i=0;i<recent.length;i++){
     var w=recent[i];var d2=new Date(w.date);var globalIdx=S.log.length-1-i;
     var item=document.createElement('div');item.className='li';
-    item.innerHTML='<div class="ld">'+w.lbl+'</div><div style="width:1px;height:20px;background:var(--bl);flex-shrink:0;"></div><div class="lin"><div class="ln">'+esc(w.name)+'<span style="font-family:\'Orbitron\',sans-serif;font-size:6px;color:var(--am);margin-left:7px">WK'+(w.week||1)+'</span></div><div class="lm">'+d2.toLocaleDateString()+' — '+w.dur+' — '+w.sets+' sets</div></div><div class="lv">'+w.vol.toLocaleString()+'<br><span style="font-size:6px;color:var(--s3)">LBS</span></div>';
+    item.innerHTML='<div class="ld">'+w.lbl+'</div><div style="width:1px;height:20px;background:var(--bl);flex-shrink:0;"></div><div class="lin"><div class="ln">'+esc(w.name)+'<span style="font-family:\'Orbitron\',sans-serif;font-size:6px;color:var(--am);margin-left:7px">'+(w.ph?'PH'+w.ph:'WK'+(w.week||1))+'</span></div><div class="lm">'+d2.toLocaleDateString()+' — '+w.dur+' — '+w.sets+' sets</div></div><div class="lv">'+w.vol.toLocaleString()+'<br><span style="font-size:6px;color:var(--s3)">LBS</span></div>';
     (function(idx){item.onclick=function(){viewSession(idx);};})(globalIdx);
     rl.appendChild(item);
   }
@@ -214,6 +229,7 @@ function getPRTimeline(exName){
       reps:parseFloat(best.reps)||0,
       orm:orm,
       week:session.week||1,
+      ph:session.ph||null,
       phase:session.phase||''
     });
   }
@@ -368,7 +384,7 @@ function renderTimeline(cont){
       row.innerHTML='<div class="timeline-date">'+(d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear()+'</div>'
         +'<div class="timeline-weight">'+e.weight+'lb x '+e.reps+'r'+(e.isPR?'<span class="timeline-pr-badge">PR</span>':'')+'</div>'
         +'<div style="font-family:Share Tech Mono,monospace;font-size:8px;color:var(--am);">'+e.orm+'lb</div>'
-        +'<div style="font-family:Orbitron,sans-serif;font-size:6px;color:var(--s2);">WK'+e.week+'</div>';
+        +'<div style="font-family:Orbitron,sans-serif;font-size:6px;color:var(--s2);">'+(e.ph?'PH'+e.ph:'WK'+e.week)+'</div>';
       list.appendChild(row);
     }
   };

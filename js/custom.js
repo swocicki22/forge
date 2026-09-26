@@ -11,13 +11,18 @@
 //
 // Shape:
 //   sessions  [{sid, name, tag, mins, cardio, ex:[...]}]
-//   cycle     7 entries, each a sid or null for a rest day
-//   weeks     how many times the cycle repeats
+//   order     the workouts in one phase, in sequence (sids; no rest days)
+//   weeks     how many PHASES — times the order repeats. The field keeps its
+//             old name so stored programs and every reader stay compatible;
+//             everything user-facing calls it a phase.
 //   days      DERIVED — never edited directly, always rebuilt
 //
+// There is no calendar. Finishing a workout makes the next one in the
+// sequence "up next"; rest happens whenever you rest.
+//
 // Each exercise carries its own progression as two rep ranges:
-//   reps     [min,max] in week 1
-//   repsEnd  [min,max] in the final week (omit for flat)
+//   reps     [min,max] in phase 1
+//   repsEnd  [min,max] in the final phase (omit for flat)
 // Everything between is interpolated, which expresses linear (reps falling),
 // reverse linear (reps climbing) and flat without needing named tracks.
 // ════════════════════════════════
@@ -73,25 +78,45 @@ function _regen(p){
     return;
   }
 
-  var cyc=p.cycle&&p.cycle.length?p.cycle:[null];
-  var total=(p.weeks||1)*cyc.length;
-  var days=[];
-  for(var d=0;d<total;d++){
-    var week=Math.floor(d/cyc.length)+1;
-    var sid=cyc[d%cyc.length];
-    var n=d+1, lbl=n<10?'0'+n:''+n;
-    if(!sid||!byId[sid]){
-      days.push({id:'cd'+n,lbl:lbl,day:n,week:week,sid:null,name:'Rest Day',
-                 tag:'REST',rest:true,cardio:null,ex:[]});
-      continue;
+  migrateCycleToOrder(p);
+  var order=(p.order||[]).filter(function(sid){return !!byId[sid];});
+  var phases=p.weeks||1, days=[], n=0;
+  for(var ph=1;ph<=phases;ph++){
+    for(var k=0;k<order.length;k++){
+      var sess=byId[order[k]];n++;
+      days.push({id:'cp'+ph+'_'+(k+1),lbl:(n<10?'0':'')+n,day:n,week:ph,phase:ph,idx:k+1,
+                 sid:sess.sid,name:sess.name,tag:sess.tag||sess.name.toUpperCase(),rest:false,
+                 optional:!!sess.optional,mins:sess.mins||null,cardio:sess.cardio||null,
+                 ex:buildCustomSlots(sess,ph,phases)});
     }
-    var sess=byId[sid];
-    days.push({id:'cd'+n,lbl:lbl,day:n,week:week,sid:sid,name:sess.name,
-               tag:sess.tag||sess.name.toUpperCase(),rest:false,
-               mins:sess.mins||null,cardio:sess.cardio||null,
-               ex:buildCustomSlots(sess,week,p.weeks||1)});
   }
   p.days=days;
+}
+
+// Programs built before phases stored a 7-slot weekly cycle with nulls for
+// rest days. Convert it to an order, and carry completed workouts across:
+// old day ids were calendar positions ('cd'+n), new ones are 'cp'+phase+'_'+k.
+function migrateCycleToOrder(p){
+  if(p.order||!p.cycle)return;
+  var cyc=p.cycle, order=cyc.filter(function(x){return !!x;});
+  var st=(typeof S!=='undefined'&&S.progState&&S.progState[p.id])||null;
+  if(st&&st.completed){
+    var moved={}, n=0;
+    for(var w=1;w<=(p.weeks||1);w++){
+      var k=0;
+      for(var c=0;c<cyc.length;c++){
+        n++;
+        if(!cyc[c])continue;
+        k++;
+        var t=st.completed['cd'+n];
+        if(t)moved['cp'+w+'_'+k]=t;
+      }
+    }
+    st.completed=moved;delete st.cursor;
+  }
+  p.order=order;
+  p.perWeek=order.length;
+  delete p.cycle;delete p.cycleLen;
 }
 
 function buildCustomSlots(sess,week,weeks){
@@ -131,9 +156,8 @@ function createCustomProgram(opts){
     mode:scheduled?'scheduled':'free',
     peri:'slot',
     weeks:scheduled?(opts.weeks||6):1,
-    cycleLen:scheduled?7:0,
     perWeek:0,
-    cycle:scheduled?[null,null,null,null,null,null,null]:null,
+    order:scheduled?[]:null,
     sessions:[],days:[]
   };
   regenerateCustomDays(p);
@@ -159,9 +183,8 @@ function duplicateProgram(pid,newName,copyProgress){
     builtin:false,custom:true,level:'Custom',
     desc:src.desc||'',notes:src.notes||'',
     mode:src.mode,peri:'slot',
-    weeks:weeks,cycleLen:scheduled?(src.cycleLen||7):0,
-    perWeek:src.perWeek||0,
-    cycle:null,sessions:[],days:[]
+    weeks:weeks,perWeek:src.perWeek||0,
+    order:null,sessions:[],days:[]
   };
 
   if(!scheduled){
@@ -177,26 +200,26 @@ function duplicateProgram(pid,newName,copyProgress){
     return p;
   }
 
-  // Scheduled: walk the first cycle to learn the weekly pattern, then pair
-  // each session's week-1 day with its final-week day to recover progression.
-  var cycLen=src.cycleLen||7;
-  var cycle=[],sidMap={};
-  for(var c=0;c<cycLen;c++){
+  // Scheduled: phase 1's workouts, in order, are the order. Pair each with
+  // its final-phase counterpart to recover the progression.
+  var order=[],sidMap={};
+  for(var c=0;c<src.days.length;c++){
     var day=src.days[c];
-    if(!day||day.rest||!day.sid){cycle.push(null);continue;}
+    if((day.phase||day.week)!==1)continue;
+    if(day.rest||!day.sid)continue;
     if(!sidMap[day.sid]){
       var last=findDayForSession(src,day.sid,weeks);
       var sid=newSid();
       sidMap[day.sid]=sid;
       var tplEx=slotsToTemplate(day.ex,last?last.ex:day.ex);
       attachPerWeek(tplEx,src,day.sid,weeks);
-      p.sessions.push({sid:sid,name:day.name,tag:day.tag,rest:false,
+      p.sessions.push({sid:sid,name:day.name,tag:day.tag,rest:false,optional:!!day.optional,
                        mins:day.mins||null,cardio:day.cardio||null,
                        ex:tplEx});
     }
-    cycle.push(sidMap[day.sid]);
+    order.push(sidMap[day.sid]);
   }
-  p.cycle=cycle;
+  p.order=order;p.perWeek=order.length;
   regenerateCustomDays(p);
   S.programs.push(p);
   if(copyProgress)copyProgramProgress(src,p);
@@ -209,10 +232,12 @@ function duplicateProgram(pid,newName,copyProgress){
 // completions map across by position.
 function copyProgramProgress(src,dst){
   var a=progState(src.id),b=progState(dst.id);
-  b.startedAt=a.startedAt;b.cursor=a.cursor||1;b.completed={};
+  b.startedAt=a.startedAt;b.completed={};b.skipped={};
   for(var i=0;i<src.days.length&&i<dst.days.length;i++){
     var t=a.completed&&a.completed[src.days[i].id];
     if(t)b.completed[dst.days[i].id]=t;
+    var sk=a.skipped&&a.skipped[src.days[i].id];
+    if(sk)b.skipped[dst.days[i].id]=sk;
   }
 }
 
@@ -236,7 +261,7 @@ function attachPerWeek(tplEx,src,srcSid,weeks){
 }
 function findDayForSession(p,sid,week){
   for(var i=0;i<p.days.length;i++){
-    if(p.days[i].sid===sid&&p.days[i].week===week)return p.days[i];
+    if(p.days[i].sid===sid&&(p.days[i].phase||p.days[i].week)===week)return p.days[i];
   }
   return null;
 }
@@ -271,6 +296,8 @@ function addCustomSession(p,name){
   var s={sid:newSid(),name:name||'New Day',tag:(name||'NEW DAY').toUpperCase(),
          rest:false,mins:null,cardio:null,ex:[]};
   p.sessions.push(s);
+  // In a phased program a new workout joins the sequence straight away.
+  if(p.mode==='scheduled'){if(!p.order)p.order=[];p.order.push(s.sid);p.perWeek=p.order.length;}
   regenerateCustomDays(p);
   saveState();
   return s;
@@ -285,20 +312,20 @@ function deleteCustomSession(p,sid){
   for(var i=0;i<p.sessions.length;i++){
     if(p.sessions[i].sid===sid){p.sessions.splice(i,1);break;}
   }
-  if(p.cycle){
-    for(var j=0;j<p.cycle.length;j++){if(p.cycle[j]===sid)p.cycle[j]=null;}
-  }
+  if(p.order)p.order=p.order.filter(function(x){return x!==sid;});
   regenerateCustomDays(p);
   saveState();
 }
-function setCycleSlot(p,idx,sid){
-  if(!p||!p.cycle||idx<0||idx>=p.cycle.length)return;
-  p.cycle[idx]=sid||null;
-  var n=0;
-  for(var i=0;i<p.cycle.length;i++)if(p.cycle[i])n++;
-  p.perWeek=n;
-  regenerateCustomDays(p);
-  saveState();
+function orderChanged(p){p.perWeek=(p.order||[]).length;regenerateCustomDays(p);saveState();}
+function setOrderSlot(p,idx,sid){
+  if(!p||!p.order||idx<0||idx>=p.order.length||!sid)return;
+  p.order[idx]=sid;orderChanged(p);
+}
+function addOrderSlot(p,sid){if(!p||!p.order||!sid)return;p.order.push(sid);orderChanged(p);}
+function removeOrderSlot(p,idx){if(!p||!p.order||idx<0||idx>=p.order.length)return;p.order.splice(idx,1);orderChanged(p);}
+function moveOrderSlot(p,idx,dir){
+  if(!p||!p.order)return;var j=idx+dir;if(j<0||j>=p.order.length)return;
+  var t=p.order[idx];p.order[idx]=p.order[j];p.order[j]=t;orderChanged(p);
 }
 function setCustomWeeks(p,weeks){
   if(!p||!p.custom)return;
