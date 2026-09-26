@@ -13,12 +13,12 @@
 <link rel="icon" type="image/png" sizes="192x192" href="forge-icon-192.png">
 <title>Forge</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css">
-<link rel="stylesheet" href="css/auth.css">
-<link rel="stylesheet" href="css/workout.css">
-<link rel="stylesheet" href="css/analytics.css">
-<link rel="stylesheet" href="css/health.css">
-<link rel="stylesheet" href="css/nutrition.css">
+<link rel="stylesheet" href="css/base.css?v=15">
+<link rel="stylesheet" href="css/auth.css?v=15">
+<link rel="stylesheet" href="css/workout.css?v=15">
+<link rel="stylesheet" href="css/analytics.css?v=15">
+<link rel="stylesheet" href="css/health.css?v=15">
+<link rel="stylesheet" href="css/nutrition.css?v=15">
 </head>
 <body>
 
@@ -93,7 +93,7 @@
   <div class="md">
     <div class="mh"></div>
     <div class="mti">ABORT SESSION?</div>
-    <div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--st);margin-bottom:16px;line-height:1.7;">You have completed sets in this session. Aborting discards them — they will NOT be committed to your log.</div>
+    <div id="abort-msg" style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--st);margin-bottom:16px;line-height:1.7;">Aborting discards this session.</div>
     <button class="mb-red" onclick="doAbortWkt()">ABORT — DISCARD SETS</button>
     <button class="mca" onclick="closeModal('abort-mo')">KEEP TRAINING</button>
   </div>
@@ -216,6 +216,37 @@
   <button class="mca" onclick="closeModal('prog-mo')">CLOSE</button>
 </div></div>
 
+<!-- live session pill: always a way back to a running workout -->
+<div id="live-pill" class="live-pill" onclick="returnToActive()"></div>
+
+<!-- ══════════ DUPLICATE TO EDIT ══════════ -->
+<div class="mo" id="dup-edit-mo" style="z-index:280;"><div class="md">
+  <div class="mh"></div><div class="mti">MAKE IT YOURS</div>
+  <div id="dup-edit-msg" class="pe-help" style="margin-bottom:12px;"></div>
+  <button class="mb" onclick="confirmDuplicateToEdit()">DUPLICATE &amp; EDIT</button>
+  <button class="mca" onclick="closeModal('dup-edit-mo')">CANCEL</button>
+</div></div>
+
+<!-- ══════════ NEW PROGRAM ══════════ -->
+<div class="mo" id="new-prog-mo" style="z-index:280;"><div class="md">
+  <div class="mh"></div><div class="mti">NEW PROGRAM</div>
+  <div class="fl">Name</div><input class="fi" id="np-name" placeholder="e.g. Winter Strength"/>
+  <div class="fl">Type</div>
+  <div class="np-modes"><button class="np-mode" id="np-mode-sched" onclick="setNpMode('scheduled')">SCHEDULED</button>
+  <button class="np-mode" id="np-mode-free" onclick="setNpMode('free')">FREE-FORM</button></div>
+  <div class="pe-help" id="np-mode-help"></div>
+  <div id="np-weeks-row"><div class="fl">Length (weeks)</div><input class="fi" id="np-weeks" type="number" inputmode="numeric" min="1" max="52" value="6"/></div>
+  <button class="mb" onclick="createNewProgram()">CREATE</button>
+  <button class="mca" onclick="closeModal('new-prog-mo')">CANCEL</button>
+</div></div>
+
+<!-- ══════════ PROGRAM EDITOR ══════════ -->
+<div class="mo" id="prog-edit-mo" style="z-index:275;"><div class="md">
+  <div class="mh"></div><div class="mti">EDIT PROGRAM</div>
+  <div id="pe-body" style="max-height:66vh;overflow-y:auto;"></div>
+  <button class="mca" onclick="closeModal('prog-edit-mo');renderSel();">CLOSE</button>
+</div></div>
+
 <!-- ══════════ MAIN APP ══════════ -->
 <div class="app" id="main-app" style="display:none">
 
@@ -269,10 +300,11 @@
 <div class="screen" id="s-active">
   <div class="wh">
     <div class="wht">
-      <div><button class="tbb2" onclick="endWkt()">&#9666; ABORT</button><div class="wti" id="wtitle">PROTOCOL</div></div>
+      <div><button class="tbb2" onclick="minimizeWkt()">&#9666; BACK</button><div class="wti" id="wtitle">PROTOCOL</div></div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
         <div class="wcl" id="wclock">0:00</div>
         <div class="week-chip" id="wk-chip">WK1</div>
+        <button class="abort-link" onclick="endWkt()">ABORT</button>
       </div>
     </div>
     <div class="pb"><div class="pf" id="pfill" style="width:0%"></div></div>
@@ -284,7 +316,7 @@
 <div class="screen" id="s-editor">
   <div class="topbar">
     <div class="logo"><svg class="glyph" viewBox="0 0 26 26" fill="none"><polygon points="13,1 25,7 25,19 13,25 1,19 1,7" stroke="#4fc3f7" stroke-width="1" fill="none" opacity=".45"/><circle cx="13" cy="13" r="2.5" fill="#4fc3f7" opacity=".85"/></svg><div class="lt" id="editor-title">EDIT</div></div>
-    <button class="tbb2" onclick="showScreen('s-workout')">&#9666; BACK</button>
+    <button class="tbb2" onclick="closeEditor()">&#9666; BACK</button>
   </div>
   <div class="scroll" id="editor-content" style="padding-top:10px;"></div>
 </div>
@@ -361,7 +393,7 @@
 
 <!-- MODALS -->
 <div class="mo" id="finmo"><div class="md"><div class="mh"></div><div class="mti">COMMIT SESSION?</div><div id="finsum" style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--st);margin-bottom:12px;line-height:1.9;letter-spacing:.04em;"></div><button class="mb" onclick="confirmFin()">COMMIT TO LOG</button><button class="mca" onclick="closeModal('finmo')">CONTINUE</button></div></div>
-<div class="mo" id="edit-ex-mo"><div class="md"><div class="mh"></div><div class="mti" id="edit-ex-title">EDIT EXERCISE</div><div class="fl">Name</div><input class="fi" id="ef-name" placeholder="e.g. Barbell Bench Press"/><div class="fl">Type</div><input class="fi" id="ef-type" placeholder="e.g. Compound, Power, Core" oninput="syncEfLoadedRow()"/><div class="rest-toggle" id="ef-loaded-row" style="margin-top:10px;display:none;"><div><div style="font-family:Rajdhani,sans-serif;font-weight:600;font-size:13px;color:var(--tx);">Loaded (uses weight)</div><div style="font-family:Share Tech Mono,monospace;font-size:7px;letter-spacing:.1em;color:var(--s3);margin-top:2px;">ON = log plate/stack weight &nbsp;·&nbsp; OFF = bodyweight</div></div><div class="toggle-sw" id="ef-loaded-sw" onclick="toggleEfLoaded()"></div></div><div class="fl">Superset Group (optional)</div><input class="fi" id="ef-ss" placeholder="e.g. A1, B2"/><div class="fl">Sets / Reps / Default Weight (lbs)</div><div class="fr"><input class="fi" id="ef-sets" type="number" placeholder="Sets" inputmode="numeric"/><input class="fi" id="ef-reps" type="number" placeholder="Reps" inputmode="numeric"/><input class="fi" id="ef-weight" type="number" placeholder="lbs" inputmode="decimal"/></div><div class="fl">Notes / Coaching Cues</div><textarea class="fta" id="ef-notes" placeholder="Form cues, tempo, tips..."></textarea><button class="mb" onclick="saveExercise()">SAVE</button><button class="mca" onclick="closeModal('edit-ex-mo')">CANCEL</button><button class="mb-red" id="del-ex-btn" onclick="deleteExercise()" style="display:none;">DELETE</button></div></div>
+<div class="mo" id="edit-ex-mo"><div class="md"><div class="mh"></div><div class="mti" id="edit-ex-title">EDIT EXERCISE</div><div class="fl">Name</div><input class="fi" id="ef-name" placeholder="e.g. Barbell Bench Press"/><div class="fl">Type</div><input class="fi" id="ef-type" placeholder="e.g. Compound, Power, Core" oninput="syncEfLoadedRow()"/><div class="rest-toggle" id="ef-loaded-row" style="margin-top:10px;display:none;"><div><div style="font-family:Rajdhani,sans-serif;font-weight:600;font-size:13px;color:var(--tx);">Loaded (uses weight)</div><div style="font-family:Share Tech Mono,monospace;font-size:7px;letter-spacing:.1em;color:var(--s3);margin-top:2px;">ON = log plate/stack weight &nbsp;·&nbsp; OFF = bodyweight</div></div><div class="toggle-sw" id="ef-loaded-sw" onclick="toggleEfLoaded()"></div></div><div class="fl">Superset Group (optional)</div><input class="fi" id="ef-ss" placeholder="e.g. A1, B2"/><div class="fl">Equipment</div><select class="fi" id="ef-impl"></select><div class="fl">Sets / Reps (min&ndash;max) / Default weight (lb)</div><div class="fr"><input class="fi" id="ef-sets" type="number" placeholder="Sets" inputmode="numeric"/><input class="fi" id="ef-reps" type="number" placeholder="Min" inputmode="numeric"/><input class="fi" id="ef-reps-max" type="number" placeholder="Max" inputmode="numeric"/><input class="fi" id="ef-weight" type="number" placeholder="lb" inputmode="decimal"/></div><div id="ef-prog-row" style="display:none;"><div class="fl">Reps in final week (leave blank to keep them flat)</div><div class="fr"><input class="fi" id="ef-reps-end" type="number" placeholder="Min" inputmode="numeric"/><input class="fi" id="ef-reps-end-max" type="number" placeholder="Max" inputmode="numeric"/></div><div class="ef-help">Weeks in between step evenly. 12&rarr;4 marches reps down as weight climbs; 8&rarr;20 marches them up.</div></div><div class="fl">Notes / Coaching Cues</div><textarea class="fta" id="ef-notes" placeholder="Form cues, tempo, tips..."></textarea><button class="mb" onclick="saveExercise()">SAVE</button><button class="mca" onclick="closeModal('edit-ex-mo')">CANCEL</button><button class="mb-red" id="del-ex-btn" onclick="deleteExercise()" style="display:none;">DELETE</button></div></div>
 <div class="mo" id="add-day-mo"><div class="md"><div class="mh"></div><div class="mti">NEW PROTOCOL DAY</div><div class="fl">Day Name</div><input class="fi" id="nd-name" placeholder="e.g. Upper Power"/><div class="fl">Tag</div><input class="fi" id="nd-tag" placeholder="e.g. UPPER POWER"/><div class="fl">Cardio Finisher (optional)</div><input class="fi" id="nd-cardio" placeholder="e.g. 20 min HIIT Bike"/><button class="mb" onclick="saveNewDay()">CREATE</button><button class="mca" onclick="closeModal('add-day-mo')">CANCEL</button></div></div>
 <div class="mo" id="edit-day-mo"><div class="md"><div class="mh"></div><div class="mti">EDIT PROTOCOL</div><div class="fl">Day Name</div><input class="fi" id="ed-name"/><div class="fl">Tag</div><input class="fi" id="ed-tag"/><div class="fl">Cardio Finisher</div><input class="fi" id="ed-cardio"/><button class="mb" onclick="saveDayEdit()">SAVE</button><button class="mca" onclick="closeModal('edit-day-mo')">CANCEL</button><button class="mb-red" onclick="deleteDay()">DELETE DAY</button></div></div>
 <div class="mo" id="notes-mo"><div class="md"><div class="mh"></div><div class="mti" id="notes-ex-name">NOTES</div><div id="notes-content" style="font-family:Rajdhani,sans-serif;font-size:13px;color:var(--st);line-height:1.7;margin-bottom:12px;"></div><button class="mb" onclick="closeModal('notes-mo')">CLOSE</button></div></div>
@@ -606,23 +638,25 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="js/core.js"></script>
-<script src="js/storage.js"></script>
-<script src="js/state.js"></script>
-<script src="js/library.js"></script>
-<script src="js/programs.js"></script>
-<script src="js/hardwood.js"></script>
-<script src="js/periodization.js"></script>
-<script src="js/workout.js"></script>
-<script src="js/history.js"></script>
-<script src="js/analytics.js"></script>
-<script src="js/vitals.js"></script>
-<script src="js/peptides.js"></script>
-<script src="js/nutrition.js"></script>
-<script src="js/migrate.js"></script>
-<script src="js/programs-ui.js"></script>
-<script src="js/backup.js"></script>
-<script src="js/splash.js"></script>
-<script src="js/boot.js"></script>
+<script src="js/core.js?v=15"></script>
+<script src="js/storage.js?v=15"></script>
+<script src="js/state.js?v=15"></script>
+<script src="js/library.js?v=15"></script>
+<script src="js/programs.js?v=15"></script>
+<script src="js/hardwood.js?v=15"></script>
+<script src="js/custom.js?v=15"></script>
+<script src="js/periodization.js?v=15"></script>
+<script src="js/workout.js?v=15"></script>
+<script src="js/editor.js?v=15"></script>
+<script src="js/history.js?v=15"></script>
+<script src="js/analytics.js?v=15"></script>
+<script src="js/vitals.js?v=15"></script>
+<script src="js/peptides.js?v=15"></script>
+<script src="js/nutrition.js?v=15"></script>
+<script src="js/migrate.js?v=15"></script>
+<script src="js/programs-ui.js?v=15"></script>
+<script src="js/backup.js?v=15"></script>
+<script src="js/splash.js?v=15"></script>
+<script src="js/boot.js?v=15"></script>
 </body>
 </html>

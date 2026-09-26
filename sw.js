@@ -1,39 +1,46 @@
 // ════════════════════════════════
 // FORGE SERVICE WORKER
 // Bump CACHE on every deploy or browsers will keep serving the old build.
-// v14 = app v5.0, built-in programs now upgrade in place (BUILTIN_VERSION)
+// Every js/css URL carries ?v=N matching CACHE (index.html and ASSETS below).
+// The page is fetched network-first but assets cache-first, so without the
+// version a fresh index.html would run against the PREVIOUS deploy's cached
+// scripts. Versioned URLs make a new page request files no cache holds.
+// To deploy: bump CACHE, then run the same ?v= bump over index.html and sw.js.
+// v15 = session-loss fixes, PR identity fixes, program builder
 // ════════════════════════════════
-const CACHE = 'forge-v14';
+const CACHE = 'forge-v15';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './forge-icon-192.png',
   './forge-icon-512.png',
-  './css/base.css',
-  './css/auth.css',
-  './css/workout.css',
-  './css/analytics.css',
-  './css/health.css',
-  './css/nutrition.css',
-  './js/core.js',
-  './js/storage.js',
-  './js/state.js',
-  './js/library.js',
-  './js/programs.js',
-  './js/hardwood.js',
-  './js/periodization.js',
-  './js/workout.js',
-  './js/history.js',
-  './js/analytics.js',
-  './js/vitals.js',
-  './js/peptides.js',
-  './js/nutrition.js',
-  './js/migrate.js',
-  './js/programs-ui.js',
-  './js/backup.js',
-  './js/splash.js',
-  './js/boot.js'
+  './css/base.css?v=15',
+  './css/auth.css?v=15',
+  './css/workout.css?v=15',
+  './css/analytics.css?v=15',
+  './css/health.css?v=15',
+  './css/nutrition.css?v=15',
+  './js/core.js?v=15',
+  './js/storage.js?v=15',
+  './js/state.js?v=15',
+  './js/library.js?v=15',
+  './js/programs.js?v=15',
+  './js/hardwood.js?v=15',
+  './js/custom.js?v=15',
+  './js/periodization.js?v=15',
+  './js/workout.js?v=15',
+  './js/editor.js?v=15',
+  './js/history.js?v=15',
+  './js/analytics.js?v=15',
+  './js/vitals.js?v=15',
+  './js/peptides.js?v=15',
+  './js/nutrition.js?v=15',
+  './js/migrate.js?v=15',
+  './js/programs-ui.js?v=15',
+  './js/backup.js?v=15',
+  './js/splash.js?v=15',
+  './js/boot.js?v=15'
 ];
 
 self.addEventListener('install', function (e) {
