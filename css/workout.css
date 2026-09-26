@@ -283,3 +283,7 @@ select.fi{appearance:none;-webkit-appearance:none;padding-right:28px;background-
 .sc.wt-tog{color:var(--hl);cursor:pointer;padding:3px 0;}
 .bw-cell{opacity:.45;cursor:pointer;}
 .bw-cell .sbtn,.bw-cell .sinp{pointer-events:none;}
+
+/* cardio rows: minutes stepper, miles, calories */
+.shr.cr,.sr.cr{grid-template-columns:20px 1.4fr 1fr 1fr 28px;}
+.cr-inp::placeholder{color:var(--s3);}

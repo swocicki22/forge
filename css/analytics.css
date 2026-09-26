@@ -137,3 +137,18 @@
 /* implement tag on PR cards — SM, BB, DB... */
 .impl-tag{display:inline-block;margin-left:3px;padding:0 4px;border:1px solid var(--s3);border-radius:2px;
   font-family:'Share Tech Mono',monospace;font-size:6px;letter-spacing:.1em;color:var(--s2);vertical-align:middle;}
+
+/* cardio tab */
+.cd-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;}
+.cd-v{font-family:'Orbitron',sans-serif;font-size:16px;color:var(--hl);}
+.cd-k{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:.12em;color:var(--s2);margin-top:3px;}
+.cd-bars{display:flex;gap:5px;align-items:flex-end;height:120px;}
+.cd-bar{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;}
+.cd-bv{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--s2);height:12px;}
+.cd-bt{flex:1;width:100%;display:flex;align-items:flex-end;background:rgba(255,255,255,.02);border-radius:1px;}
+.cd-bt>div{width:100%;background:var(--hl);border-radius:1px;min-height:0;}
+.cd-bl{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--s3);margin-top:4px;}
+.cd-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);}
+.cd-n{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--tx);min-width:0;}
+.cd-d{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--s2);font-weight:400;margin-top:2px;}
+.cd-m{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--t2);text-align:right;flex-shrink:0;}
