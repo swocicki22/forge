@@ -133,3 +133,7 @@
 .hm-ex-name{flex:1;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:11px;color:var(--tx);}
 .hm-ex-sets{font-family:Orbitron,sans-serif;font-size:8px;color:var(--hl);flex-shrink:0;}
 .hm-hint{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--s3);text-align:center;letter-spacing:.08em;margin-top:8px;}
+
+/* implement tag on PR cards — SM, BB, DB... */
+.impl-tag{display:inline-block;margin-left:3px;padding:0 4px;border:1px solid var(--s3);border-radius:2px;
+  font-family:'Share Tech Mono',monospace;font-size:6px;letter-spacing:.1em;color:var(--s2);vertical-align:middle;}

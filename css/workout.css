@@ -147,3 +147,58 @@
 /* a finished session recedes, so the eye lands on what is still to do */
 .dc.is-complete{border-color:rgba(76,175,80,.35);}
 .dc.is-complete .dcn{color:var(--s2);}
+
+/* ── LIVE SESSION ── */
+.live-pill{position:fixed;left:12px;right:12px;bottom:calc(64px + var(--sb));z-index:240;
+  display:none;align-items:center;gap:8px;padding:10px 12px;border-radius:2px;cursor:pointer;
+  background:var(--card);border:1px solid var(--hl);box-shadow:0 0 0 1px var(--hlbr),0 6px 20px rgba(0,0,0,.5);}
+.live-pill.visible{display:flex;}
+.lp-dot{width:7px;height:7px;border-radius:50%;background:var(--gr);flex-shrink:0;
+  box-shadow:0 0 6px var(--gr);animation:lp-pulse 1.6s ease-in-out infinite;}
+@keyframes lp-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.lp-name{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.08em;color:var(--tx);
+  flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lp-time{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--am);}
+.lp-go{font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:.1em;color:var(--hl);}
+/* abort lives off the back-arrow slot so it can't be hit by reflex */
+.abort-link{background:none;border:none;padding:2px 0;cursor:pointer;
+  font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:.12em;color:var(--danger);opacity:.75;}
+
+/* ── PROGRAM BUILDER ── */
+/* the exercise form's rows now hold 2 or 4 fields; let them size to content */
+#edit-ex-mo .fr{grid-template-columns:repeat(auto-fit,minmax(0,1fr));}
+#edit-ex-mo .fi{min-width:0;}
+select.fi{appearance:none;-webkit-appearance:none;padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%234fc3f7' stroke-width='1.4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+.ef-help,.pe-help{font-family:'Rajdhani',sans-serif;font-size:11px;line-height:1.4;color:var(--s2);margin-top:5px;}
+.pp-card{background:var(--card2);border:1px solid var(--border);border-radius:2px;padding:11px;margin-bottom:8px;cursor:pointer;}
+.pp-card.on{background:var(--hld);border-color:var(--hl);}
+.pp-head{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.pp-name{font-family:'Orbitron',sans-serif;font-size:12px;color:var(--st);min-width:0;overflow-wrap:anywhere;}
+.pp-card.on .pp-name{color:var(--hl);}
+.pp-badge{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:.1em;color:var(--s3);flex-shrink:0;}
+.pp-badge.on{color:var(--hl);}
+.pp-meta{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:.1em;color:var(--s2);margin-top:3px;text-transform:uppercase;}
+.pp-desc{font-family:'Rajdhani',sans-serif;font-size:11px;color:var(--t2);margin-top:6px;line-height:1.4;}
+.pp-notes{font-family:'Rajdhani',sans-serif;font-size:10px;color:var(--s2);margin-top:6px;line-height:1.4;border-top:1px solid var(--border);padding-top:6px;}
+.pp-acts{display:flex;gap:6px;margin-top:9px;}
+.np-modes{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.np-mode{background:transparent;border:1px solid var(--border);border-radius:2px;padding:9px;color:var(--s2);
+  font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:.1em;cursor:pointer;}
+.np-mode.on{border-color:var(--hl);color:var(--hl);background:var(--hld);}
+.pe-sec{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:.14em;color:var(--hl);margin-top:16px;
+  padding-bottom:5px;border-bottom:1px solid var(--border);}
+.pe-day{display:flex;align-items:center;gap:8px;margin-top:6px;}
+.pe-dlbl{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.1em;color:var(--s2);width:42px;flex-shrink:0;}
+.pe-sel{flex:1;min-width:0;padding:6px 8px;}
+.pe-sess{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);}
+.pe-sname{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;color:var(--tx);overflow-wrap:anywhere;}
+.pe-sinfo{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:.1em;color:var(--s2);margin-top:2px;text-transform:uppercase;}
+.pe-sinfo.warn{color:var(--am);}
+.pe-x{background:none;border:1px solid var(--border);border-radius:2px;color:var(--s2);width:28px;height:28px;flex-shrink:0;cursor:pointer;}
+.pe-add{display:flex;gap:6px;margin-top:10px;align-items:stretch;}
+.pe-add .fi{flex:1;min-width:0;}
+.ed-note{font-family:'Rajdhani',sans-serif;font-size:12px;line-height:1.4;color:var(--t2);background:var(--card);
+  border:1px solid var(--border);border-radius:2px;padding:9px 11px;margin-bottom:8px;}
+.ed-ss{font-family:'Orbitron',sans-serif;font-size:6px;color:var(--hl);margin-left:4px;}
+.ed-reset{width:100%;background:transparent;border:1px solid var(--border);color:var(--s2);border-radius:2px;padding:9px;
+  font-family:'Orbitron',sans-serif;font-size:7px;letter-spacing:.1em;cursor:pointer;margin-top:16px;}
