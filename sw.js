@@ -6,42 +6,42 @@
 // version a fresh index.html would run against the PREVIOUS deploy's cached
 // scripts. Versioned URLs make a new page request files no cache holds.
 // To deploy: bump CACHE, then run the same ?v= bump over index.html and sw.js.
-// v19 = BW for bodyweight gear by default; in-workout BW / added-weight switch
+// v20 = weeks per phase + weekly rep wave; rest workouts tick off; programmed reps beat old rep floors
 // ════════════════════════════════
-const CACHE = 'forge-v19';
+const CACHE = 'forge-v20';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './forge-icon-192.png',
   './forge-icon-512.png',
-  './css/base.css?v=19',
-  './css/auth.css?v=19',
-  './css/workout.css?v=19',
-  './css/analytics.css?v=19',
-  './css/health.css?v=19',
-  './css/nutrition.css?v=19',
-  './js/core.js?v=19',
-  './js/storage.js?v=19',
-  './js/state.js?v=19',
-  './js/library.js?v=19',
-  './js/programs.js?v=19',
-  './js/hardwood.js?v=19',
-  './js/custom.js?v=19',
-  './js/catalog.js?v=19',
-  './js/periodization.js?v=19',
-  './js/workout.js?v=19',
-  './js/editor.js?v=19',
-  './js/history.js?v=19',
-  './js/analytics.js?v=19',
-  './js/vitals.js?v=19',
-  './js/peptides.js?v=19',
-  './js/nutrition.js?v=19',
-  './js/migrate.js?v=19',
-  './js/programs-ui.js?v=19',
-  './js/backup.js?v=19',
-  './js/splash.js?v=19',
-  './js/boot.js?v=19'
+  './css/base.css?v=20',
+  './css/auth.css?v=20',
+  './css/workout.css?v=20',
+  './css/analytics.css?v=20',
+  './css/health.css?v=20',
+  './css/nutrition.css?v=20',
+  './js/core.js?v=20',
+  './js/storage.js?v=20',
+  './js/state.js?v=20',
+  './js/library.js?v=20',
+  './js/programs.js?v=20',
+  './js/hardwood.js?v=20',
+  './js/custom.js?v=20',
+  './js/catalog.js?v=20',
+  './js/periodization.js?v=20',
+  './js/workout.js?v=20',
+  './js/editor.js?v=20',
+  './js/history.js?v=20',
+  './js/analytics.js?v=20',
+  './js/vitals.js?v=20',
+  './js/peptides.js?v=20',
+  './js/nutrition.js?v=20',
+  './js/migrate.js?v=20',
+  './js/programs-ui.js?v=20',
+  './js/backup.js?v=20',
+  './js/splash.js?v=20',
+  './js/boot.js?v=20'
 ];
 
 self.addEventListener('install', function (e) {
